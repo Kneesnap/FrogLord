@@ -131,7 +131,7 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
      * Update the editor controls.
      */
     public void updateEditorControls() {
-        this.addButton.setDisable(this.addButton.getItems().isEmpty());
+        this.addButton.setDisable(this.addButton.getItems().stream().allMatch(CollectionEditorComponent::isMenuItemDisabled));
         this.removeButton.setDisable(this.removeButtonLogic == null || getSelectedViewEntry() == null);
         this.moveUpButton.setDisable(this.moveButtonLogic == null || getSelectedViewEntry() == null);
         this.moveDownButton.setDisable(this.moveButtonLogic == null || getSelectedViewEntry() == null);
@@ -146,7 +146,12 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
             throw new NullPointerException("newMenuItem");
 
         this.addButton.getItems().add(newMenuItem);
-        this.addButton.setDisable(false);
+        if (!isMenuItemDisabled(newMenuItem))
+            this.addButton.setDisable(false);
+    }
+
+    private static boolean isMenuItemDisabled(MenuItem item) {
+        return item.isDisable() || !item.isVisible();
     }
 
     /**

@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.shared.ui.file;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -14,9 +14,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
+import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
@@ -24,23 +28,26 @@ import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapFrictionL
 import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapInteractionType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
-import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
-import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCImageUtils;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloPadding;
+import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
+import net.highwayfrogs.editor.gui.components.ListViewComponent;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
-import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -52,27 +59,22 @@ import java.util.function.Supplier;
  * Created by Kneesnap on 9/18/2018.
  */
 public class VLOController extends SCFileEditorUIController<SCGameInstance, VloFile> {
+    @Getter private VloFileEditorComponent editorComponent;
     private final List<ImageBasedFXNode<?>> imageBasedNodes = new ArrayList<>();
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
     @FXML private ChoiceBox<ImageControllerViewSetting> sizeChoiceBox;
     @FXML private ImageView imageView;
-    @FXML private ListView<VloImage> imageList;
     @FXML private Label dimensionLabel;
     @FXML private Label ingameDimensionLabel;
     @FXML private Label idLabel;
     @FXML private VBox flagBox;
     @FXML private Button backButton;
+    @FXML private AnchorPane leftSidePane;
     @FXML private AnchorPane rightSidePane;
 
     @Getter private VloImage selectedImage;
     private int imageFilterSettings = VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS;
-
-    private static final int IMAGE_EXPORT_SETTINGS = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
-
-    private static final SavedFilePath IMAGE_EXPORT_DIRECTORY = new SavedFilePath("vlo-bulk-export", "Select the folder to export images to...");
-    private static final SavedFilePath IMAGE_IMPORT_DIRECTORY = new SavedFilePath("vlo-bulk-import", "Select the folder to import images from...");
-    private static final WeakHashMap<SCGameInstance, List<SCTextureUsage>[]> TEXTURE_USAGES_PER_INSTANCE = new WeakHashMap<>();
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -89,44 +91,19 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     @Override
     public void setTargetFile(VloFile vlo) {
         super.setTargetFile(vlo);
-
-        this.imageList.setItems(FXCollections.observableArrayList(vlo != null ? vlo.getImages() : Collections.emptyList()));
-        this.imageList.setCellFactory(param -> new LazyFXListCell<VloImage>((image, index) -> {
-            if (image == null)
-                return null;
-
-            String imageName = image.getName();
-            return index + ": " + (imageName != null ? imageName : "") + " [" + image.getPaddedWidth() + ", " + image.getPaddedHeight() + "] (ID: " + image.getTextureId() + ")";
-        }).setWithoutIndexContextMenuHandler((contextMenu, image) -> {
-            MenuItem findTextureUsages = new MenuItem("Find Usages");
-            contextMenu.getItems().add(findTextureUsages);
-            contextMenu.setOnAction(event -> {
-                List<SCTextureUsage>[] allTextureUsages = TEXTURE_USAGES_PER_INSTANCE.computeIfAbsent(getGameInstance(), SCAnalysisUtils::generateTextureUsageMapping);
-                List<SCTextureUsage> textureUsages = allTextureUsages != null && allTextureUsages.length > image.getTextureId() ? allTextureUsages[image.getTextureId()] : null;
-                if (textureUsages == null || textureUsages.isEmpty()) {
-                    FXUtils.showPopup(AlertType.INFORMATION, "No usages found.", "No usages of this image were found.\nThis does *NOT* guarantee that the image is never unused.");
-                    return;
-                }
-
-                Set<String> locations = new HashSet<>();
-                StringBuilder builder = new StringBuilder("Texture Usages (").append(textureUsages.size()).append("):\n");
-                for (int i = 0; i < textureUsages.size(); i++) {
-                    SCTextureUsage usage = textureUsages.get(i);
-                    if (locations.add(usage.getLocationDescription()))
-                        builder.append(" - ").append(usage.getLocationDescription()).append('\n');
-                }
-
-                FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
-            });
-        }));
-
-        this.imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
-        this.imageList.getSelectionModel().selectFirst();
+        this.editorComponent.getCollectionViewComponent().refreshDisplay();
     }
 
     @Override
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
+
+        // Register file list.
+        this.editorComponent = new VloFileEditorComponent(getGameInstance(), this, false);
+        setAnchorPaneStretch(this.editorComponent.getRootNode());
+        this.editorComponent.extendEditorUI();
+        this.leftSidePane.getChildren().add(this.editorComponent.getRootNode());
+        addController(this.editorComponent);
 
         // Ensure the flag stuff on the left has enough room to display.
         this.flagBox.setPrefWidth(this.rightSidePane.getWidth() - this.imageView.getFitWidth() - 4);
@@ -171,24 +148,6 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         addSelectionBox("Interaction:", MediEvilMapInteractionType.values(),
                 VloImage::getMediEvilInteractionType, VloImage::setMediEvilInteractionType, VloImage::isMediEvilFlags,
                 () -> new LazyFXListCell<>(MediEvilMapInteractionType::getDisplayName, "None (Error)"));
-
-        Button cloneButton = new Button("Clone Image");
-        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(this::promptCloneVlo, false));
-        addOptionalUINode(cloneButton, null);
-    }
-
-    private void promptCloneVlo(VloFile cloneFrom) {
-        cloneFrom.promptImageSelection(gameImage -> {
-            if (gameImage == null)
-                return;
-
-            int newView = getFile().getImages().size();
-            getFile().getImages().add(gameImage.clone()); // TODO: This is now immmutable, rewrite this feature.
-            imageList.setItems(FXCollections.observableArrayList(getFile().getImages()));
-            imageList.getSelectionModel().select(newView);
-            imageList.scrollTo(newView);
-            Platform.runLater(() -> promptCloneVlo(cloneFrom)); // If we don't delay this, the existing window won't shut.
-        }, true);
     }
 
     private Label addLabel(String labelText, boolean underline, boolean bold, Predicate<VloImage> visibilityTest) {
@@ -424,58 +383,6 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     }
 
     @FXML
-    @SneakyThrows
-    private void exportImage(ActionEvent event) {
-        String name = this.selectedImage.getName();
-        BufferedImage image = this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS);
-        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.selectedImage.getTextureId()));
-    }
-
-    @FXML
-    @SneakyThrows
-    private void importImage(ActionEvent event) {
-        BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
-        if (loadedImage != null) {
-            this.selectedImage.replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
-            updateDisplay();
-        }
-    }
-
-    @FXML
-    private void exportAllImages(ActionEvent event) {
-        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_EXPORT_DIRECTORY);
-        if (selectedFolder == null)
-            return; // Cancelled.
-
-        getFile().exportAllImages(selectedFolder, IMAGE_EXPORT_SETTINGS);
-    }
-
-    @FXML
-    @SneakyThrows
-    private void importAllImages(ActionEvent event) {
-        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_IMPORT_DIRECTORY);
-        if (selectedFolder == null)
-            return; // Cancelled.
-
-        updateFilter();
-        int importedFiles = 0;
-        for (File file : FileUtils.listFiles(selectedFolder)) {
-            String name = FileUtils.stripExtension(file.getName());
-            if (!NumberUtils.isInteger(name))
-                continue;
-
-            int id = Integer.parseInt(name);
-            if (id >= 0 && id < getFile().getImages().size()) {
-                getFile().getImages().get(id).replaceImage(ImageIO.read(file), ProblemResponse.CREATE_POPUP);
-                importedFiles++;
-            }
-        }
-
-        getLogger().info("Imported %d images.", importedFiles);
-        updateDisplay();
-    }
-
-    @FXML
     private void onImageToggle(ActionEvent event) {
         updateImage();
     }
@@ -516,10 +423,8 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         updateOptionalUI(image);
         this.updateDisplay();
 
-        if (forceSelect) {
-            this.imageList.getSelectionModel().select(image);
-            this.imageList.scrollTo(image);
-        }
+        if (forceSelect)
+            this.editorComponent.getCollectionViewComponent().setSelectedViewEntryInUI(image);
     }
 
     /**
@@ -593,6 +498,98 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         public void updateNode(VloImage image) {
             if (this.nodeUpdater != null)
                 this.nodeUpdater.accept(image, this);
+        }
+    }
+
+    private static class VloFileEditorComponent extends CollectionEditorComponent<SCGameInstance, VloImage> {
+        private final VLOController controller;
+        private final MenuItem addImageItem = new MenuItem("Add Image");
+        private final MenuItem addFroggerTextImageItem = new MenuItem("Add Frogger Text Image");
+
+        public VloFileEditorComponent(SCGameInstance instance, VLOController controller, boolean padCollectionView) {
+            super(instance, new VloFileBasicListViewComponent(instance, controller), padCollectionView);
+            this.controller = controller;
+        }
+
+        @Override
+        public VloFileBasicListViewComponent getCollectionViewComponent() {
+            return (VloFileBasicListViewComponent) super.getCollectionViewComponent();
+        }
+
+        private void extendEditorUI() {
+            addMenuItemToAddButtonLogic(this.addImageItem);
+            this.addImageItem.setOnAction(event -> promptUserAddImage(null));
+
+            // TODO: ADD text menu item if the game is frogger. (Maybe)
+
+            setRemoveButtonLogic(image -> {
+                if (image != null && image.getParent() == this.controller.getFile() && image.getParent().removeImage(image))
+                    getCollectionViewComponent().refreshDisplay();
+            });
+        }
+
+        private void promptUserAddImage(PsxImageBitDepth bitDepth) {
+            VloFile vloFile = this.controller.getFile();
+            File selectedFile = FileUtils.askUserToOpenFile(vloFile.getGameInstance(), FileUtils.IMPORT_SINGLE_IMAGE_PATH);
+            if (selectedFile == null)
+                return;
+
+            BufferedImage loadedImage;
+            try {
+                loadedImage = ImageIO.read(selectedFile);
+            } catch (IOException ex) {
+                Utils.handleError(vloFile.getLogger(), ex, true, "The file '%s' could not be loaded as an image.", selectedFile.getName());
+                return;
+            }
+
+            String imageName = FileUtils.stripExtension(selectedFile.getName());
+            VloImage existingImage;
+            if ((existingImage = vloFile.getImageByName(imageName)) != null) {
+                if (!FXUtils.makePopUpYesNo("Image already present.", "An image already exists named '" + imageName + "', would you like to replace it?"))
+                    return;
+
+                existingImage.replaceImage(loadedImage, bitDepth, -1, existingImage.testFlag(VloImage.FLAG_TRANSLUCENT), ProblemResponse.CREATE_POPUP);
+                return;
+            } else if (!VloImage.isValidTextureName(imageName)) {
+                FXUtils.showPopup(AlertType.WARNING, "Invalid texture name.", "The texture name '" + imageName + "' is not valid, please rename the file.");
+                return;
+            }
+
+            vloFile.addImage(imageName, loadedImage, VloPadding.DEFAULT, bitDepth, null, false);
+            getCollectionViewComponent().refreshDisplay();
+        }
+    }
+
+    private static class VloFileBasicListViewComponent extends ListViewComponent<SCGameInstance, VloImage> {
+        private final VLOController controller;
+
+        public VloFileBasicListViewComponent(SCGameInstance instance, VLOController controller) {
+            super(instance);
+            this.controller = controller;
+        }
+
+        @Override
+        public void onSceneAdd(Scene newScene) {
+            super.onSceneAdd(newScene);
+            if (getSelectedViewEntry() == null && getEntries().size() > 0)
+                getRootNode().getSelectionModel().selectFirst();
+        }
+
+        @Override
+        protected void onSelect(VloImage image) {
+            this.controller.selectImage(image, false);
+            this.controller.editorComponent.updateEditorControls();
+        }
+
+        @Override
+        protected void onDoubleClick(VloImage image) {
+            // Do nothing.
+        }
+
+        @Override
+        public List<VloImage> getViewEntries() {
+            VloFile file = this.controller != null ? this.controller.getFile() : null;
+            return file != null ? file.getImages() : Collections.emptyList();
         }
     }
 }

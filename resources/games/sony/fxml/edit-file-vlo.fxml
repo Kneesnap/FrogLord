@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -30,33 +30,18 @@
                                <Button fx:id="backButton" layoutX="124.0" layoutY="8.0" mnemonicParsing="false" onAction="#returnToWad" text="Back" visible="false" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="8.0" />
                            </children>
                         </AnchorPane>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-                           <children>
-                                <ListView fx:id="imageList" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0" />
-                           </children>
-                        </AnchorPane>
-                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="48.0" prefWidth="130.0" VBox.vgrow="NEVER">
-                           <children>
-                              <HBox alignment="CENTER" prefHeight="48.0" prefWidth="240.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="4.0" AnchorPane.rightAnchor="4.0" AnchorPane.topAnchor="0.0">
-                                 <children>
-                                      <Button mnemonicParsing="false" onAction="#importImage" prefHeight="25.0" prefWidth="54.0" text="Import" />
-                                      <Button mnemonicParsing="false" onAction="#exportImage" prefHeight="25.0" prefWidth="54.0" text="Export" />
-                                      <Button mnemonicParsing="false" onAction="#importAllImages" prefHeight="25.0" prefWidth="54.0" text="Imp All" />
-                                      <Button mnemonicParsing="false" onAction="#exportAllImages" prefHeight="25.0" prefWidth="54.0" text="Exp All" />
-                                 </children>
-                              </HBox>
-                           </children></AnchorPane>
                      </children>
                   </VBox>
                </children>
-            </AnchorPane>
+              <AnchorPane fx:id="leftSidePane" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="250.0" prefWidth="130.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="35.0" VBox.vgrow="ALWAYS" />
+           </AnchorPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
-          <AnchorPane HBox.hgrow="ALWAYS" fx:id="rightSidePane">
+          <AnchorPane fx:id="rightSidePane" HBox.hgrow="ALWAYS">
                <children>
                    <Button layoutX="4.0" layoutY="4.0" mnemonicParsing="false" onAction="#openVramEditor" prefHeight="25.0" prefWidth="72.0" text="VRAM" AnchorPane.leftAnchor="4.0" AnchorPane.topAnchor="4.0" />
                    <VBox fx:id="flagBox" centerShape="false" layoutX="4.0" layoutY="29.0" prefHeight="197.0" prefWidth="98.0" AnchorPane.leftAnchor="4.0" />
                    <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                   <Label layoutX="4.0" layoutY="266.0" underline="true" text="Preview Settings:" AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="4.0" />
+                   <Label layoutX="4.0" layoutY="266.0" text="Preview Settings:" underline="true" AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="4.0" />
                    <CheckBox fx:id="transparencyCheckBox" layoutX="4.0" layoutY="266.0" mnemonicParsing="false" onAction="#onImageToggle" selected="true" text="Transparency" AnchorPane.bottomAnchor="48.0" AnchorPane.leftAnchor="4.0" />
                    <CheckBox fx:id="paddingCheckBox" layoutX="6.0" layoutY="255.0" mnemonicParsing="false" onAction="#onImageToggle" selected="true" text="Show Padding" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="4.0" />
                    <ChoiceBox fx:id="sizeChoiceBox" layoutX="4.0" layoutY="248.0" onAction="#onImageToggle" prefWidth="100.0" AnchorPane.bottomAnchor="4.0" AnchorPane.leftAnchor="4.0" />

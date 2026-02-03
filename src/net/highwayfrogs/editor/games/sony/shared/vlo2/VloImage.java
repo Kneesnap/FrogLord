@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.sony.shared.vlo2;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
@@ -11,16 +13,16 @@ import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
 import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapFrictionLevel;
 import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapInteractionType;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.ColorUtils;
-import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.StringUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -30,10 +32,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -65,13 +64,7 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks:
- *  1) Rewrite the VLO file UI
- *   -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
- *   -> Update the import all/export all feature to be on right-click of the VLO itself
- *    -> It should also use image file names.
- *     -> For images with unrecognized non-numeric names, add them to the VLO.
- *     -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
- *  2) Text generation
+ *  1) Text generation
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
  * Created by Kneesnap on 8/30/2018.
@@ -547,16 +540,64 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public Image getCollectionViewIcon() {
-        return toFXImage(DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
+        int iconWidth = this.paddedWidth;
+        int iconHeight = this.paddedHeight;
+
+        if (this.paddedWidth > 2 * this.paddedHeight && this.paddedHeight > 10) {
+            if (iconHeight > 16)
+                iconHeight = 16;
+            if (iconWidth > 64)
+                iconWidth = 64;
+        } else {
+            if (iconWidth > 16)
+                iconWidth = 16;
+            if (iconHeight > 16)
+                iconHeight = 16;
+        }
+
+        return FXUtils.toFXImage(ImageUtils.resizeImage(toBufferedImage(), iconWidth, iconHeight, false), false);
     }
+
+    private static final WeakHashMap<SCGameInstance, List<SCTextureUsage>[]> TEXTURE_USAGES_PER_INSTANCE = new WeakHashMap<>();
 
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
-        // TODO: Implement Import.
-        //  -> "Replace Image": Imports with the image's existing settings.
-        //  -> on the image list add icon, -> "Import Images" -> Show a menu where you can pick individual images or full directories. Perhaps allow selecting multiple at once.
-        // TODO: Implement Export.
-        // TODO: Implement Change Bit Depth (Have window previewing the images using the previous padding window template) (PSX Only)
+        MenuItem findTextureUsages = new MenuItem("Find Usages");
+        contextMenu.getItems().add(findTextureUsages);
+        contextMenu.setOnAction(event -> {
+            List<SCTextureUsage>[] allTextureUsages = TEXTURE_USAGES_PER_INSTANCE.computeIfAbsent(getGameInstance(), SCAnalysisUtils::generateTextureUsageMapping);
+            List<SCTextureUsage> textureUsages = allTextureUsages != null && allTextureUsages.length > this.textureId ? allTextureUsages[this.textureId] : null;
+            if (textureUsages == null || textureUsages.isEmpty()) {
+                FXUtils.showPopup(AlertType.INFORMATION, "No usages found.", "No usages of this image were found.\nThis does *NOT* guarantee that the image is never unused.");
+                return;
+            }
+
+            Set<String> locations = new HashSet<>();
+            StringBuilder builder = new StringBuilder("Texture Usages (").append(textureUsages.size()).append("):\n");
+            for (int i = 0; i < textureUsages.size(); i++) {
+                SCTextureUsage usage = textureUsages.get(i);
+                if (locations.add(usage.getLocationDescription()))
+                    builder.append(" - ").append(usage.getLocationDescription()).append('\n');
+            }
+
+            FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
+        });
+
+        MenuItem exportItem = new MenuItem("Export");
+        contextMenu.getItems().add(exportItem);
+        exportItem.setOnAction(event -> {
+            String name = getName();
+            BufferedImage image = this.toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
+            FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.textureId));
+        });
+
+        MenuItem importItem = new MenuItem("Import");
+        contextMenu.getItems().add(importItem);
+        importItem.setOnAction(event -> {
+            BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
+            if (loadedImage != null)
+                replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
+        });
     }
 
     private enum PaddingOperation {
@@ -1462,7 +1503,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         if (this.paddingTransparent == paddingTransparent)
             return;
 
-        BufferedImage oldImage = toBufferedImage(DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
+        BufferedImage oldImage = toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
         this.paddingTransparent = paddingTransparent;
         replaceImage(oldImage, ProblemResponse.THROW_EXCEPTION);
     }

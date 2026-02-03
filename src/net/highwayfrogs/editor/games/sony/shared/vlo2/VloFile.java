@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.vlo2;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -19,6 +21,7 @@ import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -66,7 +69,11 @@ public class VloFile extends SCSharedGameFile {
     public static Comparator<VloImage> IMAGE_SORTING_ORDER = Comparator
             .comparingInt((VloImage image) -> image.getUnitWidth() * image.getPaddedHeight()).reversed();
 
-    public static final boolean DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT = false;
+    static final boolean DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT = false;
+    public static final int IMAGE_EXPORT_SETTINGS = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
+    private static final SavedFilePath IMAGE_EXPORT_DIRECTORY = new SavedFilePath("vlo-bulk-export", "Select the folder to export images to...");
+    private static final SavedFilePath IMAGE_IMPORT_DIRECTORY = new SavedFilePath("vlo-bulk-import", "Select the folder to import images from...");
+
 
     public VloFile(SCGameInstance instance) {
         super(instance);
@@ -285,7 +292,7 @@ public class VloFile extends SCSharedGameFile {
                 continue; // It's not possible to re-import these images, so skip them.
 
             int[] startPixelBuffer = image.getPixelBuffer().clone();
-            BufferedImage exportImage = image.toBufferedImage(VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
+            BufferedImage exportImage = image.toBufferedImage(IMAGE_EXPORT_SETTINGS);
             image.replaceImage(exportImage, ProblemResponse.THROW_EXCEPTION);
             if (!Arrays.equals(startPixelBuffer, image.getPixelBuffer())) {
                 image.getLogger().warning("Re-import was not a byte-match to its original image data.");
@@ -336,6 +343,63 @@ public class VloFile extends SCSharedGameFile {
         super.addToPropertyList(propertyList);
         propertyList.add("Images", getImages().size());
         propertyList.add("PS1 VLO", isPsxMode());
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportItem = new MenuItem("Export Images");
+        contextMenu.getItems().add(exportItem);
+        exportItem.setOnAction(event -> {
+            File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_EXPORT_DIRECTORY);
+            if (selectedFolder != null)
+                exportAllImages(selectedFolder, IMAGE_EXPORT_SETTINGS);
+        });
+
+        MenuItem importItem = new MenuItem("Import Images");
+        contextMenu.getItems().add(importItem);
+        importItem.setOnAction(event -> {
+            File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_IMPORT_DIRECTORY);
+            if (selectedFolder == null)
+                return; // Cancelled.
+
+            int importedFiles = 0;
+            String[] imageExtensions = ImageIO.getReaderFileSuffixes();
+            for (File file : FileUtils.listFiles(selectedFolder)) {
+                String fullFileName = file.getName();
+                String name = FileUtils.stripExtension(fullFileName);
+
+                String extension = fullFileName.substring(name.length() + 1);
+                if (!Utils.contains(imageExtensions, extension)) {
+                    getLogger().info("Skipping '%s' because the extension '%s' was not supported.", fullFileName, extension);
+                    continue;
+                }
+
+                BufferedImage loadedImage;
+
+                try {
+                    loadedImage = ImageIO.read(file);
+                } catch (IOException ex) {
+                    Utils.handleError(getLogger(), ex, false, "Failed to load image file '%s'.", fullFileName);
+                    continue;
+                }
+
+                // Find image by name, and replace.
+                VloImage existingImage = getImageByName(name);
+                if (existingImage != null) {
+                    existingImage.replaceImage(loadedImage, null, -1, existingImage.testFlag(VloImage.FLAG_TRANSLUCENT), ProblemResponse.CREATE_POPUP);
+                    continue;
+                }
+
+                // If not a texture ID, then create a new image with that name.
+                addImage(name, loadedImage, VloPadding.DEFAULT, null, null, false);
+            }
+
+            getLogger().info("Imported %d images.", importedFiles);
+            if (getGameInstance().getMainMenuController().getCurrentEditor() instanceof VLOController)
+                ((VLOController) getGameInstance().getMainMenuController().getCurrentEditor()).updateDisplay();
+        });
     }
 
     /**

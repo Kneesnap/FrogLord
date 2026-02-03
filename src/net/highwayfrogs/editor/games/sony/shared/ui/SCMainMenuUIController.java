@@ -212,7 +212,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         for (VloFile saveVLO : allVlos) {
             File vloFolder = new File(targetFolder, FileUtils.stripExtension(saveVLO.getFileDisplayName()));
             FileUtils.makeDirectory(vloFolder);
-            saveVLO.exportAllImages(vloFolder, VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
+            saveVLO.exportAllImages(vloFolder, VloFile.IMAGE_EXPORT_SETTINGS);
         }
     }
 

@@ -396,16 +396,21 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         for (int y = 0; y < this.overlapGrid.length; y++)
             Arrays.fill(this.overlapGrid[y], false);
 
-        loopEnd:
         for (VloImage image : this.vloArchive.getImages()) {
             int startX = image.getVramX();
             int startY = image.getVramY();
+            loopEnd:
             for (int y = 0; y < image.getPaddedHeight(); y++) {
                 for (int x = 0; x < image.getUnitWidth(); x++) {
                     int pixelX = startX + x;
                     int pixelY = startY + y;
+                    if (pixelX < 0 || pixelY < 0 || this.overlapGrid.length <= pixelY || this.overlapGrid[pixelY].length <= pixelX) {
+                        warning.append("WARNING: Texture outside of VRAM (").append(pixelX).append(" ").append(pixelY).append(")\n").append(image).append(Constants.NEWLINE);
+                        break loopEnd;
+                    }
+
                     if (this.overlapGrid[pixelY][pixelX]) {
-                        warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(pixelX).append(" ").append(pixelY).append(").").append(Constants.NEWLINE);
+                        warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(pixelX).append(" ").append(pixelY).append(")\n").append(image).append(Constants.NEWLINE);
                         break loopEnd;
                     }
 

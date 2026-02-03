@@ -93,6 +93,7 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
     @Override
     public void setSelectedViewEntryInUI(TViewEntry viewEntry) {
         getRootNode().getSelectionModel().select(viewEntry);
+        getRootNode().scrollTo(viewEntry);
     }
 
     /**
