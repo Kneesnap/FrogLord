@@ -705,12 +705,12 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * Save extra data.
      * @param writer The writer to save data to.
      */
-    void writeImageData(DataWriter writer, VloClutList clutList) {
+    void writeImageData(DataWriter writer) {
         if (this.tempImageDataPointer < 0)
             throw new RuntimeException("Cannot write image data, the image data pointer is invalid.");
 
         writer.writeAddressTo(this.tempImageDataPointer);
-        writeImageBytes(writer, clutList);
+        writeImageBytes(writer);
 
         this.tempImageDataPointer = -1;
     }
@@ -810,7 +810,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         }
     }
 
-    private void writeImageBytes(DataWriter writer, VloClutList clutList) {
+    private void writeImageBytes(DataWriter writer) {
         // Write 32-bit color PC image.
         if (!isPsxMode()) {
             // Byte Order ARGB -> Byte Order RGBA
@@ -830,7 +830,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         }
 
         // this.clut is up to date, having been updated at any point that an image is imported.
-        clutList.addClut(this.clut);
         if (this.bitDepth == PsxImageBitDepth.CLUT8) {
             for (int i = 0; i < this.pixelBuffer.length; i++)
                 writer.writeByte((byte) this.clut.getColorIndex(getClutColor(tempColor, i), true));

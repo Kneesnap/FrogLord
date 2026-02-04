@@ -191,7 +191,9 @@ public class VloVramSnapshot extends SCSharedGameObject {
             sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedHeight()).reversed());
         }
 
-        Set<VloClut> addedCluts = new HashSet<>();
+        // We must use an identity set, so that if there are multiple cluts with the same contents, they will both be added independently.
+        // This happens in MediEvil, and therefore must be supported, even if FrogLord merges duplicate cluts. (The cluts here aren't rebuilt, so...)
+        Set<VloClut> addedCluts = Collections.newSetFromMap(new IdentityHashMap<>());
 
         // Add images.
         VloTreeNodeFillMethod fillMethod = this.node.getFillMethod();

@@ -211,7 +211,7 @@ public class VloFile extends SCSharedGameFile {
 
             VloImage image = this.images.get(i);
             try {
-                image.writeImageData(writer, this.clutList);
+                image.writeImageData(writer);
             } catch (Throwable th) {
                 throw new RuntimeException("Failed to save image data for " + image + ".", th);
             }
