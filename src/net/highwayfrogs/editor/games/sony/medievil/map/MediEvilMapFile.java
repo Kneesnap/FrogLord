@@ -32,6 +32,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
     private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
     private final MediEvilMapPathChainPacket pathChainPacket;
+    private final MediEvilMap2DSplinePacket spline2DPacket;
     private final MediEvilMapCollprimsPacket collprimsPacket;
     private final MediEvilMapGridPacket gridPacket;
 
@@ -40,7 +41,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
         addFilePacket(this.headerPacket = new MediEvilMapHeaderPacket(this));
         addFilePacket(this.entitiesPacket = new MediEvilMapEntitiesPacket(this)); // Entities
         addFilePacket(this.pathChainPacket = new MediEvilMapPathChainPacket(this));
-        addFilePacket(new DummyFilePacket<>(this, "2LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL2 - 2D Splines
+        addFilePacket(this.spline2DPacket = new MediEvilMap2DSplinePacket(this));
         addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
         addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
         addFilePacket(this.collprimsPacket = new MediEvilMapCollprimsPacket(this)); // Collision Primitives
