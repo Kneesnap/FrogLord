@@ -7,10 +7,7 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapCollprimsPacket;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapEntitiesPacket;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.*;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
@@ -35,6 +32,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
     private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
     private final MediEvilMapCollprimsPacket collprimsPacket;
+    private final MediEvilMapGridPacket gridPacket;
 
     public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
@@ -45,7 +43,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
         addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
         addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
         addFilePacket(this.collprimsPacket = new MediEvilMapCollprimsPacket(this)); // Collision Primitives
-        addFilePacket(new DummyFilePacket<>(this, "DIRG", true, PacketSizeType.SIZE_INCLUSIVE)); // GRID - Collision Info?
+        addFilePacket(this.gridPacket = new MediEvilMapGridPacket(this)); // GRID
     }
 
     @Override
