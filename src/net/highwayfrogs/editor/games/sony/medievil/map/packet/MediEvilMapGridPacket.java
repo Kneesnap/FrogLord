@@ -270,7 +270,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
             if (this.tempSplinePointer <= 0)
                 throw new RuntimeException("Cannot writer spline id list, the pointer " + NumberUtils.toHexString(this.tempSplinePointer) + " is invalid.");
 
-            if (this.collprims.isEmpty()) {
+            if (this.splines.isEmpty()) {
                 writer.writeIntAtPos(this.tempSplinePointer, 0);
                 this.tempSplinePointer = -1;
                 return;
