@@ -29,10 +29,11 @@ import java.util.List;
 @Getter
 public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> implements ISCTextureUser {
     private final MediEvilMapHeaderPacket headerPacket;
-    private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
     private final MediEvilMapPathChainPacket pathChainPacket;
     private final MediEvilMap2DSplinePacket spline2DPacket;
+    private final MediEvilMap3DSplinePacket spline3DPacket;
+    private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapCollprimsPacket collprimsPacket;
     private final MediEvilMapGridPacket gridPacket;
 
@@ -42,8 +43,8 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
         addFilePacket(this.entitiesPacket = new MediEvilMapEntitiesPacket(this)); // Entities
         addFilePacket(this.pathChainPacket = new MediEvilMapPathChainPacket(this));
         addFilePacket(this.spline2DPacket = new MediEvilMap2DSplinePacket(this));
-        addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
-        addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
+        addFilePacket(this.spline3DPacket = new MediEvilMap3DSplinePacket(this));
+        addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this));
         addFilePacket(this.collprimsPacket = new MediEvilMapCollprimsPacket(this)); // Collision Primitives
         addFilePacket(this.gridPacket = new MediEvilMapGridPacket(this));
     }
