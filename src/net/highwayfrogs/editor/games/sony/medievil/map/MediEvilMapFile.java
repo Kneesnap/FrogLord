@@ -31,6 +31,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
     private final MediEvilMapHeaderPacket headerPacket;
     private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
+    private final MediEvilMapPathChainPacket pathChainPacket;
     private final MediEvilMapCollprimsPacket collprimsPacket;
     private final MediEvilMapGridPacket gridPacket;
 
@@ -38,12 +39,12 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
         super(instance, false);
         addFilePacket(this.headerPacket = new MediEvilMapHeaderPacket(this));
         addFilePacket(this.entitiesPacket = new MediEvilMapEntitiesPacket(this)); // Entities
-        addFilePacket(new DummyFilePacket<>(this, "NHCP", true, PacketSizeType.SIZE_INCLUSIVE)); // PCHN - Path Chain?
+        addFilePacket(this.pathChainPacket = new MediEvilMapPathChainPacket(this));
         addFilePacket(new DummyFilePacket<>(this, "2LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL2 - 2D Splines
         addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
         addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
         addFilePacket(this.collprimsPacket = new MediEvilMapCollprimsPacket(this)); // Collision Primitives
-        addFilePacket(this.gridPacket = new MediEvilMapGridPacket(this)); // GRID
+        addFilePacket(this.gridPacket = new MediEvilMapGridPacket(this));
     }
 
     @Override
