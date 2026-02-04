@@ -1,12 +1,16 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMap2DSplinePacket.MediEvilMap2DSpline;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +19,9 @@ import java.util.List;
  * Implements the 'PCHN' MediEvil map packet.
  * Created by Kneesnap on 2/3/2026.
  */
+@Getter
 public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
     private final List<MediEvilMapPathChain> pathChains = new ArrayList<>();
-    private byte padding; // It is not clear if this byte is actually used for anything.
 
     public static final String IDENTIFIER = "NHCP"; // 'PCHN'
 
@@ -29,7 +33,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
     protected void loadBody(DataReader reader, int endIndex) {
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Runtime values probably.
         short chainCount = reader.readUnsignedByteAsShort();
-        this.padding = reader.readByte();
+        reader.skipByte(); // Padding (garbage)
         int chainDataStartAddress = reader.readInt();
 
         // Read path chains.
@@ -60,13 +64,27 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
             this.pathChains.get(i).loadPreviousChainIds(reader);
         for (int i = 0; i < this.pathChains.size(); i++)
             this.pathChains.get(i).loadNextChainIds(reader);
+
+        // Resolve previous/next path chains.
+        for (int i = 0; i < this.pathChains.size(); i++)
+            this.pathChains.get(i).resolvePreviousChains();
+        for (int i = 0; i < this.pathChains.size(); i++)
+            this.pathChains.get(i).resolveNextChains();
+    }
+
+    @Override
+    protected void loadBodySecondPass(DataReader reader, int endIndex) {
+        for (int i = 0; i < this.pathChains.size(); i++)
+            this.pathChains.get(i).resolvePathSplines();
+        for (int i = 0; i < this.pathChains.size(); i++)
+            this.pathChains.get(i).resolveCameraSplines();
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeNull(Constants.SHORT_SIZE); // Runtime values probably.
         writer.writeUnsignedByte((short) this.pathChains.size());
-        writer.writeByte(this.padding);
+        writer.writeByte(Constants.NULL_BYTE); // Padding (garbage)
         int chainDataStartAddress = writer.writeNullPointer();
 
         // Write path chains.
@@ -98,28 +116,48 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
     @Override
     public void clear() {
         this.pathChains.clear();
-        this.padding = (byte) 0x00;
     }
 
     public static class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> {
         private final MediEvilMapPathChainPacket pathChainPacket;
         private short pathGroup;
-        private byte[] previousChainIds; // TODO: Replace these with object references.
-        private byte previousChainConnectAB; // "Connect to start/end"
-        private byte[] nextChainIds; // TODO: Replace these with object references.
-        private byte nextChainConnectAB; // "Connect to start/end"
-        private byte[] pathSplineIds; // TODO: Replace these with object references.
-        private byte[] cameraSplineIds; // TODO: Replace these with object references.
+        private final List<MediEvilMapPathChain> previousChains = new ArrayList<>(); // Must not exceed 8 entries.
+        private byte previousChainConnectAB; // Of all the previousChains, which ones are marked start, and which ones are marked end. (Bit flags)
+        private final List<MediEvilMapPathChain> nextChains = new ArrayList<>(); // Must not exceed 8 entries.
+        private byte nextChainConnectAB; // Of all the nextChains, which ones are marked start, and which ones are marked end. (Bit flags)
+        private final List<MediEvilMap2DSpline> pathSplines = new ArrayList<>();
+        private final List<MediEvilMap2DSpline> cameraSplines = new ArrayList<>(); // Potentially unused.
 
         private int tempPreviousChainIdOffset = -1;
+        private byte[] tempPreviousChainIds;
         private int tempNextChainIdOffset = -1;
+        private byte[] tempNextChainIds;
         private int tempPathSplineIdOffset = -1;
         private int tempCameraSplineIdOffset = -1;
+        private byte[] tempPathSplineIds;
+        private byte[] tempCameraSplineIds;
 
 
         public MediEvilMapPathChain(MediEvilMapPathChainPacket pathChainPacket) {
             super(pathChainPacket.getGameInstance());
             this.pathChainPacket = pathChainPacket;
+        }
+
+        /**
+         * Gets the ID used to identify this spline when saving/loading.
+         * This ID has the ability to change while FrogLord applies changes to files, so it should not be used to identify a spline.
+         */
+        public int getId() {
+            int index = this.pathChainPacket.pathChains.indexOf(this);
+            if (index < 0)
+                throw new IllegalArgumentException("The referenced " + getClass().getSimpleName() + " is not registered as part of the MediEvilMapFile.");
+
+            return index;
+        }
+
+        @Override
+        public ILogger getLogger() {
+            return new AppendInfoLoggerWrapper(this.pathChainPacket.getLogger(), getClass().getSimpleName() + "[" + this.pathChainPacket.pathChains.indexOf(this) + "]", AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
         }
 
         @Override
@@ -129,10 +167,10 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
             short splineCount = reader.readUnsignedByteAsShort();
             this.pathGroup = reader.readUnsignedByteAsShort();
 
-            this.previousChainIds = new byte[previousNumber];
-            this.nextChainIds = new byte[nextNumber];
-            this.cameraSplineIds = new byte[splineCount];
-            this.pathSplineIds = new byte[splineCount];
+            this.tempPreviousChainIds = new byte[previousNumber];
+            this.tempNextChainIds = new byte[nextNumber];
+            this.tempCameraSplineIds = new byte[splineCount];
+            this.tempPathSplineIds = new byte[splineCount];
             this.tempPreviousChainIdOffset = reader.readInt();
             this.tempNextChainIdOffset = reader.readInt();
             this.tempPathSplineIdOffset = reader.readInt();
@@ -141,12 +179,12 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
         @Override
         public void save(DataWriter writer) {
-            if (this.pathSplineIds.length != this.cameraSplineIds.length)
-                throw new IllegalStateException("Expected the number of pathSplineIds (" + this.pathSplineIds.length + ") to match the number of cameraSplineIds (" + this.cameraSplineIds.length + "), but they did not!");
+            if (this.pathSplines.size() != this.cameraSplines.size())
+                throw new IllegalStateException("Expected the number of pathSpline (" + this.pathSplines.size() + ") to match the number of cameraSplines (" + this.cameraSplines.size() + "), but they did not!");
 
-            writer.writeUnsignedByte((short) this.previousChainIds.length);
-            writer.writeUnsignedByte((short) this.nextChainIds.length);
-            writer.writeUnsignedByte((short) this.pathSplineIds.length);
+            writer.writeUnsignedByte((short) this.previousChains.size());
+            writer.writeUnsignedByte((short) this.nextChains.size());
+            writer.writeUnsignedByte((short) this.pathSplines.size());
             writer.writeUnsignedByte(this.pathGroup);
 
             this.tempPreviousChainIdOffset = writer.writeNullPointer();
@@ -181,7 +219,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             requireReaderIndex(reader, this.tempPreviousChainIdOffset, "Expected previousChainIds");
             this.tempPreviousChainIdOffset = -1;
-            reader.readBytes(this.previousChainIds);
+            reader.readBytes(this.tempPreviousChainIds);
         }
 
         private void savePreviousChainIds(DataWriter writer) {
@@ -190,7 +228,25 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             writer.writeAddressTo(this.tempPreviousChainIdOffset);
             this.tempPreviousChainIdOffset = -1;
-            writer.writeBytes(this.previousChainIds);
+            for (int i = 0; i < this.previousChains.size(); i++)
+                writer.writeUnsignedByte((short) this.previousChains.get(i).getId());
+        }
+
+        private void resolvePreviousChains() {
+            if (this.tempPreviousChainIds == null || this.tempPreviousChainIdOffset != -1)
+                throw new RuntimeException("Cannot resolve previous chains, the data was not setup properly.");
+
+            this.previousChains.clear();
+            List<MediEvilMapPathChain> pathChains = this.pathChainPacket.getPathChains();
+            for (int i = 0; i < this.tempPreviousChainIds.length; i++) {
+                int pathChainIndex = (this.tempPreviousChainIds[i] & 0xFF);
+                if (pathChainIndex >= pathChains.size())
+                    throw new IllegalArgumentException("Invalid pathChainIndex: " + pathChainIndex);
+
+                this.previousChains.add(pathChains.get(pathChainIndex));
+            }
+
+            this.tempPreviousChainIds = null;
         }
 
         private void loadNextChainIdOffset(DataReader reader) {
@@ -219,7 +275,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             requireReaderIndex(reader, this.tempNextChainIdOffset, "Expected nextChainIds");
             this.tempNextChainIdOffset = -1;
-            reader.readBytes(this.nextChainIds);
+            reader.readBytes(this.tempNextChainIds);
         }
 
         private void saveNextChainIds(DataWriter writer) {
@@ -228,7 +284,25 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             writer.writeAddressTo(this.tempNextChainIdOffset);
             this.tempNextChainIdOffset = -1;
-            writer.writeBytes(this.nextChainIds);
+            for (int i = 0; i < this.nextChains.size(); i++)
+                writer.writeUnsignedByte((short) this.nextChains.get(i).getId());
+        }
+
+        private void resolveNextChains() {
+            if (this.tempNextChainIds == null || this.tempNextChainIdOffset != -1)
+                throw new RuntimeException("Cannot resolve next chains, the data was not setup properly.");
+
+            this.nextChains.clear();
+            List<MediEvilMapPathChain> pathChains = this.pathChainPacket.getPathChains();
+            for (int i = 0; i < this.tempNextChainIds.length; i++) {
+                int pathChainIndex = (this.tempNextChainIds[i] & 0xFF);
+                if (pathChainIndex >= pathChains.size())
+                    throw new IllegalArgumentException("Invalid pathChainIndex: " + pathChainIndex);
+
+                this.previousChains.add(pathChains.get(pathChainIndex));
+            }
+
+            this.tempNextChainIds = null;
         }
 
         private void loadPathSplineIdOffset(DataReader reader) {
@@ -253,7 +327,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             requireReaderIndex(reader, this.tempPathSplineIdOffset, "Expected pathSplineIds");
             this.tempPathSplineIdOffset = -1;
-            reader.readBytes(this.pathSplineIds);
+            reader.readBytes(this.tempPathSplineIds);
         }
 
         private void savePathSplineIds(DataWriter writer) {
@@ -262,7 +336,25 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             writer.writeAddressTo(this.tempPathSplineIdOffset);
             this.tempPathSplineIdOffset = -1;
-            writer.writeBytes(this.pathSplineIds);
+            for (int i = 0; i < this.pathSplines.size(); i++)
+                writer.writeUnsignedByte((short) this.pathSplines.get(i).getId());
+        }
+
+        private void resolvePathSplines() {
+            if (this.tempPathSplineIds == null || this.tempPathSplineIdOffset != -1)
+                throw new RuntimeException("Cannot resolve path splines, the data was not setup properly.");
+
+            this.pathSplines.clear();
+            List<MediEvilMap2DSpline> pathSplines = this.pathChainPacket.getParentFile().getSpline2DPacket().getSplines();
+            for (int i = 0; i < this.tempPathSplineIds.length; i++) {
+                int pathSplineIndex = (this.tempPathSplineIds[i] & 0xFF);
+                if (pathSplineIndex >= pathSplines.size())
+                    throw new IllegalArgumentException("Invalid pathSplineIndex: " + pathSplineIndex);
+
+                this.pathSplines.add(pathSplines.get(pathSplineIndex));
+            }
+
+            this.tempPathSplineIds = null;
         }
 
         private void loadCameraSplineIdOffset(DataReader reader) {
@@ -287,7 +379,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             requireReaderIndex(reader, this.tempCameraSplineIdOffset, "Expected cameraSplineIds");
             this.tempCameraSplineIdOffset = -1;
-            reader.readBytes(this.cameraSplineIds);
+            reader.readBytes(this.tempCameraSplineIds);
         }
 
         private void saveCameraSplineIds(DataWriter writer) {
@@ -296,7 +388,25 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket {
 
             writer.writeAddressTo(this.tempCameraSplineIdOffset);
             this.tempCameraSplineIdOffset = -1;
-            writer.writeBytes(this.cameraSplineIds);
+            for (int i = 0; i < this.cameraSplines.size(); i++)
+                writer.writeUnsignedByte((short) this.cameraSplines.get(i).getId());
+        }
+
+        private void resolveCameraSplines() {
+            if (this.tempCameraSplineIds == null || this.tempCameraSplineIdOffset != -1)
+                throw new RuntimeException("Cannot resolve camera splines, the data was not setup properly.");
+
+            this.cameraSplines.clear();
+            List<MediEvilMap2DSpline> cameraSplines = this.pathChainPacket.getParentFile().getSpline2DPacket().getSplines();
+            for (int i = 0; i < this.tempCameraSplineIds.length; i++) {
+                int cameraSplineIndex = (this.tempCameraSplineIds[i] & 0xFF);
+                if (cameraSplineIndex >= cameraSplines.size())
+                    throw new IllegalArgumentException("Invalid cameraSplineIndex: " + cameraSplineIndex);
+
+                this.cameraSplines.add(cameraSplines.get(cameraSplineIndex));
+            }
+
+            this.tempCameraSplineIds = null;
         }
     }
 }

@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMap2DSplinePacket.MediEvilMap2DSpline;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -14,12 +15,13 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Implements the GRID packet.
- * TODO: On collprim removed from collprims packet, remove it from all grid squares.
- * TODO: On spline removed from spline packet, remove it from all grid squares.
+ * TODO: On collprim removed from collprims packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
+ * TODO: On spline removed from spline packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
  * Created by Kneesnap on 2/3/2026.
  */
 public class MediEvilMapGridPacket extends MediEvilMapPacket {
@@ -27,9 +29,10 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
     private byte gridYSquareCount;
     private int gridSquareSize;
     private short gridShift; // Grid size shift
-    private MediEvilMapGridSquareDataEntry[] gridSquares;
+    private MediEvilMapGridSquareDataEntry[] gridSquares = EMPTY_GRID_SQUARE_ARRAY;
 
     public static final String IDENTIFIER = "DIRG"; // 'GRID'.
+    private static final MediEvilMapGridSquareDataEntry[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilMapGridSquareDataEntry[0];
 
     public MediEvilMapGridPacket(MediEvilMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -113,7 +116,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
 
     @Override
     public void clear() {
-        // TODO: IMPLEMENT
+        Arrays.fill(this.gridSquares, null);
     }
 
     /**
@@ -133,7 +136,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
     public static class MediEvilMapGridSquareDataEntry extends SCGameData<MediEvilGameInstance> {
         @Getter private final MediEvilMapGridPacket gridPacket;
         @Getter private final List<MediEvilMapCollprim> collprims = new ArrayList<>();
-        @Getter private final List<Byte> splines = new ArrayList<>(); // TODO: Implement.
+        @Getter private final List<MediEvilMap2DSpline> splines = new ArrayList<>();
         private int polygonCount; // This value seems to be the number of polygons in the grid square, but the game does not seem to use this value for anything.
 
         private int tempColPrimIdPointer = -1;
@@ -253,8 +256,14 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
             requireReaderIndex(reader, this.tempSplinePointer, "Expected spline id list");
             this.tempSplinePointer = -1;
 
-            for (int i = 0; i < this.splines.size(); i++)
-                this.splines.set(i, reader.readByte());
+            List<MediEvilMap2DSpline> splines = this.gridPacket.getParentFile().getSpline2DPacket().getSplines();
+            for (int i = 0; i < this.splines.size(); i++) {
+                int splineIndex = reader.readUnsignedByteAsShort();
+                if (splineIndex >= splines.size())
+                    throw new IllegalArgumentException("Invalid splineIndex: " + splineIndex);
+
+                this.splines.set(i, splines.get(splineIndex));
+            }
         }
 
         private void saveSplines(DataWriter writer) {
@@ -271,7 +280,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
             this.tempSplinePointer = -1;
 
             for (int i = 0; i < this.splines.size(); i++)
-                writer.writeByte(this.splines.get(i));
+                writer.writeUnsignedByte((short) this.splines.get(i).getId());
         }
     }
 }
