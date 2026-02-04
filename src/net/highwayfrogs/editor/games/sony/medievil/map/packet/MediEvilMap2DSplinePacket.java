@@ -134,7 +134,7 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
         @Override
         public void save(DataWriter writer) {
             writer.writeUnsignedByte((short) this.subDivisions.size());
-            writer.writeUnsignedByte((short) (this.cameraSpline != null ? this.cameraSpline.getId() : -1));
+            writer.writeUnsignedByte((short) (this.cameraSpline != null ? this.cameraSpline.getId() : 0xFF));
             writer.writeUnsignedByte((short) this.pathChain.getId());
             writer.writeByte(this.numDeadSubDivsStart);
             writer.writeByte(this.numDeadSubDivsEnd);
