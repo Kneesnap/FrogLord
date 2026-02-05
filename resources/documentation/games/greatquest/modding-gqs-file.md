@@ -196,6 +196,9 @@ Moves the sound from the per-level .SBR file to the `SNDCHUNK.SCK` file.
 Imports a .wav file from a file path relative to the .gqs file.  
 If neither `--Stream` or `--Embedded` are included, the sound will either use the pre-existing sound type, or create a new streamed sound.  
 
+**--Delete**  
+Removes the sound from the level.
+
 ### [CopyResources]
 Copies resource chunks from one chunked file to the chunked file which the .gqs file is applied to.  
 

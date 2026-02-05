@@ -223,6 +223,7 @@ UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the nu
 **Supported Entity Types:** Base Actors  
 **Usage:** `OnAlarm <REPEAT|FINISHED> <alarmId>`  
 Any whole number between 0 and 31 can be used as an alarm ID.  
+Alarms are unique to each individual entity, so the same ID will be usable for different purposes on different entities.  
 To use `OnAlarm`, the alarm must first be activated using `SetAlarm`.  
 If `REPEAT` is specified, the cause will run each time the alarm repeats. (Only occurs for `SetAlarm --Repeat`)  
 If `FINISHED` is specified, the cause will only run once, when the alarm finishes (which is after all repeats).
@@ -673,7 +674,7 @@ Not used in the vanilla game.
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`-->
 **Usage:** `SetAlarm <alarmId> <durationInSeconds> [--Repeat <numberOfTimesToRepeat>]`  
-Any number between 0 and 31 is a valid alarm ID.  
+Any number between 0 and 31 is a valid alarm ID, each entity has its own unique alarms.  
 The duration of the alarm can be a decimal number.  
 The timer will start counting down from the number of seconds given.  
 Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
