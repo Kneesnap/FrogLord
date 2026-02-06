@@ -38,6 +38,7 @@ import java.util.List;
  */
 @Getter
 public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
+    private final MediEvilMapFile mapFile;
     private final int[] vertices = new int[INTERNAL_VERTEX_COUNT];
     @Setter private int textureId = -1;
     private int flags;
@@ -61,8 +62,9 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x80808080);
 
-    public MediEvilMapPolygon(MediEvilGameInstance instance) {
-        super(instance);
+    public MediEvilMapPolygon(MediEvilMapFile mapFile) {
+        super(mapFile.getGameInstance());
+        this.mapFile = mapFile;
         Arrays.fill(this.vertices, -1);
         for (int i = 0; i < this.textureUvs.length; i++)
             this.textureUvs[i] = new SCByteTextureUV();
@@ -223,14 +225,11 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      * Gets the index of the polygon within the map file.
      * @return polygonIndex
      */
-    public int getPolygonIndex(MediEvilMapFile mapFile) {
-        if (mapFile == null)
-            throw new NullPointerException("mapFile");
-
-        List<MediEvilMapPolygon> polygons = mapFile.getGraphicsPacket().getPolygons();
+    public int getPolygonIndex() {
+        List<MediEvilMapPolygon> polygons = this.mapFile.getGraphicsPacket().getPolygons();
         int polygonIndex = polygons.indexOf(this);
         if (polygonIndex < 0)
-            throw new IllegalStateException("The polygon was not tracked as part of '" + mapFile.getFileDisplayName() + "'.");
+            throw new IllegalStateException("The polygon was not tracked as part of '" + this.mapFile.getFileDisplayName() + "'.");
 
         return polygonIndex;
     }
@@ -257,6 +256,8 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      */
     public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapMesh mapMesh, boolean enableGouraudShading) {
         MediEvilMapFile mapFile = mapMesh.getMap();
+        if (mapFile != this.mapFile)
+            throw new IllegalArgumentException("The provided mesh is for a different map file!");
 
         MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
         PSXPolygonType polygonType = getPolygonType();
@@ -311,10 +312,9 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     /**
      * Creates a texture shade definition for this polygon.
-     * @param mapFile The level necessary for looking up texture remap data.
      * @param shadeTexture The shaded texture to load from.
      */
-    public void loadDataFromShadeDefinition(MediEvilMapFile mapFile, PSXShadeTextureDefinition shadeTexture, boolean isShadingEnabled) {
+    public void loadDataFromShadeDefinition(PSXShadeTextureDefinition shadeTexture, boolean isShadingEnabled) {
         if (shadeTexture.getPolygonType().getVerticeCount() != getPolygonType().getVerticeCount())
             throw new UnsupportedOperationException("Cannot change between quad/tri polygons."); // This is just not coded yet, we could theoretically add this.
 
@@ -334,7 +334,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         // Apply colors.
         if (isShadingEnabled && newPolygonType.getColorCount() > 0 && shadeTexture.getColors() != null && newPolygonType.getVerticeCount() == shadeTexture.getColors().length) {
             for (int i = 0; i < shadeTexture.getVerticeCount(); i++) {
-                SVector vertex = mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
+                SVector vertex = this.mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
                 vertex.setPadding(toPackedShort(shadeTexture.getColors()[i]));
             }
         }
@@ -342,7 +342,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         // Load texture.
         if (shadeTexture.getTextureSource() instanceof VloImage) {
             VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
-            MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
+            MediEvilLevelTableEntry levelTableEntry = this.mapFile.getLevelTableEntry();
             int remapIndex = levelTableEntry.getRemap().getRemapIndex(gameImage.getTextureId());
             if (remapIndex >= 0)
                 this.textureId = remapIndex;

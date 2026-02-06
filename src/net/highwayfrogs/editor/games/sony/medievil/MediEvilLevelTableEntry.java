@@ -3,8 +3,11 @@ package net.highwayfrogs.editor.games.sony.medievil;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameRegion;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.polygrid.MediEvilPolygonGridFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.quadtree.MediEvilMapQuadTree;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
@@ -12,6 +15,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+
+import java.util.List;
 
 /**
  * Represents an entry in the MediEvil level table.
@@ -76,9 +81,52 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         if (wadFile == null)
             return null;
 
-        for (WADEntry wadEntry : wadFile.getFiles())
-            if (wadEntry.getFile() instanceof MediEvilMapFile)
-                return (MediEvilMapFile) wadEntry.getFile();
+        List<WADEntry> wadEntries = wadFile.getFiles();
+        for (int i = 0; i < wadEntries.size(); i++) {
+            WADEntry wadEntry = wadEntries.get(i);
+            SCGameFile<?> wadEntryFile = wadEntry.getFile();
+            if (wadEntryFile instanceof MediEvilMapFile)
+                return (MediEvilMapFile) wadEntryFile;
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the .QTR file containing data for this level.
+     */
+    public MediEvilMapQuadTree getQuadTreeFile() {
+        WADFile wadFile = getWadFile();
+        if (wadFile == null)
+            return null;
+
+        List<WADEntry> wadEntries = wadFile.getFiles();
+        for (int i = 0; i < wadEntries.size(); i++) {
+            WADEntry wadEntry = wadEntries.get(i);
+            SCGameFile<?> wadEntryFile = wadEntry.getFile();
+            if (wadEntryFile instanceof MediEvilMapQuadTree)
+                return (MediEvilMapQuadTree) wadEntryFile;
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the .PGD file containing data for this level.
+     */
+    public MediEvilPolygonGridFile getPolygonGridFile() {
+        WADFile wadFile = getWadFile();
+        if (wadFile == null)
+            return null;
+
+        List<WADEntry> wadEntries = wadFile.getFiles();
+        for (int i = 0; i < wadEntries.size(); i++) {
+            WADEntry wadEntry = wadEntries.get(i);
+            SCGameFile<?> wadEntryFile = wadEntry.getFile();
+            if (wadEntryFile instanceof MediEvilPolygonGridFile)
+                return (MediEvilPolygonGridFile) wadEntryFile;
+        }
+
         return null;
     }
 

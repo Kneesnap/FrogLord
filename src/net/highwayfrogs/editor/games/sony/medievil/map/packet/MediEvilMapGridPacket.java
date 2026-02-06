@@ -28,9 +28,9 @@ import java.util.List;
  * Created by Kneesnap on 2/3/2026.
  */
 public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropertyListCreator {
-    private byte gridXSquareCount;
+    private byte gridXSquareCount;// TODO: Are these automatically calculated based on gridShift? 1 << (16 - gridShift)?
     private byte gridYSquareCount;
-    private int gridSquareSize;
+    private int gridSquareSize; // Equal to (1 << gridShift). TODO: Remove?
     private short gridShift; // Grid size shift
     private MediEvilMapGridSquare[] gridSquaresByPosition = EMPTY_GRID_SQUARE_ARRAY;
     private final List<MediEvilMapGridSquare> gridSquares = new ArrayList<>();

@@ -215,7 +215,7 @@ public class MediEvilMapQuadTreeNode extends SCGameData<MediEvilGameInstance> im
 
         MediEvilMapFile mapFile = this.quadTree.getMapFile();
         for (int i = 0; i < this.polygons.size(); i++)
-            writer.writeUnsignedShort(this.polygons.get(i).getPolygonIndex(mapFile));
+            writer.writeUnsignedShort(this.polygons.get(i).getPolygonIndex());
     }
 
     private MediEvilMapQuadTreeNode resolveNode(int nodeOffset, String nodeName) {

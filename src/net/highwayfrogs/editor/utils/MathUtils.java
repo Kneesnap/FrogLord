@@ -123,4 +123,32 @@ public class MathUtils {
     public static double clampAngleInDegrees(double angle) {
         return ((angle % 360F) + 540F) % 360F - 180F;
     }
+
+    private static int crossProduct(int point1X, int point1Y, int point2X, int point2Y, int point3X, int point3Y) {
+        int y1 = point1Y - point2Y;
+        int y2 = point1Y - point3Y;
+        int x1 = point1X - point2X;
+        int x2 = point1X - point3X;
+        return y2 * x1 - y1 * x2;
+    }
+
+    /**
+     * Test if two lines intersect.
+     * @param line1X1 the x coordinate at the start of the first line
+     * @param line1Y1 the y coordinate at the start of the first line
+     * @param line1X2 the x coordinate at the end of the first line
+     * @param line1Y2 the y coordinate at the end of the first line
+     * @param line2X1 the x coordinate at the start of the second line
+     * @param line2Y1 the y coordinate at the start of the second line
+     * @param line2X2 the x coordinate at the end of the second line
+     * @param line2Y2 the y coordinate at the end of the second line
+     * @return do lines intersect
+     */
+    public static boolean doLinesIntersect(int line1X1, int line1Y1, int line1X2, int line1Y2, int line2X1, int line2Y1, int line2X2, int line2Y2) {
+        int d1 = crossProduct(line1X1, line1Y1, line1X2, line1Y2, line2X1, line2Y1);
+        int d2 = crossProduct(line1X1, line1Y1, line1X2, line1Y2, line2X2, line2Y2);
+        int d3 = crossProduct(line2X1, line2Y1, line2X2, line2Y2, line1X1, line1Y1);
+        int d4 = crossProduct(line2X1, line2Y1, line2X2, line2Y2, line1X2, line1Y2);
+        return ((d1 > 0 && d2 < 0 || d1 < 0 && d2 > 0) && (d3 > 0 && d4 < 0 || d3 < 0 && d4 > 0));
+    }
 }

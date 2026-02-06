@@ -51,7 +51,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         reader.requireIndex(getLogger(), polygonListPtr, "Expected polygon list data");
         int polygonCount = g3PolyCount + g4PolyCount + gt3PolyCount + gt4PolyCount;
         for (int i = 0; i < polygonCount; i++) {
-            MediEvilMapPolygon polygon = new MediEvilMapPolygon(getGameInstance());
+            MediEvilMapPolygon polygon = new MediEvilMapPolygon(getParentFile());
             polygon.load(reader);
             this.polygons.add(polygon);
         }
