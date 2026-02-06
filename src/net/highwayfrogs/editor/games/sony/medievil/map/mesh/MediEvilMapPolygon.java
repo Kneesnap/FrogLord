@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a map polygon seen in MediEvil.
@@ -216,6 +217,22 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
             default:
                 throw new IllegalArgumentException("MediEvil map polygons cannot be set to type " + newType + ".");
         }
+    }
+
+    /**
+     * Gets the index of the polygon within the map file.
+     * @return polygonIndex
+     */
+    public int getPolygonIndex(MediEvilMapFile mapFile) {
+        if (mapFile == null)
+            throw new NullPointerException("mapFile");
+
+        List<MediEvilMapPolygon> polygons = mapFile.getGraphicsPacket().getPolygons();
+        int polygonIndex = polygons.indexOf(this);
+        if (polygonIndex < 0)
+            throw new IllegalStateException("The polygon was not tracked as part of '" + mapFile.getFileDisplayName() + "'.");
+
+        return polygonIndex;
     }
 
     /**

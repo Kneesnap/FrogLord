@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMap2DSplinePacket.MediEvilMap2DSpline;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -16,107 +18,37 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrap
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Implements the GRID packet.
  * TODO: On collprim removed from collprims packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
  * TODO: On spline removed from spline packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
+ * TODO: Perhaps rename all 'y' occurrences to 'z'.
  * Created by Kneesnap on 2/3/2026.
  */
-public class MediEvilMapGridPacket extends MediEvilMapPacket {
+public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropertyListCreator {
     private byte gridXSquareCount;
     private byte gridYSquareCount;
     private int gridSquareSize;
     private short gridShift; // Grid size shift
-    private MediEvilMapGridSquareDataEntry[] gridSquares = EMPTY_GRID_SQUARE_ARRAY;
+    private MediEvilMapGridSquare[] gridSquares = EMPTY_GRID_SQUARE_ARRAY;
+    private final List<MediEvilMapGridSquare> gridSquareEntries = new ArrayList<>();
+    private final List<MediEvilMapGridSquare> immutableGridSquareEntries = Collections.unmodifiableList(this.gridSquareEntries);
 
     public static final String IDENTIFIER = "DIRG"; // 'GRID'.
-    private static final MediEvilMapGridSquareDataEntry[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilMapGridSquareDataEntry[0];
+    private static final MediEvilMapGridSquare[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilMapGridSquare[0];
 
     public MediEvilMapGridPacket(MediEvilMapFile parentFile) {
         super(parentFile, IDENTIFIER);
     }
 
-    @Override
-    protected void loadBody(DataReader reader, int endIndex) {
-        this.gridXSquareCount = reader.readByte();
-        this.gridYSquareCount = reader.readByte();
-        this.gridSquareSize = reader.readUnsignedShortAsInt();
-        this.gridShift = reader.readUnsignedByteAsShort();
-        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
-        int gridIdTablePtr = reader.readInt();
-        int gridDataBasePtr = reader.readInt();
-
-        // Read grid ID table.
-        reader.requireIndex(getLogger(), gridIdTablePtr, "Expected Grid ID Table");
-        IntList gridSquareTableIndices = new IntList();
-        this.gridSquares = new MediEvilMapGridSquareDataEntry[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
-        for (int i = 0; i < this.gridSquares.length; i++) {
-            short id = reader.readShort();
-            if (id == -1)
-                continue;
-
-            int gridSquareEntryIndex = (id & 0xFFFF);
-            if (gridSquareEntryIndex != gridSquareTableIndices.size())
-                throw new IllegalArgumentException("gridSquareEntryIndex was expected to be " + gridSquareTableIndices.size() + ", but was actually " + gridSquareEntryIndex + "!");
-
-            gridSquareTableIndices.add(i);
-        }
-
-        // Read grid squares.
-        reader.requireIndex(getLogger(), gridDataBasePtr, "Expected Grid Square entries");
-        List<MediEvilMapGridSquareDataEntry> gridSquares = new ArrayList<>();
-        for (int i = 0; i < gridSquareTableIndices.size(); i++) {
-            MediEvilMapGridSquareDataEntry newGridSquare = new MediEvilMapGridSquareDataEntry(this);
-            this.gridSquares[gridSquareTableIndices.get(i)] = newGridSquare;
-            gridSquares.add(newGridSquare);
-            newGridSquare.load(reader);
-        }
-
-        // Read grid square data.
-        for (int i = 0; i < gridSquares.size(); i++)
-            gridSquares.get(i).loadColPrims(reader);
-        for (int i = 0; i < gridSquares.size(); i++)
-            gridSquares.get(i).loadSplines(reader);
-    }
-
-    @Override
-    protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeByte(this.gridXSquareCount);
-        writer.writeByte(this.gridYSquareCount);
-        writer.writeUnsignedShort(this.gridSquareSize);
-        writer.writeUnsignedByte(this.gridShift);
-        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
-        int gridIdTablePtr = writer.writeNullPointer();
-        int gridDataBasePtr = writer.writeNullPointer();
-
-        // Write grid ID table.
-        writer.writeAddressTo(gridIdTablePtr);
-        List<MediEvilMapGridSquareDataEntry> gridSquares = new ArrayList<>();
-        for (int i = 0; i < this.gridSquares.length; i++) {
-            MediEvilMapGridSquareDataEntry gridSquare = this.gridSquares[i];
-            if (gridSquare != null) {
-                writer.writeUnsignedShort(gridSquares.size());
-                gridSquares.add(gridSquare);
-            } else {
-                writer.writeShort((short) -1);
-            }
-        }
-
-        // Write grid squares.
-        writer.writeAddressTo(gridDataBasePtr);
-        for (int i = 0; i < gridSquares.size(); i++)
-            gridSquares.get(i).save(writer);
-        for (int i = 0; i < gridSquares.size(); i++)
-            gridSquares.get(i).saveColPrims(writer);
-        for (int i = 0; i < gridSquares.size(); i++)
-            gridSquares.get(i).saveSplines(writer);
-    }
-
-    @Override
-    public void clear() {
-        Arrays.fill(this.gridSquares, null);
+    /**
+     * Get the number of grid squares currently active within the grid packet.
+     */
+    public List<MediEvilMapGridSquare> getGridSquares() {
+        return this.immutableGridSquareEntries;
     }
 
     /**
@@ -133,18 +65,177 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
         return (this.gridYSquareCount & 0xFF);
     }
 
-    public static class MediEvilMapGridSquareDataEntry extends SCGameData<MediEvilGameInstance> {
+    /**
+     * Gets the index used to identify this square while the entry is in a serialized state.
+     * This value is only valid during data save, as this value may change as with the grid.
+     */
+    public MediEvilMapGridSquare getGridSquareByStorageIndex(int targetIndex) {
+        if (targetIndex < 0 || targetIndex >= this.gridSquareEntries.size())
+            throw new IndexOutOfBoundsException("No grid square entry could be found by the storage index " + targetIndex + " (Max: " + (this.gridSquareEntries.size() - 1) + ")");
+
+        return this.gridSquareEntries.get(targetIndex);
+    }
+
+    @Override
+    protected void loadBody(DataReader reader, int endIndex) {
+        this.gridXSquareCount = reader.readByte();
+        this.gridYSquareCount = reader.readByte();
+        this.gridSquareSize = reader.readUnsignedShortAsInt();
+        this.gridShift = reader.readUnsignedByteAsShort();
+        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
+        int gridIdTablePtr = reader.readInt();
+        int gridDataBasePtr = reader.readInt();
+
+        // Read grid ID table.
+        reader.requireIndex(getLogger(), gridIdTablePtr, "Expected Grid ID Table");
+        IntList gridSquareTableIndices = new IntList();
+        this.gridSquares = new MediEvilMapGridSquare[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
+        for (int i = 0; i < this.gridSquares.length; i++) {
+            short id = reader.readShort();
+            if (id == -1)
+                continue;
+
+            int gridSquareEntryIndex = (id & 0xFFFF);
+            if (gridSquareEntryIndex != gridSquareTableIndices.size())
+                throw new IllegalArgumentException("gridSquareEntryIndex was expected to be " + gridSquareTableIndices.size() + ", but was actually " + gridSquareEntryIndex + "!");
+
+            gridSquareTableIndices.add(i);
+        }
+
+        // Read grid squares.
+        this.gridSquareEntries.clear();
+        reader.requireIndex(getLogger(), gridDataBasePtr, "Expected Grid Square entries");
+        for (int i = 0; i < gridSquareTableIndices.size(); i++) {
+            int squareIndex = gridSquareTableIndices.get(i);
+            MediEvilMapGridSquare newGridSquare = new MediEvilMapGridSquare(this, squareIndex);
+            this.gridSquares[squareIndex] = newGridSquare;
+            this.gridSquareEntries.add(newGridSquare);
+            newGridSquare.load(reader);
+        }
+
+        // Read grid square data.
+        for (int i = 0; i < this.gridSquareEntries.size(); i++)
+            this.gridSquareEntries.get(i).loadColPrims(reader);
+        for (int i = 0; i < this.gridSquareEntries.size(); i++)
+            this.gridSquareEntries.get(i).loadSplines(reader);
+    }
+
+    @Override
+    protected void saveBodyFirstPass(DataWriter writer) {
+        writer.writeByte(this.gridXSquareCount);
+        writer.writeByte(this.gridYSquareCount);
+        writer.writeUnsignedShort(this.gridSquareSize);
+        writer.writeUnsignedByte(this.gridShift);
+        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
+        int gridIdTablePtr = writer.writeNullPointer();
+        int gridDataBasePtr = writer.writeNullPointer();
+
+        // Write grid ID table.
+        writer.writeAddressTo(gridIdTablePtr);
+        int storageIndex = 0;
+        for (int i = 0; i < this.gridSquares.length; i++) {
+            MediEvilMapGridSquare gridSquare = this.gridSquares[i];
+            if (gridSquare != null) {
+                if (this.gridSquareEntries.get(i) != gridSquare)
+                    throw new IllegalStateException("The gridSquareEntries list was ordered wrong. Got " + this.gridSquareEntries.get(i) + " at index " + i + ", when " + gridSquare + " was expected.");
+
+                writer.writeUnsignedShort(storageIndex);
+                storageIndex++;
+            } else {
+                writer.writeShort((short) -1);
+            }
+        }
+
+        // Write grid squares.
+        writer.writeAddressTo(gridDataBasePtr);
+        for (int i = 0; i < this.gridSquareEntries.size(); i++)
+            gridSquareEntries.get(i).save(writer);
+        for (int i = 0; i < gridSquareEntries.size(); i++)
+            gridSquareEntries.get(i).saveColPrims(writer);
+        for (int i = 0; i < gridSquareEntries.size(); i++)
+            gridSquareEntries.get(i).saveSplines(writer);
+    }
+
+    @Override
+    public void clear() {
+        Arrays.fill(this.gridSquares, null);
+        this.gridSquareEntries.clear();
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Grid Dimensions", getGridXSquareCount() + "x" + getGridYSquareCount());
+        propertyList.add("Grid Square Size", this.gridSquareSize);
+        propertyList.add("Grid Shift", this.gridShift);
+        propertyList.addString(this::addGridSquares, "Grid Squares", String.valueOf(this.gridSquareEntries.size()));
+    }
+
+    private void addGridSquares(PropertyListNode propertyList) {
+        for (int i = 0; i < this.gridSquareEntries.size(); i++)
+            propertyList.addProperties("GridSquare[" + i + "]", this.gridSquareEntries.get(i));
+    }
+
+    public static class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> implements IPropertyListCreator {
         @Getter private final MediEvilMapGridPacket gridPacket;
+        @Getter private final int squareIndex;
         @Getter private final List<MediEvilMapCollprim> collprims = new ArrayList<>();
         @Getter private final List<MediEvilMap2DSpline> splines = new ArrayList<>();
-        private int polygonCount; // This value seems to be the number of polygons in the grid square, but the game does not seem to use this value for anything.
 
         private int tempColPrimIdPointer = -1;
         private int tempSplinePointer = -1;
 
-        public MediEvilMapGridSquareDataEntry(MediEvilMapGridPacket gridPacket) {
+        public MediEvilMapGridSquare(MediEvilMapGridPacket gridPacket, int squareIndex) {
             super(gridPacket.getGameInstance());
             this.gridPacket = gridPacket;
+            this.squareIndex = squareIndex;
+        }
+
+        /**
+         * Gets the map file.
+         */
+        public MediEvilMapFile getMap() {
+            return this.gridPacket.getParentFile();
+        }
+
+        /**
+         * Gets the x grid coordinate of this entry.
+         */
+        public int getGridX() {
+            return this.squareIndex % this.gridPacket.gridXSquareCount;
+        }
+
+        /**
+         * Gets the z grid coordinate of this entry.
+         */
+        public int getGridZ() {
+            return this.squareIndex / this.gridPacket.gridXSquareCount;
+        }
+
+        /**
+         * Gets the index used to identify this entry while the entry is in a serialized state.
+         * This value is only valid during data save, as this value may change as with the grid.
+         */
+        public int calculateStorageIndex() {
+            int storageIndex = 0;
+            for (int i = 0; i < this.gridPacket.gridSquares.length; i++) {
+                MediEvilMapGridSquare gridSquare = this.gridPacket.gridSquares[i];
+                if (gridSquare == null)
+                    continue;
+
+                if (gridSquare == this) {
+                    return storageIndex;
+                } else {
+                    storageIndex++;
+                }
+            }
+
+            throw new IllegalStateException("The square is not part of the grid, so it therefore has no storageIndex.");
+        }
+
+        @Override
+        public String toString() {
+            return "MediEvilMapGridSquare{x=" + getGridX() + ",z=" + getGridZ() + ",collprims=" + this.collprims.size()
+                    + ",splines=" + this.splines.size() + "}";
         }
 
         @Override
@@ -154,7 +245,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
             this.tempSplinePointer = reader.readInt();
             short colPrimCount = reader.readUnsignedByteAsShort();
             short splineCount = reader.readUnsignedByteAsShort();
-            this.polygonCount = reader.readUnsignedShortAsInt();
+            reader.skipShort(); // Unknown garbage. Thought it was polygon count, but maybe not.
 
             // 2 Runtime pointer fields.
             reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE);
@@ -176,7 +267,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
             this.tempSplinePointer = writer.writeNullPointer();
             writer.writeUnsignedByte((short) this.collprims.size());
             writer.writeUnsignedByte((short) this.splines.size());
-            writer.writeUnsignedShort(this.polygonCount);
+            writer.writeUnsignedShort(0); // Skip unknown value.
 
             // 2 Runtime pointer fields.
             writer.writeNullPointer();
@@ -185,14 +276,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
 
         @Override
         public ILogger getLogger() {
-            return new AppendInfoLoggerWrapper(this.gridPacket.getLogger(), getClass().getSimpleName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
-        }
-
-        /**
-         * Gets the map file.
-         */
-        public MediEvilMapFile getMap() {
-            return this.gridPacket.getParentFile();
+            return new AppendInfoLoggerWrapper(this.gridPacket.getLogger(), getClass().getSimpleName() + "[x=" + getGridX() + ",z=" + getGridZ() + "]", AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
         }
 
         private void loadColPrims(DataReader reader) {
@@ -281,6 +365,13 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket {
 
             for (int i = 0; i < this.splines.size(); i++)
                 writer.writeUnsignedByte((short) this.splines.get(i).getId());
+        }
+
+        @Override
+        public void addToPropertyList(PropertyListNode propertyList) {
+            propertyList.addString("Grid Position", "(" + getGridX() + ", " + getGridZ() + ")");
+            propertyList.addInteger("Collprims", this.collprims.size());
+            propertyList.addInteger("2D Splines", this.splines.size());
         }
     }
 }

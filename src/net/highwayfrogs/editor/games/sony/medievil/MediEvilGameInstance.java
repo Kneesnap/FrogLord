@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
+import net.highwayfrogs.editor.games.sony.medievil.map.quadtree.MediEvilMapQuadTree;
 import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
@@ -54,7 +55,7 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     private static final int FILE_TYPE_VLO = 1;
     private static final int FILE_TYPE_MOF = 2;
     private static final int FILE_TYPE_MAPMOF = 3;
-    private static final int FILE_TYPE_MAP = 4;
+    public static final int FILE_TYPE_MAP = 4;
     private static final int FILE_TYPE_QTR = 5;
     private static final int FILE_TYPE_PGD = 6;
 
@@ -67,10 +68,11 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
         if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.hasExtension("map"))
             return new MediEvilMapFile(this);
+        if (resourceEntry.getTypeId() == FILE_TYPE_QTR || resourceEntry.hasExtension("qtr"))
+            return new MediEvilMapQuadTree(this);
         if (resourceEntry.getTypeId() == 0 && (resourceEntry.hasExtension("bin") || resourceEntry.getDisplayName().startsWith("HELP")) && MediEvilHelpFile.isHelpFile(fileData))
             return new MediEvilHelpFile(this);
 
-        // TODO FILE_TYPE_VLO
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 

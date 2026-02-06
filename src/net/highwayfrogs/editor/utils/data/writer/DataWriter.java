@@ -196,7 +196,7 @@ public class DataWriter {
 
     /**
      * Writes an unsigned byte short as an unsigned byte.
-     * @param value the short to write.
+     * @param value the short to write. TODO: Accept integer, and throw if outside of range. Throw if a negative value is provided too.
      */
     public void writeUnsignedByte(short value) {
         writeByte(DataUtils.unsignedShortToByte(value));
