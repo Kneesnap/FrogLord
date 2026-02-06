@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
+import net.highwayfrogs.editor.games.sony.medievil.map.polygrid.MediEvilPolygonGridFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.quadtree.MediEvilMapQuadTree;
 import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
@@ -66,10 +67,12 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
 
     @Override
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
-        if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.hasExtension("map"))
+        if (resourceEntry.hasExtension("map", FILE_TYPE_MAP)) // 1997 prototypes use different file IDs, so only use the file IDs as a backup option here.
             return new MediEvilMapFile(this);
-        if (resourceEntry.getTypeId() == FILE_TYPE_QTR || resourceEntry.hasExtension("qtr"))
+        if (resourceEntry.hasExtension("qtr", FILE_TYPE_QTR))
             return new MediEvilMapQuadTree(this);
+        if (resourceEntry.hasExtension("pgd", FILE_TYPE_PGD))
+            return new MediEvilPolygonGridFile(this);
         if (resourceEntry.getTypeId() == 0 && (resourceEntry.hasExtension("bin") || resourceEntry.getDisplayName().startsWith("HELP")) && MediEvilHelpFile.isHelpFile(fileData))
             return new MediEvilHelpFile(this);
 

@@ -25,7 +25,6 @@ import java.util.List;
  * Implements the GRID packet.
  * TODO: On collprim removed from collprims packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
  * TODO: On spline removed from spline packet, remove it from all grid squares. (Unless the grid is auto-generated on save)
- * TODO: Perhaps rename all 'y' occurrences to 'z'.
  * Created by Kneesnap on 2/3/2026.
  */
 public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropertyListCreator {
@@ -33,9 +32,9 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
     private byte gridYSquareCount;
     private int gridSquareSize;
     private short gridShift; // Grid size shift
-    private MediEvilMapGridSquare[] gridSquares = EMPTY_GRID_SQUARE_ARRAY;
-    private final List<MediEvilMapGridSquare> gridSquareEntries = new ArrayList<>();
-    private final List<MediEvilMapGridSquare> immutableGridSquareEntries = Collections.unmodifiableList(this.gridSquareEntries);
+    private MediEvilMapGridSquare[] gridSquaresByPosition = EMPTY_GRID_SQUARE_ARRAY;
+    private final List<MediEvilMapGridSquare> gridSquares = new ArrayList<>();
+    private final List<MediEvilMapGridSquare> immutableGridSquares = Collections.unmodifiableList(this.gridSquares);
 
     public static final String IDENTIFIER = "DIRG"; // 'GRID'.
     private static final MediEvilMapGridSquare[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilMapGridSquare[0];
@@ -48,7 +47,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
      * Get the number of grid squares currently active within the grid packet.
      */
     public List<MediEvilMapGridSquare> getGridSquares() {
-        return this.immutableGridSquareEntries;
+        return this.immutableGridSquares;
     }
 
     /**
@@ -70,10 +69,10 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
      * This value is only valid during data save, as this value may change as with the grid.
      */
     public MediEvilMapGridSquare getGridSquareByStorageIndex(int targetIndex) {
-        if (targetIndex < 0 || targetIndex >= this.gridSquareEntries.size())
-            throw new IndexOutOfBoundsException("No grid square entry could be found by the storage index " + targetIndex + " (Max: " + (this.gridSquareEntries.size() - 1) + ")");
+        if (targetIndex < 0 || targetIndex >= this.gridSquares.size())
+            throw new IndexOutOfBoundsException("No grid square entry could be found by the storage index " + targetIndex + " (Max: " + (this.gridSquares.size() - 1) + ")");
 
-        return this.gridSquareEntries.get(targetIndex);
+        return this.gridSquares.get(targetIndex);
     }
 
     @Override
@@ -89,35 +88,35 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         // Read grid ID table.
         reader.requireIndex(getLogger(), gridIdTablePtr, "Expected Grid ID Table");
         IntList gridSquareTableIndices = new IntList();
-        this.gridSquares = new MediEvilMapGridSquare[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
-        for (int i = 0; i < this.gridSquares.length; i++) {
+        this.gridSquaresByPosition = new MediEvilMapGridSquare[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
+        for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             short id = reader.readShort();
             if (id == -1)
                 continue;
 
-            int gridSquareEntryIndex = (id & 0xFFFF);
-            if (gridSquareEntryIndex != gridSquareTableIndices.size())
-                throw new IllegalArgumentException("gridSquareEntryIndex was expected to be " + gridSquareTableIndices.size() + ", but was actually " + gridSquareEntryIndex + "!");
+            int gridSquareIndex = (id & 0xFFFF);
+            if (gridSquareIndex != gridSquareTableIndices.size())
+                throw new IllegalArgumentException("gridSquareEntryIndex was expected to be " + gridSquareTableIndices.size() + ", but was actually " + gridSquareIndex + "!");
 
             gridSquareTableIndices.add(i);
         }
 
         // Read grid squares.
-        this.gridSquareEntries.clear();
+        this.gridSquares.clear();
         reader.requireIndex(getLogger(), gridDataBasePtr, "Expected Grid Square entries");
         for (int i = 0; i < gridSquareTableIndices.size(); i++) {
             int squareIndex = gridSquareTableIndices.get(i);
             MediEvilMapGridSquare newGridSquare = new MediEvilMapGridSquare(this, squareIndex);
-            this.gridSquares[squareIndex] = newGridSquare;
-            this.gridSquareEntries.add(newGridSquare);
+            this.gridSquaresByPosition[squareIndex] = newGridSquare;
+            this.gridSquares.add(newGridSquare);
             newGridSquare.load(reader);
         }
 
         // Read grid square data.
-        for (int i = 0; i < this.gridSquareEntries.size(); i++)
-            this.gridSquareEntries.get(i).loadColPrims(reader);
-        for (int i = 0; i < this.gridSquareEntries.size(); i++)
-            this.gridSquareEntries.get(i).loadSplines(reader);
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            this.gridSquares.get(i).loadColPrims(reader);
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            this.gridSquares.get(i).loadSplines(reader);
     }
 
     @Override
@@ -133,11 +132,11 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         // Write grid ID table.
         writer.writeAddressTo(gridIdTablePtr);
         int storageIndex = 0;
-        for (int i = 0; i < this.gridSquares.length; i++) {
-            MediEvilMapGridSquare gridSquare = this.gridSquares[i];
+        for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
+            MediEvilMapGridSquare gridSquare = this.gridSquaresByPosition[i];
             if (gridSquare != null) {
-                if (this.gridSquareEntries.get(i) != gridSquare)
-                    throw new IllegalStateException("The gridSquareEntries list was ordered wrong. Got " + this.gridSquareEntries.get(i) + " at index " + i + ", when " + gridSquare + " was expected.");
+                if (this.gridSquares.get(i) != gridSquare)
+                    throw new IllegalStateException("The gridSquares list was ordered wrong. Got " + this.gridSquares.get(i) + " at index " + i + ", when " + gridSquare + " was expected.");
 
                 writer.writeUnsignedShort(storageIndex);
                 storageIndex++;
@@ -148,18 +147,18 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
         // Write grid squares.
         writer.writeAddressTo(gridDataBasePtr);
-        for (int i = 0; i < this.gridSquareEntries.size(); i++)
-            gridSquareEntries.get(i).save(writer);
-        for (int i = 0; i < gridSquareEntries.size(); i++)
-            gridSquareEntries.get(i).saveColPrims(writer);
-        for (int i = 0; i < gridSquareEntries.size(); i++)
-            gridSquareEntries.get(i).saveSplines(writer);
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            this.gridSquares.get(i).save(writer);
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            this.gridSquares.get(i).saveColPrims(writer);
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            this.gridSquares.get(i).saveSplines(writer);
     }
 
     @Override
     public void clear() {
-        Arrays.fill(this.gridSquares, null);
-        this.gridSquareEntries.clear();
+        Arrays.fill(this.gridSquaresByPosition, null);
+        this.gridSquares.clear();
     }
 
     @Override
@@ -167,12 +166,12 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         propertyList.add("Grid Dimensions", getGridXSquareCount() + "x" + getGridYSquareCount());
         propertyList.add("Grid Square Size", this.gridSquareSize);
         propertyList.add("Grid Shift", this.gridShift);
-        propertyList.addString(this::addGridSquares, "Grid Squares", String.valueOf(this.gridSquareEntries.size()));
+        propertyList.addString(this::addGridSquares, "Grid Squares", String.valueOf(this.gridSquares.size()));
     }
 
     private void addGridSquares(PropertyListNode propertyList) {
-        for (int i = 0; i < this.gridSquareEntries.size(); i++)
-            propertyList.addProperties("GridSquare[" + i + "]", this.gridSquareEntries.get(i));
+        for (int i = 0; i < this.gridSquares.size(); i++)
+            propertyList.addProperties("GridSquare[" + i + "]", this.gridSquares.get(i));
     }
 
     public static class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> implements IPropertyListCreator {
@@ -205,9 +204,9 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         }
 
         /**
-         * Gets the z grid coordinate of this entry.
+         * Gets the y grid coordinate of this entry.
          */
-        public int getGridZ() {
+        public int getGridY() {
             return this.squareIndex / this.gridPacket.gridXSquareCount;
         }
 
@@ -216,25 +215,16 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
          * This value is only valid during data save, as this value may change as with the grid.
          */
         public int calculateStorageIndex() {
-            int storageIndex = 0;
-            for (int i = 0; i < this.gridPacket.gridSquares.length; i++) {
-                MediEvilMapGridSquare gridSquare = this.gridPacket.gridSquares[i];
-                if (gridSquare == null)
-                    continue;
+            int storageIndex = this.gridPacket.gridSquares.indexOf(this);
+            if (storageIndex < 0)
+                throw new IllegalStateException("The square is not part of the grid, so it therefore has no storageIndex.");
 
-                if (gridSquare == this) {
-                    return storageIndex;
-                } else {
-                    storageIndex++;
-                }
-            }
-
-            throw new IllegalStateException("The square is not part of the grid, so it therefore has no storageIndex.");
+            return storageIndex;
         }
 
         @Override
         public String toString() {
-            return "MediEvilMapGridSquare{x=" + getGridX() + ",z=" + getGridZ() + ",collprims=" + this.collprims.size()
+            return getClass().getSimpleName() + "{x=" + getGridX() + ",y=" + getGridY() + ",collprims=" + this.collprims.size()
                     + ",splines=" + this.splines.size() + "}";
         }
 
@@ -276,7 +266,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
         @Override
         public ILogger getLogger() {
-            return new AppendInfoLoggerWrapper(this.gridPacket.getLogger(), getClass().getSimpleName() + "[x=" + getGridX() + ",z=" + getGridZ() + "]", AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
+            return new AppendInfoLoggerWrapper(this.gridPacket.getLogger(), getClass().getSimpleName() + "[x=" + getGridX() + ",y=" + getGridY() + "]", AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
         }
 
         private void loadColPrims(DataReader reader) {
@@ -369,7 +359,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
         @Override
         public void addToPropertyList(PropertyListNode propertyList) {
-            propertyList.addString("Grid Position", "(" + getGridX() + ", " + getGridZ() + ")");
+            propertyList.addString("Grid Position", "(" + getGridX() + ", " + getGridY() + ")");
             propertyList.addInteger("Collprims", this.collprims.size());
             propertyList.addInteger("2D Splines", this.splines.size());
         }

@@ -68,6 +68,7 @@ public class DataWriter {
 
     /**
      * Skip bytes to align to the given byte boundary.
+     * TODO: Make byte argument ordering consistent with DataReader.
      * @param alignment The number of bytes the index should have an increment of.
      * @param padding   The padding byte
      */
@@ -78,8 +79,10 @@ public class DataWriter {
             for (int i = 0; i < alignment - offsetAmount; i++)
                 writeByte(padding); // Alignment.
     }
+
     /**
      * Write null bytes to a given address.
+     * TODO: Poor function name.
      * @param address The address to end at.
      */
     public void writeTo(int address) {
