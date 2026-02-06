@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTableEntry;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,11 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     }
 
     @Override
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), getClass().getSimpleName() + "[" + this.name + "]");
+    }
+
+    @Override
     public void load(DataReader reader) {
         this.loadMainEntityData(reader);
     }
@@ -45,8 +52,32 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the MOF file registered to this entity definition.
      */
-    public MRModel getModel() {
-        return this.mofId != 0 && this.mofId != -1 ? getGameInstance().getGameFileByResourceID(this.mofId, MRModel.class, true) : null;
+    public MRModel getModel(int subFormId, boolean warnIfNotFound) {
+        // Attempt to get the model from the model lists.
+        if (subFormId >= 0 && this.modelData.size() > subFormId && subFormId != 0xFF) {
+            MediEvilModelEntityData data = this.modelData.get(subFormId);
+            if (data.getMofIndex() == 0)
+                return null; // This has been explicitly marked to be null. (Main usage is particles without a corresponding MOF)
+
+            MRModel model = getGameInstance().getGameFileByResourceID(data.getMofIndex(), MRModel.class, true);
+            if (model != null) {
+                return model;
+            } else if (warnIfNotFound) {
+                getLogger().warning("Failed to find MOF from Model List's resource ID %d...", data.getMofIndex());
+            }
+        }
+
+        // Attempt to use this as a MOF file directly.
+        if (this.mofId != 0 && this.mofId != -1) {
+            MRModel model = getGameInstance().getGameFileByResourceID(this.mofId, MRModel.class, true);
+            if (model != null) {
+                return model;
+            } else if (warnIfNotFound) {
+                getLogger().warning("Failed to find MOF from resource ID %d... (Sub Form ID: %d, Model Data: %d)", this.mofId, subFormId, this.modelData.size());
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -72,7 +103,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
             reader.skipBytes(170); // TODO: Read more of this instead of skipping.
         }
         this.mofId = reader.readInt();
-        long largeMofId =  (this.mofId & 0xFFFFFFFFL);
+        long largeMofId = (this.mofId & 0xFFFFFFFFL);
         // Read model data.
         this.modelData.clear();
         if (getGameInstance().isValidLookingPointer(largeMofId)) {

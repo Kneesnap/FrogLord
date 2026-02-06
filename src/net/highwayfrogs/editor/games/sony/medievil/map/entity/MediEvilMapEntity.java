@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
-import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition.MediEvilModelEntityData;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
@@ -16,34 +15,55 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChang
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
+import java.lang.ref.WeakReference;
 import java.util.UUID;
 
 /**
  * Represents an entity on a MediEvil map.
  * Created by RampantSpirit on 3/11/2024.
  */
-@Getter
 public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
-    private static final UUID INITIAL_POSITION_EDITOR_ID = UUID.randomUUID();
+    @Getter private final MediEvilMapFile map;
+    @Getter private int entityId = -1;
+    @Getter private int formId = -1;
+    @Getter private short subFormId = 0xFF;
+    @Getter private short baseGenericData; // Seems to mean different things in different entities? not 100% sure.
+    @Getter private short rotationX;
+    @Getter private short rotationY;
+    @Getter private short rotationZ;
+    @Getter private final SVector position = new SVector();
+    @Getter private long triggerData;
+    @Getter private int initFlags;
+    @Getter private int destroyFlags;
+    @Getter private final int[] genericData = new int[4]; // Seems it's just like old/pre-recode Frogger.
+    private WeakReference<ILogger> logger;
 
-    private final MediEvilMapFile map;
-    private int entityId = -1;
-    private int formId = -1;
-    private short subFormId = 0xFF;
-    private short baseGenericData; // Seems to mean different things in different entities? not 100% sure.
-    private short rotationX;
-    private short rotationY;
-    private short rotationZ;
-    private final SVector position = new SVector();
-    private long triggerData;
-    private int initFlags;
-    private int destroyFlags;
-    private final int[] genericData = new int[4]; // Seems it's just like old/pre-recode Frogger.
+    private static final UUID INITIAL_POSITION_EDITOR_ID = UUID.randomUUID();
 
     public MediEvilMapEntity(MediEvilMapFile map) {
         super(map.getGameInstance());
         this.map = map;
+    }
+
+    @Override
+    public ILogger getLogger() {
+        ILogger logger = this.logger != null ? this.logger.get() : null;
+        if (logger == null)
+            this.logger = new WeakReference<>(logger = new LazyInstanceLogger(getGameInstance(), MediEvilMapEntity::getLoggerInfo, this));
+
+        return logger;
+    }
+
+    /**
+     * Gets logger information to display when the logger is used.
+     */
+    public String getLoggerInfo() {
+        MediEvilEntityDefinition definition = getEntityDefinition();
+        return this.map.getFileDisplayName() + "|Entity " + this.map.getEntitiesPacket().getEntities().indexOf(this)
+                + "/" + this.entityId + "|" + (definition != null ? definition.getName() : "Type " + this.formId);
     }
 
     @Override
@@ -128,30 +148,8 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
      */
     public MRModel getModel() {
         MediEvilEntityDefinition definition = getEntityDefinition();
-        if (definition != null) {
-            // Attempt to get the model from the model lists.
-            if (definition.getModelData().size() > this.subFormId && this.subFormId != 0xFF) {
-                MediEvilModelEntityData data = definition.getModelData().get(this.subFormId);
-                if (data.getMofIndex() != 0) {
-                    MRModel model = getGameInstance().getGameFileByResourceID(data.getMofIndex(), MRModel.class, true);
-                    if (model != null) {
-                        return model;
-                    } else {
-                        getLogger().warning("Failed to find MOF from Model List's resource ID %d...", data.getMofIndex());
-                    }
-                }
-            }
-
-            // Attempt to use this as a MOF file directly.
-            if (definition.getMofId() != 0 && definition.getMofId() != -1) {
-                MRModel model = definition.getModel();
-                if (model != null) {
-                    return model;
-                } else {
-                    getLogger().warning("Failed to find MOF from resource ID %d...", definition.getMofId());
-                }
-            }
-        }
+        if (definition != null)
+            return definition.getModel(this.subFormId, true);
 
         return null;
     }

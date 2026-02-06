@@ -12,8 +12,8 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
  */
 @Getter
 public class MediEvilEntityPointerTableEntry extends SCGameData<MediEvilGameInstance> {
-    private long entityDataPointer;
-    private int overlayId;
+    private long entityDataPointer; // TODO: Perhaps store this in the definition itself, and store a reference to the definition here.
+    private int overlayId; // TODO: Use this to determine if an entity definition can be used with a particular map file or not.
 
     private static final int SIZE_IN_BYTES = 8;
 
