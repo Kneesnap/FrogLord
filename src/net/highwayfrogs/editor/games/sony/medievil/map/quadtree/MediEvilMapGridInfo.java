@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGridPacket.MediEvilMapGridSquare;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.grid.MediEvilMapGridSquare;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;

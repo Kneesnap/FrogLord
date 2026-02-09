@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.*;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.grid.MediEvilMapGridPacket;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
