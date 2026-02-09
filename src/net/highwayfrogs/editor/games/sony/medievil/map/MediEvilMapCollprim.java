@@ -11,6 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -81,6 +83,12 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         writer.writeUnsignedShort(this.zLength);
         writer.writeUnsignedInt(this.radiusSq);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" + this.mapFile.getCollprimsPacket().getCollprims().indexOf(this) + "@" + this.mapFile.getFileDisplayName() + ",type=" + getType() + "}";
+    }
+
 
     /**
      * Creates an editor for the data under the given UI grid.
@@ -408,6 +416,62 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
      */
     public double getFloatRadiusSq() {
         return DataUtils.fixedPointIntToFloatNBits(this.radiusSq, 8);
+    }
+
+    /**
+     * Gets the world vertex position of a vertex by its ID.
+     * @param vertexId the id of the vertex between [0, 8) to return
+     * @param rawVertexPos temporary storage vector for vertex position Pass null to allocate a new object.
+     * @param output temporary storage vector for the output. Pass null to allocate a new object.
+     * @return vertexWorldPosition
+     */
+    public IVector getVertexWorldPosition(int vertexId, SVector rawVertexPos, IVector output) {
+        if (rawVertexPos == null)
+            rawVertexPos = new SVector();
+
+        switch (vertexId) {
+            case 0: // -X, -Y, -Z
+                rawVertexPos.setValues((short) -this.xLength, (short) -this.yLength, (short) -this.zLength);
+                break;
+            case 1: // +X, -Y, -Z
+                rawVertexPos.setValues((short) this.xLength, (short) -this.yLength, (short) -this.zLength);
+                break;
+            case 2: // -X, +Y, -Z
+                rawVertexPos.setValues((short) -this.xLength, (short) this.yLength, (short) -this.zLength);
+                break;
+            case 3: // +X, +Y, -Z
+                rawVertexPos.setValues((short) this.xLength, (short) this.yLength, (short) -this.zLength);
+                break;
+            case 4: // -X, -Y, +Z
+                rawVertexPos.setValues((short) -this.xLength, (short) -this.yLength, (short) this.zLength);
+                break;
+            case 5: // +X, -Y, +Z
+                rawVertexPos.setValues((short) this.xLength, (short) -this.yLength, (short) this.zLength);
+                break;
+            case 6: // -X, +Y, +Z
+                rawVertexPos.setValues((short) -this.xLength, (short) this.yLength, (short) this.zLength);
+                break;
+            case 7: // +X, +Y, +Z
+                rawVertexPos.setValues((short) this.xLength, (short) this.yLength, (short) this.zLength);
+                break;
+            default:
+                throw new UnsupportedOperationException("Invalid vertexId: " + vertexId);
+        }
+
+        if (output == null)
+            output = new IVector();
+
+        // For the positions to be correct, we must change the matrix slightly.
+        double oldYaw = this.matrix.getYawAngle(), oldPitch = this.matrix.getPitchAngle(), oldRoll = this.matrix.getRollAngle();
+        this.matrix.updateMatrix(oldPitch, -oldYaw, oldRoll);
+        try {
+            PSXMatrix.MRApplyMatrix(this.matrix, rawVertexPos, output);
+        } finally {
+            // Restore original Y rotation.
+            this.matrix.updateMatrix(oldPitch, oldYaw, oldRoll);
+        }
+
+        return output;
     }
 
     /**

@@ -20,10 +20,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents the MediEvil .PGD files (Polygon grids).
@@ -170,7 +167,6 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
                 || MathUtils.doLinesIntersect(lineStartX, lineStartY, lineEndX, lineEndY, gridBoxMaxX, gridBoxMinY, gridBoxMaxX, gridBoxMaxY); // Right Edge
     }
 
-
     /**
      * Gets the map file which this quad tree corresponds to.
      */
@@ -212,12 +208,22 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
             for (int j = 0; j < gridSquareIds.size(); j++) {
                 int gridSquareIndex = gridSquareIds.get(j);
                 MediEvilPolygonGridSquare gridSquare = this.gridSquaresByPosition[gridSquareIndex];
-                if (gridSquare == null)
+                if (gridSquare == null) {
                     this.gridSquaresByPosition[gridSquareIndex] = gridSquare = new MediEvilPolygonGridSquare(this, gridSquareIndex);
+                    addGridSquareToList(gridSquare);
+                }
 
                 gridSquare.getPolygons().add(polygon);
             }
         }
+    }
+
+    private void addGridSquareToList(MediEvilPolygonGridSquare gridSquare) {
+        int searchIndex = Collections.binarySearch(this.gridSquares, gridSquare, Comparator.comparingInt(MediEvilPolygonGridSquare::getSquareIndex));
+        if (searchIndex >= 0)
+            throw new IllegalStateException(gridSquare + " is already registered in the list.");
+
+        this.gridSquares.add(-(searchIndex + 1), gridSquare);
     }
 
     @Override
@@ -278,7 +284,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
     }
 
     private void validateGrid() {
-        // MediEvil polygons appear to always have their center in the grid square which they occupy.
+        // MediEvil polygons appear to always be present in all grid squares they overlap with.
         // This ensures we'll know if this observation is violated.
         // Being able to rely on this behavior is important for modding capabilities, so that automated grid generation works.
         IntList gridSquareIndices = new IntList();

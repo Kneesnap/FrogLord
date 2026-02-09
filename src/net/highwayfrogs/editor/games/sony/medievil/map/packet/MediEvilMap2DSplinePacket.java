@@ -78,6 +78,7 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
         this.splines.clear();
     }
 
+    @Getter
     public static class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> {
         private final MediEvilMap2DSplinePacket splinePacket;
         private final List<SVector> subDivisions = new ArrayList<>(); // Padding seems to be garbage.
@@ -112,6 +113,11 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
         @Override
         public ILogger getLogger() {
             return new AppendInfoLoggerWrapper(this.splinePacket.getLogger(), getClass().getSimpleName() + "[" + this.splinePacket.splines.indexOf(this) + "]", AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "{" + this.splinePacket.splines.indexOf(this) + "}";
         }
 
         @Override
