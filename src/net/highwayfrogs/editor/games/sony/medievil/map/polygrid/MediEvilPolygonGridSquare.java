@@ -48,14 +48,14 @@ public class MediEvilPolygonGridSquare extends SCGameData<MediEvilGameInstance> 
      * Gets the x grid coordinate of this entry.
      */
     public int getGridX() {
-        return this.squareIndex % this.grid.getGridXSquareCount();
+        return this.squareIndex % this.grid.getGridSize();
     }
 
     /**
      * Gets the y grid coordinate of this entry.
      */
     public int getGridY() {
-        return this.squareIndex / this.grid.getGridXSquareCount();
+        return this.squareIndex / this.grid.getGridSize();
     }
 
     @Override

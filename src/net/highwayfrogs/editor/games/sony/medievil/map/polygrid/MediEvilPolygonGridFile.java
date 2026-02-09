@@ -30,17 +30,16 @@ import java.util.List;
  * Created by Kneesnap on 2/5/2026.
  */
 public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
-    private byte gridXSquareCount; // TODO: Are these automatically calculated based on gridShift? 1 << (16 - gridShift)?
-    private byte gridYSquareCount;
-    @Getter private int gridSquareSize; // Equal to (1 << gridShift). TODO: Remove?
-    @Getter private short gridShift;
-    private MWIResourceEntry mapFileEntry;
+    @Getter private short gridShift = 9;
     private MediEvilPolygonGridSquare[] gridSquaresByPosition = EMPTY_GRID_SQUARE_ARRAY;
     private final List<MediEvilPolygonGridSquare> gridSquares = new ArrayList<>();
     private final List<MediEvilPolygonGridSquare> immutableGridSquares = Collections.unmodifiableList(this.gridSquares);
+    private MWIResourceEntry mapFileEntry;
 
     private static final MediEvilPolygonGridSquare[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilPolygonGridSquare[0];
     public static final int GRID_WORLD_CENTER_OFFSET = 32768;
+    public static final int MINIMUM_GRID_SHIFT_EXCLUSIVE = 8;
+    public static final int MAXIMUM_GRID_SHIFT_EXCLUSIVE = 16;
 
     public MediEvilPolygonGridFile(MediEvilGameInstance instance) {
         super(instance);
@@ -54,17 +53,26 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
     }
 
     /**
-     * Gets the grid length on the x-axis.
+     * Gets the length (in number of squares) along each of the sides of the grid.
      */
-    public int getGridXSquareCount() {
-        return (this.gridXSquareCount & 0xFF);
+    public int getGridSize() {
+        return getGridSize(this.gridShift);
     }
 
     /**
-     * Gets the grid length on the y-axis.
+     * Gets the size (in world units) of each side of a grid square.
      */
-    public int getGridYSquareCount() {
-        return (this.gridYSquareCount & 0xFF);
+    public int getGridSquareSize() {
+        return getGridSquareSize(this.gridShift);
+    }
+
+    /**
+     * Sets the grid shift value for this grid file.
+     * @param newGridShift the new grid shift value
+     */
+    public void setGridShift(int newGridShift) {
+        validateGridShift(newGridShift);
+        this.gridShift = (short) newGridShift;
     }
 
     /**
@@ -74,7 +82,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
      * @return gridSquarePositionIndex
      */
     public int getGridSquareIndexFromWorldPosition(int x, int z) {
-        return (((z + GRID_WORLD_CENTER_OFFSET) >> this.gridShift) * (this.gridXSquareCount & 0xFF))
+        return (((z + GRID_WORLD_CENTER_OFFSET) >> this.gridShift) * getGridSize())
                 + ((x + GRID_WORLD_CENTER_OFFSET) >> this.gridShift);
     }
 
@@ -137,7 +145,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         // 2) Test intersection with all the grid squares in that box.
         for (int gridY = minGridZ; gridY <= maxGridZ; gridY++) {
             for (int gridX = minGridX; gridX <= maxGridX; gridX++) {
-                int gridIndex = (gridY * getGridXSquareCount()) + gridX;
+                int gridIndex = (gridY * getGridSize()) + gridX;
                 if (!output.contains(gridIndex) && doesGridSquareBoxIntersect(gridX, gridY, startVertex, endVertex))
                     output.add(gridIndex);
             }
@@ -145,10 +153,11 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
     }
 
     private boolean doesGridSquareBoxIntersect(int gridX, int gridY, SVector lineStart, SVector lineEnd) {
+        int gridSquareSize = getGridSquareSize();
         int gridBoxMinX = (gridX << this.gridShift) - GRID_WORLD_CENTER_OFFSET;
-        int gridBoxMaxX = gridBoxMinX + this.gridSquareSize;
+        int gridBoxMaxX = gridBoxMinX + gridSquareSize;
         int gridBoxMinY = (gridY << this.gridShift) - GRID_WORLD_CENTER_OFFSET;
-        int gridBoxMaxY = gridBoxMinY + this.gridSquareSize;
+        int gridBoxMaxY = gridBoxMinY + gridSquareSize;
 
         // Create a hypothetical box around the grid square area, by testing if the line points intersect with any of the box edges.
         int lineStartX = lineStart.getX();
@@ -213,9 +222,9 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.gridXSquareCount = reader.readByte();
-        this.gridYSquareCount = reader.readByte();
-        this.gridSquareSize = reader.readUnsignedShortAsInt();
+        short gridXSquareCount = reader.readUnsignedByteAsShort();
+        short gridYSquareCount = reader.readUnsignedByteAsShort();
+        int gridSquareSize = reader.readUnsignedShortAsInt();
         this.gridShift = reader.readUnsignedByteAsShort();
         reader.alignRequireEmpty(Constants.INTEGER_SIZE);
 
@@ -225,7 +234,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         // Read grid ID table.
         reader.requireIndex(getLogger(), gridIdTablePtr, "Expected Grid ID Table");
         IntList gridSquareTableIndices = new IntList();
-        this.gridSquaresByPosition = new MediEvilPolygonGridSquare[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
+        this.gridSquaresByPosition = new MediEvilPolygonGridSquare[gridYSquareCount * gridXSquareCount];
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             short id = reader.readShort();
             if (id == -1)
@@ -253,6 +262,22 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         for (int i = 0; i < this.gridSquares.size(); i++)
             this.gridSquares.get(i).loadPolygons(reader);
 
+        // Ensure the grid loaded seems to match FrogLord's understanding of how polygon grids work.
+        validateGrid();
+
+        // Throw errors if data doesn't match expected.
+        int expectedGridSize = getGridSize();
+        if (gridXSquareCount != expectedGridSize)
+            throw new IllegalStateException("Expected a gridXSquareCount of " + expectedGridSize + " for a gridShift of " + this.gridShift + ", but actually got gridXSquareCount=" + gridXSquareCount + ".");
+        if (gridYSquareCount != expectedGridSize)
+            throw new IllegalStateException("Expected a gridYSquareCount of " + expectedGridSize + " for a gridShift of " + this.gridShift + ", but actually got gridYSquareCount=" + gridYSquareCount + ".");
+
+        int expectedGridSquareSize = getGridSquareSize();
+        if (gridSquareSize != expectedGridSquareSize)
+            throw new IllegalStateException("Expected a gridSquareSize of " + expectedGridSquareSize + " for a gridShift of " + this.gridShift + ", but actually got gridSquareSize=" + gridSquareSize + ".");
+    }
+
+    private void validateGrid() {
         // MediEvil polygons appear to always have their center in the grid square which they occupy.
         // This ensures we'll know if this observation is violated.
         // Being able to rely on this behavior is important for modding capabilities, so that automated grid generation works.
@@ -296,9 +321,9 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
     @Override
     public void save(DataWriter writer) {
         regenerate();
-        writer.writeByte(this.gridXSquareCount);
-        writer.writeByte(this.gridYSquareCount);
-        writer.writeUnsignedShort(this.gridSquareSize);
+        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedShort(getGridSquareSize());
         writer.writeUnsignedByte(this.gridShift);
         writer.align(Constants.INTEGER_SIZE);
 
@@ -341,14 +366,32 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("Grid Dimensions", getGridXSquareCount() + "x" + getGridYSquareCount());
-        propertyList.add("Grid Square Size", this.gridSquareSize);
-        propertyList.add("Grid Shift", this.gridShift);
+        propertyList.add("Grid Dimensions", getGridSize() + "x" + getGridSize());
+        propertyList.addInteger("Grid Square Size", getGridSquareSize());
+        propertyList.addInteger("Grid Shift", this.gridShift,
+                newValue -> newValue > MINIMUM_GRID_SHIFT_EXCLUSIVE && newValue < MAXIMUM_GRID_SHIFT_EXCLUSIVE,
+                this::setGridShift);
         propertyList.addString(this::addGridSquares, "Grid Squares", String.valueOf(this.gridSquares.size()));
     }
 
     private void addGridSquares(PropertyListNode propertyList) {
         for (int i = 0; i < this.gridSquares.size(); i++)
             propertyList.addProperties("GridSquare[" + i + "]", this.gridSquares.get(i));
+    }
+
+    private static void validateGridShift(int gridShift) {
+        // Values outside of this range will cause invalid sizes like zero.
+        if (gridShift <= MINIMUM_GRID_SHIFT_EXCLUSIVE || gridShift >= MAXIMUM_GRID_SHIFT_EXCLUSIVE)
+            throw new IllegalArgumentException("Invalid gridShift: " + gridShift + ", must be within (" + MINIMUM_GRID_SHIFT_EXCLUSIVE + ", " + MAXIMUM_GRID_SHIFT_EXCLUSIVE + ").");
+    }
+
+    private static int getGridSquareSize(int gridShift) {
+        validateGridShift(gridShift);
+        return (1 << gridShift);
+    }
+
+    private static int getGridSize(int gridShift) {
+        validateGridShift(gridShift);
+        return 1 << (16 - gridShift);
     }
 }

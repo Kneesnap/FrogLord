@@ -20,6 +20,8 @@ import java.util.List;
 
 /**
  * Represents a QuadTree.
+ * This entire quad tree system seems to have been originally intended for more widespread use than what it appears used for in the final game.
+ * In the final game, it seems to be exclusively used to find all polygons which a point/vertical ray along the y-axis intersects with.
  * Created by Kneesnap on 2/3/2026.
  */
 public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {

@@ -28,16 +28,15 @@ import java.util.List;
  * Created by Kneesnap on 2/3/2026.
  */
 public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropertyListCreator {
-    private byte gridXSquareCount;// TODO: Are these automatically calculated based on gridShift? 1 << (16 - gridShift)?
-    private byte gridYSquareCount;
-    private int gridSquareSize; // Equal to (1 << gridShift). TODO: Remove?
-    private short gridShift; // Grid size shift
+    @Getter private short gridShift = 12; // Grid size shift
     private MediEvilMapGridSquare[] gridSquaresByPosition = EMPTY_GRID_SQUARE_ARRAY;
     private final List<MediEvilMapGridSquare> gridSquares = new ArrayList<>();
     private final List<MediEvilMapGridSquare> immutableGridSquares = Collections.unmodifiableList(this.gridSquares);
 
     public static final String IDENTIFIER = "DIRG"; // 'GRID'.
     private static final MediEvilMapGridSquare[] EMPTY_GRID_SQUARE_ARRAY = new MediEvilMapGridSquare[0];
+    public static final int MINIMUM_GRID_SHIFT_EXCLUSIVE = 8;
+    public static final int MAXIMUM_GRID_SHIFT_EXCLUSIVE = 16;
 
     public MediEvilMapGridPacket(MediEvilMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -51,17 +50,26 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
     }
 
     /**
-     * Gets the grid length on the x-axis.
+     * Gets the length (in number of squares) along each of the sides of the grid.
      */
-    public int getGridXSquareCount() {
-        return (this.gridXSquareCount & 0xFF);
+    public int getGridSize() {
+        return getGridSize(this.gridShift);
     }
 
     /**
-     * Gets the grid length on the y-axis.
+     * Gets the size (in world units) of each side of a grid square.
      */
-    public int getGridYSquareCount() {
-        return (this.gridYSquareCount & 0xFF);
+    public int getGridSquareSize() {
+        return getGridSquareSize(this.gridShift);
+    }
+
+    /**
+     * Sets the grid shift value for this grid file.
+     * @param newGridShift the new grid shift value
+     */
+    public void setGridShift(int newGridShift) {
+        validateGridShift(newGridShift);
+        this.gridShift = (short) newGridShift;
     }
 
     /**
@@ -77,9 +85,9 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        this.gridXSquareCount = reader.readByte();
-        this.gridYSquareCount = reader.readByte();
-        this.gridSquareSize = reader.readUnsignedShortAsInt();
+        short gridXSquareCount = reader.readUnsignedByteAsShort();
+        short gridYSquareCount = reader.readUnsignedByteAsShort();
+        int gridSquareSize = reader.readUnsignedShortAsInt();
         this.gridShift = reader.readUnsignedByteAsShort();
         reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
         int gridIdTablePtr = reader.readInt();
@@ -88,7 +96,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         // Read grid ID table.
         reader.requireIndex(getLogger(), gridIdTablePtr, "Expected Grid ID Table");
         IntList gridSquareTableIndices = new IntList();
-        this.gridSquaresByPosition = new MediEvilMapGridSquare[(this.gridYSquareCount & 0xFF) * (this.gridXSquareCount & 0xFF)];
+        this.gridSquaresByPosition = new MediEvilMapGridSquare[gridYSquareCount * gridXSquareCount];
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             short id = reader.readShort();
             if (id == -1)
@@ -117,13 +125,24 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
             this.gridSquares.get(i).loadColPrims(reader);
         for (int i = 0; i < this.gridSquares.size(); i++)
             this.gridSquares.get(i).loadSplines(reader);
+
+        // Throw errors if data doesn't match expected.
+        int expectedGridSize = getGridSize();
+        if (gridXSquareCount != expectedGridSize)
+            throw new IllegalStateException("Expected a gridXSquareCount of " + expectedGridSize + " for a gridShift of " + this.gridShift + ", but actually got gridXSquareCount=" + gridXSquareCount + ".");
+        if (gridYSquareCount != expectedGridSize)
+            throw new IllegalStateException("Expected a gridYSquareCount of " + expectedGridSize + " for a gridShift of " + this.gridShift + ", but actually got gridYSquareCount=" + gridYSquareCount + ".");
+
+        int expectedGridSquareSize = getGridSquareSize();
+        if (gridSquareSize != expectedGridSquareSize)
+            throw new IllegalStateException("Expected a gridSquareSize of " + expectedGridSquareSize + " for a gridShift of " + this.gridShift + ", but actually got gridSquareSize=" + gridSquareSize + ".");
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeByte(this.gridXSquareCount);
-        writer.writeByte(this.gridYSquareCount);
-        writer.writeUnsignedShort(this.gridSquareSize);
+        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedShort(getGridSquareSize());
         writer.writeUnsignedByte(this.gridShift);
         writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
         int gridIdTablePtr = writer.writeNullPointer();
@@ -163,15 +182,33 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("Grid Dimensions", getGridXSquareCount() + "x" + getGridYSquareCount());
-        propertyList.add("Grid Square Size", this.gridSquareSize);
-        propertyList.add("Grid Shift", this.gridShift);
+        propertyList.add("Grid Dimensions", getGridSize() + "x" + getGridSize());
+        propertyList.addInteger("Grid Square Size", getGridSquareSize());
+        propertyList.addInteger("Grid Shift", this.gridShift,
+                newValue -> newValue > MINIMUM_GRID_SHIFT_EXCLUSIVE && newValue < MAXIMUM_GRID_SHIFT_EXCLUSIVE,
+                this::setGridShift);
         propertyList.addString(this::addGridSquares, "Grid Squares", String.valueOf(this.gridSquares.size()));
     }
 
     private void addGridSquares(PropertyListNode propertyList) {
         for (int i = 0; i < this.gridSquares.size(); i++)
             propertyList.addProperties("GridSquare[" + i + "]", this.gridSquares.get(i));
+    }
+
+    private static void validateGridShift(int gridShift) {
+        // Values outside of this range will cause invalid sizes like zero.
+        if (gridShift <= MINIMUM_GRID_SHIFT_EXCLUSIVE || gridShift >= MAXIMUM_GRID_SHIFT_EXCLUSIVE)
+            throw new IllegalArgumentException("Invalid gridShift: " + gridShift + ", must be within (" + MINIMUM_GRID_SHIFT_EXCLUSIVE + ", " + MAXIMUM_GRID_SHIFT_EXCLUSIVE + ").");
+    }
+
+    private static int getGridSquareSize(int gridShift) {
+        validateGridShift(gridShift);
+        return (1 << gridShift);
+    }
+
+    private static int getGridSize(int gridShift) {
+        validateGridShift(gridShift);
+        return 1 << (16 - gridShift);
     }
 
     public static class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> implements IPropertyListCreator {
@@ -200,14 +237,14 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
          * Gets the x grid coordinate of this entry.
          */
         public int getGridX() {
-            return this.squareIndex % this.gridPacket.gridXSquareCount;
+            return this.squareIndex % this.gridPacket.getGridSize();
         }
 
         /**
          * Gets the y grid coordinate of this entry.
          */
         public int getGridY() {
-            return this.squareIndex / this.gridPacket.gridXSquareCount;
+            return this.squareIndex / this.gridPacket.getGridSize();
         }
 
         /**
