@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.medievil.map;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
@@ -9,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.*;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.grid.MediEvilMapGridPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.polygrid.MediEvilPolygonGridFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.quadtree.MediEvilMapQuadTree;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
@@ -16,7 +20,10 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -96,5 +103,50 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
     @Override
     public MediEvilConfig getConfig() {
         return (MediEvilConfig) super.getConfig();
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportMfsFile = new MenuItem("Export to .mfs file");
+        contextMenu.getItems().add(exportMfsFile);
+        exportMfsFile.setOnAction(event -> askUserToExportMfsFile());
+
+        MenuItem importMfsFile = new MenuItem("Import from .mfs file");
+        contextMenu.getItems().add(importMfsFile);
+        importMfsFile.setOnAction(event -> askUserToImportMfsFile());
+    }
+    private void askUserToExportMfsFile() {
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), MFSUtil.EXPORT_FOLDER);
+        if (outputFolder != null)
+            MFSUtil.saveMap(this, outputFolder, ProblemResponse.CREATE_POPUP);
+    }
+
+    private void askUserToImportMfsFile() {
+        File importFile = FileUtils.askUserToOpenFile(getGameInstance(), MFSUtil.IMPORT_PATH);
+        if (importFile != null)
+            MFSUtil.importMfsFile(getLogger(), this, importFile);
+    }
+
+    /**
+     * Regenerate the polygon data for this map.
+     */
+    public void regeneratePolygonData() {
+        MediEvilLevelTableEntry levelTableEntry = getLevelTableEntry();
+        if (levelTableEntry == null)
+            throw new IllegalStateException("Could not find LevelTableEntry for '" + getFileDisplayName() + "'.");
+
+        MediEvilMapQuadTree quadTree = levelTableEntry.getQuadTreeFile();
+        if (quadTree == null)
+            throw new IllegalStateException("No .QTR file could be found for '" + getFileDisplayName() + "'.");
+
+        MediEvilPolygonGridFile polygonGrid = levelTableEntry.getPolygonGridFile();
+        if (polygonGrid == null)
+            throw new IllegalStateException("No .PGD file could be found for '" + getFileDisplayName() + "'.");
+
+        this.gridPacket.regenerate();
+        quadTree.regenerate();
+        polygonGrid.regenerate();
     }
 }

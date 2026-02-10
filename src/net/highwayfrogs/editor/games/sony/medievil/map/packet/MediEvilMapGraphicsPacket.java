@@ -24,8 +24,8 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
     private final List<MediEvilMapPolygon> polygons = new ArrayList<>();
     private final List<SVector> vertices = new ArrayList<>();
     private short vertexGridResolution;
-    private short[] vertexGridOffsetTable;
-    private short[] vertexGridLengthTable;
+    private short[] vertexGridOffsetTable; // TODO: What's this stuff about.
+    private short[] vertexGridLengthTable; // TODO: Hmm.
 
     public MediEvilMapGraphicsPacket(MediEvilMapFile parentFile) {
         super(parentFile, IDENTIFIER);

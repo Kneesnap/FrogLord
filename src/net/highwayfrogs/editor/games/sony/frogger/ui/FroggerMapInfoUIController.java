@@ -29,7 +29,6 @@ import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerCom
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -37,8 +36,6 @@ import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 
 /**
  * Sets up the map editor.
@@ -58,9 +55,6 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML private Button saveToObj;
     private SCRemapEditor<FroggerMapFile> remapEditor;
 
-    private static final BrowserFileType FFS_FILE_TYPE = new BrowserFileType("Frogger File Sync", "ffs");
-    private static final SavedFilePath FFS_IMPORT_PATH = new SavedFilePath("ffsImportPath", "Please select the map ffs file to import.", FFS_FILE_TYPE);
-    private static final SavedFilePath FFS_EXPORT_FOLDER = new SavedFilePath("ffsExportPath", "Please select the folder to export the .ffs map into");
     private static final SavedFilePath OBJ_EXPORT_FOLDER = new SavedFilePath("mapObjExportPath", "Please select the folder to export the map .obj into");
 
     public FroggerMapInfoUIController(FroggerGameInstance instance) {
@@ -179,7 +173,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML
     @SneakyThrows
     private void loadFromFFS(ActionEvent event) {
-        File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFS_IMPORT_PATH);
+        File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFSUtil.IMPORT_PATH);
         if (importFile != null)
             FFSUtil.importFFSToMap(getFile().getLogger(), getFile(), importFile);
     }
@@ -187,14 +181,8 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML
     @SneakyThrows
     private void exportToFFS(ActionEvent event) {
-        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), FFS_EXPORT_FOLDER);
-        if (outputFolder == null)
-            return;
-
-        FFSUtil.saveMapAsFFS(getFile(), outputFolder, ProblemResponse.CREATE_POPUP);
-
-        InputStream blenderScriptStream = getGameInstance().getGameType().getEmbeddedResourceStream(FFSUtil.BLENDER_ADDON_FILE_NAME);
-        if (blenderScriptStream != null)
-            Files.write(new File(outputFolder, FFSUtil.BLENDER_ADDON_FILE_NAME).toPath(), FileUtils.readBytesFromStream(blenderScriptStream));
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), FFSUtil.EXPORT_FOLDER);
+        if (outputFolder != null)
+            FFSUtil.saveMapAsFFS(getFile(), outputFolder, ProblemResponse.CREATE_POPUP);
     }
 }

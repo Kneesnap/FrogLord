@@ -457,7 +457,6 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        regenerate();
         writer.writeUnsignedByte((short) getGridSize());
         writer.writeUnsignedByte((short) getGridSize());
         writer.writeUnsignedShort(getGridSquareSize());

@@ -289,27 +289,6 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         return new PSXShadeTextureDefinition(mapMesh.getShadedTextureManager(), polygonType, textureSource, colors, uvs, isSemiTransparent, true);
     }
 
-    private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
-        // Process padding into color value.
-        int blueHiBits = (packedColor & 0x700);
-        int blueLoBits = (packedColor & 3);
-        int bgrColor = (packedColor & 0xF8F8) | (blueHiBits << 13) | (blueLoBits << 19);
-
-        // Calculate GPU code.
-        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
-        if (polygonType.isQuad())
-            gpuCode |= CVector.FLAG_QUAD;
-        if (polygonType.isTextured())
-            gpuCode |= CVector.FLAG_TEXTURED;
-        if (isSemiTransparent)
-            gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
-
-        // Create color.
-        CVector loadedColor = CVector.makeColorFromRGB(ColorUtils.swapRedBlue(bgrColor));
-        loadedColor.setCode(gpuCode);
-        return loadedColor;
-    }
-
     /**
      * Creates a texture shade definition for this polygon.
      * @param shadeTexture The shaded texture to load from.
@@ -357,5 +336,47 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     public static short toPackedShort(CVector color) {
         return (short) (((color.getGreenShort() & 0b11111000) << 8) | (color.getRedShort() & 0b11111000)
                 | ((color.getBlueShort() & 0b111000000) << 3) | ((color.getBlueShort() & 0b00011000) >> 3));
+    }
+
+    /**
+     * Gets the RGB color  as a packet short saved in vertex padding.
+     * @param rgbColor the RGB color to get as a short
+     * @return packedShortColor
+     */
+    public static short toPackedShort(int rgbColor) {
+        int red = ColorUtils.getRedInt(rgbColor);
+        int green = ColorUtils.getGreenInt(rgbColor);
+        int blue = ColorUtils.getBlueInt(rgbColor);
+        return (short) (((green & 0b11111000) << 8) | (red & 0b11111000)
+                | ((blue & 0b111000000) << 3) | ((blue & 0b00011000) >> 3));
+    }
+
+    /**
+     * Loads a color from a packed short value to an RGB integer.
+     * @param packedColor the packed color to read
+     * @return rgbColor
+     */
+    public static int getRGBFromPackedShort(short packedColor) {
+        // Process padding into color value.
+        int blueHiBits = (packedColor & 0x700);
+        int blueLoBits = (packedColor & 3);
+        int bgrColor = (packedColor & 0xF8F8) | (blueHiBits << 13) | (blueLoBits << 19);
+        return ColorUtils.swapRedBlue(bgrColor);
+    }
+
+    private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
+        // Calculate GPU code.
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
+        if (polygonType.isQuad())
+            gpuCode |= CVector.FLAG_QUAD;
+        if (polygonType.isTextured())
+            gpuCode |= CVector.FLAG_TEXTURED;
+        if (isSemiTransparent)
+            gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
+
+        // Create color.
+        CVector loadedColor = CVector.makeColorFromRGB(getRGBFromPackedShort(packedColor));
+        loadedColor.setCode(gpuCode);
+        return loadedColor;
     }
 }

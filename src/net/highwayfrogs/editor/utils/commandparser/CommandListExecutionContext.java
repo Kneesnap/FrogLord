@@ -12,5 +12,6 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 @Getter
 @RequiredArgsConstructor
 public class CommandListExecutionContext {
-    @NonNull private final ILogger logger;
+    @NonNull protected final ILogger logger;
+    private final String importedFileName;
 }

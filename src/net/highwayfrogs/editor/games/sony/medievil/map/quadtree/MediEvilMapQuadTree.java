@@ -163,7 +163,6 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        regenerate();
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(calculatePolygonCount());
         writer.writeUnsignedShort(this.gridLinks.size());

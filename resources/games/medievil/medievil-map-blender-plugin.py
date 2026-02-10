@@ -3,6 +3,7 @@
 #################################
 # If all you're seeing is this file, you probably want to check out the following link for instructions:
 # https://github.com/Kneesnap/FrogLord/blob/master/resources/documentation/games/frogger/blender-plugin.md
+# The guide was written for Frogger, but the steps are virtually identical for MediEvil.
 
 # Documentation Base: https://docs.blender.org/api/current/info_quickstart.html
 # Important things to remember.
@@ -27,7 +28,7 @@
 # - https://blender.stackexchange.com/questions/280716/python-code-to-set-color-attributes-per-vertex-in-blender-3-5
 
 bl_info = {
-    "name": "Frogger Map Support (FrogLord)",
+    "name": "MediEvil Map Support (FrogLord)",
     "category": "Object",
     "blender": (2, 80, 0),
 }
@@ -47,10 +48,10 @@ import addon_utils
 # invoke() function which calls the file selector.
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-FILE_EXTENSION = "ffs"
-GAME_DISPLAY_NAME = "Frogger"
-GAME_IDENTIFIER = "frogger"
-CURRENT_FORMAT_VERSION = 2
+FILE_EXTENSION = "mfs"
+GAME_DISPLAY_NAME = "MediEvil"
+GAME_IDENTIFIER = "medievil"
+CURRENT_FORMAT_VERSION = 1
 
 LEVEL_MESH_NAME = "LevelMesh"
 LEVEL_OBJECT_NAME = "LevelObject"
@@ -58,8 +59,7 @@ UNTEXTURED_MATERIAL_NAME = "NoTexture"
 
 UV_LAYER_NAME = "Texture Uvs"
 VERTEX_COLOR_LAYER_NAME = "Vertex Colors"
-TEXTURE_FLAG_LAYER_NAME = "Texture Flags"
-GRID_FLAG_LAYER_NAME = "Grid Flags"
+POLYGON_FLAG_LAYER_NAME = "Polygon Flags"
 
 def main(context):
     print("Hello from FrogLord Blender (%s)" % GAME_DISPLAY_NAME)
@@ -126,7 +126,7 @@ def create_shaded_material(material, folder, file_name):
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
     links = material.node_tree.links
-    
+
     # Get or create default nodes.
     if nodes.get('Principled BSDF') is None: # By default, this node exists.
         principled_bsdf = create_material_node(nodes, 'ShaderNodeBsdfPrincipled')
@@ -146,7 +146,7 @@ def create_shaded_material(material, folder, file_name):
     # Build the shader graph.
     nodes.get('Material Output').location = Vector((330.0, 201.0))
     nodes.get('Material Output').target = 'EEVEE' # See above.
-    
+
     nodes[preview_output].name = 'Material Preview Output'
     nodes[preview_output].location = Vector((330.0, -45.0))
     nodes[preview_output].target = 'CYCLES' # See above
@@ -200,7 +200,7 @@ def get_game_texture_id(material):
     if material is None:
         return MAGIC_NO_TEXTURE_ID
 
-    material_texture_id = material.frogger_data.texture_id
+    material_texture_id = material.medievil_data.texture_id
     if material_texture_id >= 0 or material_texture_id == MAGIC_NO_TEXTURE_ID:
         return material_texture_id
 
@@ -214,7 +214,7 @@ def get_game_texture_name(material):
     if material is None:
         return None
 
-    material_texture_name = material.frogger_data.texture_name
+    material_texture_name = material.medievil_data.texture_name
     if material_texture_name is not None and len(material_texture_name) > 0:
         return material_texture_name
 
@@ -228,7 +228,7 @@ def get_game_texture_name(material):
     return material.name if name_match is not None else None
 
 def swap_blender_order(array):
-    # Swaps between <Frogger Polygon Data Order> <-> <Blender Data Order>
+    # Swaps between <MediEvil Polygon Data Order> <-> <Blender Data Order>
     if len(array) == 4:
         temp = array[3]
         array[3] = array[2]
@@ -241,17 +241,6 @@ def to_blender_order(array):
 
 def to_froglord_order(array):
     return swap_blender_order(array[::-1])
-
-def convert_grid_flags(blender_grid_flags):
-    # The default blender layer value is zero, and we need to therefore treat zero as "I'm not a grid square.", so that new polygons are seen as not part of the grid.
-    # However, the flag value of zero IS a valid grid square flag combination. So, we'll treat a REAL value of 0 as -1, so we can distinguish the "I'm not a grid square" from "I'm a grid square but my flags are zero."
-    # This operation is reversible.
-    if blender_grid_flags == 0:
-        return -1
-    elif blender_grid_flags == -1:
-        return 0
-    else:
-        return blender_grid_flags
 
 def select_object(obj):
     if not obj in bpy.context.collection.objects.values():
@@ -330,7 +319,7 @@ def load_map_file(operator, context, filepath):
 
     # Create a material for faces without textures.
     untextured_material = bpy.data.materials[UNTEXTURED_MATERIAL_NAME] if UNTEXTURED_MATERIAL_NAME in bpy.data.materials else bpy.data.materials.new(name=UNTEXTURED_MATERIAL_NAME)
-    untextured_material.frogger_data.texture_id = MAGIC_NO_TEXTURE_ID # Mark as different from the default 'no texture ID' value.
+    untextured_material.medievil_data.texture_id = MAGIC_NO_TEXTURE_ID # Mark as different from the default 'no texture ID' value.
     untextured_material_id = len(mesh.materials)
     untextured_material.use_nodes = True
     clear_material(untextured_material)
@@ -361,17 +350,19 @@ def load_map_file(operator, context, filepath):
     material_id_remaps = {}
     material_index_remaps = {}
     downsized_face_count = 0
+    vertex_colors = []
     for command, args, line_text, line_number in commands:
         arg_index = 0
 
-        if command == "version_ffs" or command == "version_format": # version_format version (version_ffs is for Frogger specifically)
+        if command == "version_format": # version_format version
             format_version = int(args[arg_index])
             if format_version > CURRENT_FORMAT_VERSION:
                 operator.report({"WARNING"}, ".%s files uses a newer version (%d) than what is supported by the Blender plugin (%d). Issues may result from this!" % (FILE_EXTENSION, format_version, CURRENT_FORMAT_VERSION))
         elif command == "version_game": # version_game version
-            bpy.context.scene.frogger_data.game_version = args[arg_index]
+            bpy.context.scene.medievil_data.game_version = args[arg_index]
         elif command == "vertex": # vertex x y z (Swap z and y in Blender, then invert Z.)
             pending_vertex_data.append([float(args[arg_index + 0]), float(args[arg_index + 2]), -float(args[arg_index + 1])])
+            vertex_colors.append(int_to_rgbaf_color(int(args[arg_index + 3], 16)))
         elif command == "texture": # texture textureId textureName
             texture_id = int(args[arg_index])
             material_name = "Tex%d" % texture_id
@@ -389,42 +380,22 @@ def load_map_file(operator, context, filepath):
             material_index_remaps[len(material_index_remaps)] = len(obj.data.materials)
 
             material = bpy.data.materials[material_name] if material_name in bpy.data.materials else bpy.data.materials.new(name=material_name)
-            material.frogger_data.texture_id = texture_id
-            material.frogger_data.texture_file_name = texture_name
+            material.medievil_data.texture_id = texture_id
+            material.medievil_data.texture_file_name = texture_name
             create_shaded_material(material, folder, texture_file_name)
             obj.data.materials.append(material)
         elif command == "polygon": # polygon polygon_args...
             polygon_type = args[arg_index].lower()
-            if polygon_type == "f3": # f3 show v1 v2 v3 color gridFlags
-                num_colors = 1
-                has_texture = False
-                num_vertices = 3
-            elif polygon_type == "f4": # f4 show v1 v2 v3 v4 color gridFlags
-                num_colors = 1
-                has_texture = False
-                num_vertices = 4
-            elif polygon_type == "ft3": # ft3 show texture flags v1 v2 v3 uv1 uv2 uv3 color gridFlags
-                num_colors = 1
-                has_texture = True
-                num_vertices = 3
-            elif polygon_type == "ft4": # ft4 show texture flags v1 v2 v3 v4 uv1 uv2 uv3 uv4 color gridFlags
-                num_colors = 1
-                has_texture = True
-                num_vertices = 4
-            elif polygon_type == "g3": # g3 show v1 v2 v3 color1 color2 color3 gridFlags
-                num_colors = 3
+            if polygon_type == "g3": # g3 show v1 v2 v3 color1 color2 color3 gridFlags
                 has_texture = False
                 num_vertices = 3
             elif polygon_type == "g4": # g4 show v1 v2 v3 v4 color1 color2 color3 color4 gridFlags
-                num_colors = 4
                 has_texture = False
                 num_vertices = 4
             elif polygon_type == "gt3": # gt3 show texture flags v1 v2 v3 uv1 uv2 uv3 color1 color2 color3 gridFlags
-                num_colors = 3
                 has_texture = True
                 num_vertices = 3
             elif polygon_type == "gt4": # gt4 show texture flags v1 v2 v3 v4 uv1 uv2 uv3 uv4 color1 color2 color3 color4 gridFlags
-                num_colors = 4
                 has_texture = True
                 num_vertices = 4
             else:
@@ -432,19 +403,9 @@ def load_map_file(operator, context, filepath):
                 continue
 
             # Read polygon data.
-            should_hide = (args[arg_index + 1] == "hide")
+            polygon_flags = int(args[arg_index + 1])
             material_index = untextured_material_id
-            texture_flags = 0
-
-            # Read textured polygon data, maybe.
             arg_index += 2
-            if has_texture:
-                if format_version >= 2: # version 2+ uses local indices into the texture list.
-                    material_index = material_index_remaps[int(args[arg_index])]
-                else: # version 1 used texture ids here.
-                    material_index = material_id_remaps[int(args[arg_index])]
-                texture_flags = int(args[arg_index + 1])
-                arg_index += 2
 
             # Read vertices.
             vertices = []
@@ -453,27 +414,16 @@ def load_map_file(operator, context, filepath):
                 arg_index += 1
             vertices = to_blender_order(vertices)
 
-            # Read texCoords.
+            # Read texture data.
             tex_coords = []
             if has_texture:
+                material_index = material_index_remaps[int(args[arg_index])]
+                arg_index += 1
                 for i in range(num_vertices):
                     uv_text = args[arg_index].split(":")
                     tex_coords.append([float(uv_text[0]), 1.0 - float(uv_text[1])])
                     arg_index += 1
             tex_coords = to_blender_order(tex_coords)
-
-            # Read colors.
-            colors = []
-            for i in range(num_colors):
-                colors.append(int_to_rgbaf_color(int(args[arg_index], 16)))
-                arg_index += 1
-            colors = to_blender_order(colors)
-
-            # Read optional grid flags.
-            grid_flags = -1
-            if len(args) > arg_index:
-                grid_flags = int(args[arg_index])
-                arg_index += 1
 
             # After preparing the polygon data, we have a problem.
             # Some Frogger maps such as DES1.MAP contain quads that use the same vertex more than once, to effectively render as a triangle, while still being a quad.
@@ -493,14 +443,12 @@ def load_map_file(operator, context, filepath):
                 vertices.pop(i)
                 if has_texture:
                     tex_coords.pop(i)
-                if len(colors) > 1:
-                    colors.pop(i)
             if len(duplicate_vertices) > 0:
                 downsized_face_count += 1
 
             # Store the polygon data for later access.
             pending_face_data.append(vertices)
-            extra_face_data.append((should_hide, material_index, texture_flags, tex_coords, colors, grid_flags))
+            extra_face_data.append((polygon_flags, material_index, tex_coords))
         else:
             operator.report({"WARNING"}, "Unknown Command '%s', skipping line %d!" % (command, line_number))
 
@@ -513,31 +461,28 @@ def load_map_file(operator, context, filepath):
     # Apply extra polygon data.
     for i in range(len(extra_face_data)):
         polygon = mesh.polygons[i]
-        should_hide, material_index, _, tex_coords, colors, _ = extra_face_data[i]
+        polygon_vertices = pending_face_data[i]
+        _, material_index, tex_coords = extra_face_data[i]
 
-        polygon.hide = should_hide
         polygon.material_index = material_index
         if len(tex_coords) > 0:
             for uv_index in range(polygon.loop_total):
                 mesh.uv_layers[UV_LAYER_NAME].data[polygon.loop_start + uv_index].uv = tex_coords[uv_index]
 
-        # Apply vertex colors.
+        # Apply vertex colors. TODO: Implement per-vertex colors instead of per-face-vertex. (It technically works right now, but if it's possible to truly have only one color per vertex, that is a better choice.)
         for color_index in range(polygon.loop_total):
-            mesh.vertex_colors[VERTEX_COLOR_LAYER_NAME].data[polygon.loop_start + color_index].color = colors[color_index] if len(colors) > 1 else colors[0]
+            mesh.vertex_colors[VERTEX_COLOR_LAYER_NAME].data[polygon.loop_start + color_index].color = vertex_colors[polygon_vertices[color_index]]
 
     # Apply data which blender doesn't support natively.
     bm = bmesh.new()
     bm.from_mesh(mesh)
 
     # https://docs.blender.org/api/current/bmesh.types.html#bmesh.types.BMLayerAccessFace
-    texture_flag_layer = bm.faces.layers.int.get(TEXTURE_FLAG_LAYER_NAME) or bm.faces.layers.int.new(TEXTURE_FLAG_LAYER_NAME)
-    grid_flag_layer = bm.faces.layers.int.get(GRID_FLAG_LAYER_NAME) or bm.faces.layers.int.new(GRID_FLAG_LAYER_NAME)
+    polygon_flag_layer = bm.faces.layers.int.get(POLYGON_FLAG_LAYER_NAME) or bm.faces.layers.int.new(POLYGON_FLAG_LAYER_NAME)
     bm.faces.ensure_lookup_table()
     for i in range(len(extra_face_data)):
-        _, _, texture_flags, _, _, grid_flags = extra_face_data[i]
-
-        bm.faces[i][texture_flag_layer] = texture_flags
-        bm.faces[i][grid_flag_layer] = convert_grid_flags(grid_flags)
+        polygon_flags, _, _ = extra_face_data[i]
+        bm.faces[i][polygon_flag_layer] = polygon_flags
 
     bm.to_mesh(mesh)
     bm.free()
@@ -573,7 +518,7 @@ def save_map_file(operator, context, filepath):
     if not LEVEL_OBJECT_NAME in bpy.data.objects:
         operator.report({"ERROR"}, "Could not find an object named '%s'!" % LEVEL_OBJECT_NAME)
         return {'CANCELLED'}
-    if not bpy.context.scene.frogger_data or not bpy.context.scene.frogger_data.game_version:
+    if not bpy.context.scene.medievil_data or not bpy.context.scene.medievil_data.game_version:
         operator.report({"ERROR"}, "Could not determine the target version of %s from the scene data." % GAME_DISPLAY_NAME)
         return {'CANCELLED'}
 
@@ -603,15 +548,9 @@ def save_map_file(operator, context, filepath):
     bm.from_mesh(mesh)
     bm.faces.ensure_lookup_table()
 
-    texture_flag_layer = bm.faces.layers.int.get(TEXTURE_FLAG_LAYER_NAME)
-    grid_flag_layer = bm.faces.layers.int.get(GRID_FLAG_LAYER_NAME)
-    if texture_flag_layer is None:
-        operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % TEXTURE_FLAG_LAYER_NAME)
-        set_object_mode(operator, obj, old_mode, False)
-        bm.free()
-        return {'CANCELLED'}
-    if grid_flag_layer is None:
-        operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % GRID_FLAG_LAYER_NAME)
+    polygon_flag_layer = bm.faces.layers.int.get(POLYGON_FLAG_LAYER_NAME)
+    if polygon_flag_layer is None:
+        operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % POLYGON_FLAG_LAYER_NAME)
         set_object_mode(operator, obj, old_mode, False)
         bm.free()
         return {'CANCELLED'}
@@ -622,8 +561,8 @@ def save_map_file(operator, context, filepath):
     writer.write("# File Export (.%s) -- By Blender\n" % FILE_EXTENSION)
     writer.write("# File: '%s'\n" % (bpy.path.basename(bpy.context.blend_data.filepath) or 'Untitled'))
     writer.write("# Export Time: %s\n" % (str(datetime.now())))
-    writer.write("version_ffs %d\n" % (CURRENT_FORMAT_VERSION))
-    writer.write("version_game %s\n" % (bpy.context.scene.frogger_data.game_version))
+    writer.write("version_format %d\n" % (CURRENT_FORMAT_VERSION))
+    writer.write("version_game %s\n" % (bpy.context.scene.medievil_data.game_version))
     writer.write('\n')
 
     # Write textures.
@@ -642,9 +581,28 @@ def save_map_file(operator, context, filepath):
     if len(seen_materials) > 0:
         writer.write('\n')
 
+    # Calculate vertex color sums.
+    vertex_colors = []
+    for polygon in mesh.polygons:
+        for i, vertex_id in enumerate(polygon.vertices):
+            while vertex_id >= len(vertex_colors):
+                vertex_colors.append((0.0, 0.0, 0.0, 0)) # (r, g, b, count)
+
+            red_sum, green_sum, blue_sum, count = vertex_colors[vertex_id]
+            red, green, blue, _ = color_layer.data[polygon.loop_start + i].color
+            vertex_colors[vertex_id] = (red_sum + red, green_sum + green, blue_sum + blue, count + 1)
+
+    # Calculate vertex color averages.
+    for i in range(len(vertex_colors)):
+        red_sum, green_sum, blue_sum, count = vertex_colors[i]
+        if count > 0:
+            vertex_colors[i] = rgbaf_color_to_int((red_sum / count, green_sum / count, blue_sum / count, 1.0))
+        else:
+            vertex_colors = 0
+
     # Write Vertices:
-    for vert in bm.verts:
-        writer.write("vertex %f %f %f\n" % (vert.co.x, -vert.co.z, vert.co.y))
+    for i, vert in enumerate(bm.verts):
+        writer.write("vertex %f %f %f %06X\n" % (vert.co.x, -vert.co.z, vert.co.y, vertex_colors[i]))
     writer.write('\n')
 
     # Setup Data:
@@ -668,11 +626,6 @@ def save_map_file(operator, context, filepath):
             vertices.append(vertex)
         vertices = to_froglord_order(vertices)
 
-        colors = []
-        for i in range(polygon.loop_total):
-            colors.append(rgbaf_color_to_int(color_layer.data[polygon.loop_start + i].color))
-        colors = to_froglord_order(colors)
-
         uvs = []
         if is_textured:
             for i in range(polygon.loop_total):
@@ -685,45 +638,26 @@ def save_map_file(operator, context, filepath):
         elif material_texture_id != MAGIC_NO_TEXTURE_ID and material is not None:
             operator.report({"WARNING"}, "Face %d used material %d/%d/'%s', which was not a recognized %s texture! It will be exported as an untextured polygon!" % (polygon_index, material_texture_id, polygon.material_index, material.name, GAME_DISPLAY_NAME))
 
-        # Determine polygon type.
-        is_quad = polygon.loop_total == 4
-
-        is_gouraud = False
-        for i in range(1, len(colors)):
-            if colors[i] != colors[0]:
-                is_gouraud = True
-                break
-
         # Write polygon command.
-        writer.write("polygon ")
-        writer.write('g' if is_gouraud else 'f')
+        writer.write("polygon g")
         if is_textured:
             writer.write('t')
         writer.write(str(len(polygon.vertices)))
 
-        writer.write(" hide" if polygon.hide else " show")
-
-        # Write optional texture data.
-        if is_textured:
-            texture_flags = bm.faces[polygon_index][texture_flag_layer]
-            writer.write(" %d %d" % (material_index_remaps[material_texture_id], texture_flags or 0))
+        # Write polygon flags
+        polygon_flags = bm.faces[polygon_index][polygon_flag_layer]
+        writer.write(" %d" % (polygon_flags or 0))
 
         # Write Vertices:
         for vertex_id in vertices:
             writer.write(" %d" % vertex_id)
 
-        # Write TexCoords
-        for uv in uvs:
-            writer.write(" %f:%f" % uv)
-
-        # Write Colors:
-        for i in range(len(colors) if is_gouraud else 1):
-            writer.write(" %06X" % colors[i])
-
-        # Write grid flags.
-        grid_flags = convert_grid_flags(bm.faces[polygon_index][grid_flag_layer])
-        if grid_flags != -1:
-            writer.write(" %d" % grid_flags)
+        # Write optional texture data.
+        if is_textured:
+            writer.write(" %d" % material_index_remaps[material_texture_id])
+            # Write TexCoords
+            for uv in uvs:
+                writer.write(" %f:%f" % uv)
 
         # End of polygon command.
         writer.write('\n')
@@ -737,15 +671,15 @@ def save_map_file(operator, context, filepath):
     return {'FINISHED'}
 
 # Reference Blender > Text Editor > Templates > Python > Operator File Import.
-class LoadFroggerOperator(bpy.types.Operator, ImportHelper):
+class LoadMediEvilOperator(bpy.types.Operator, ImportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
     """Loads a map file into the scene"""
     bl_idname = "%s.load_map" % GAME_IDENTIFIER
     bl_label = "Load %s Map (.%s)" % (GAME_DISPLAY_NAME, FILE_EXTENSION)
-    
+
     # ImportHelper mix-in class uses this.
     filename_ext = ".%s" % FILE_EXTENSION
-    
+
     filter_glob: bpy.props.StringProperty(
         default="*.%s" % FILE_EXTENSION,
         options={'HIDDEN'},
@@ -755,7 +689,7 @@ class LoadFroggerOperator(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         return load_map_file(self, context, self.filepath)
 
-class SaveFroggerOperator(bpy.types.Operator, ExportHelper):
+class SaveMediEvilOperator(bpy.types.Operator, ExportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
     """Saves a map file from the scene"""
     bl_idname = "%s.save_map" % GAME_IDENTIFIER
@@ -772,36 +706,36 @@ class SaveFroggerOperator(bpy.types.Operator, ExportHelper):
 
     def execute(self, context):
         return save_map_file(self, context, self.filepath)
- 
+
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(LoadFroggerOperator.bl_idname, text=LoadFroggerOperator.bl_label)
-    self.layout.operator(SaveFroggerOperator.bl_idname, text=SaveFroggerOperator.bl_label)
+    self.layout.operator(LoadMediEvilOperator.bl_idname, text=LoadMediEvilOperator.bl_label)
+    self.layout.operator(SaveMediEvilOperator.bl_idname, text=SaveMediEvilOperator.bl_label)
 
 # Only needed if you want to add into a dynamic menu.
 def menu_func_import(self, context):
-    self.layout.operator(LoadFroggerOperator.bl_idname, text=LoadFroggerOperator.bl_label)
+    self.layout.operator(LoadMediEvilOperator.bl_idname, text=LoadMediEvilOperator.bl_label)
 
 def menu_func_export(self, context):
-    self.layout.operator(SaveFroggerOperator.bl_idname, text=SaveFroggerOperator.bl_label)
+    self.layout.operator(SaveMediEvilOperator.bl_idname, text=SaveMediEvilOperator.bl_label)
 
-class FroggerSceneData(bpy.types.PropertyGroup):
+class MediEvilSceneData(bpy.types.PropertyGroup):
     game_version: bpy.props.StringProperty(name="%s Version" % GAME_DISPLAY_NAME)
 
-class FroggerMaterialData(bpy.types.PropertyGroup):
+class MediEvilMaterialData(bpy.types.PropertyGroup):
     texture_id: bpy.props.IntProperty(name="Texture ID", description="The internal texture ID used by the version of %s the texture came from." % GAME_DISPLAY_NAME, default=MAGIC_UNKNOWN_TEXTURE_ID)
     texture_name: bpy.props.StringProperty(name="Texture Name", description="The name of the texture, if known. Used to allow importing back into FrogLord.", default='')
 
 def register():
-    bpy.utils.register_class(FroggerSceneData)
-    bpy.types.Scene.frogger_data = bpy.props.PointerProperty(type=FroggerSceneData)
+    bpy.utils.register_class(MediEvilSceneData)
+    bpy.types.Scene.medievil_data = bpy.props.PointerProperty(type=MediEvilSceneData)
 
-    bpy.utils.register_class(FroggerMaterialData)
-    bpy.types.Material.frogger_data = bpy.props.PointerProperty(type=FroggerMaterialData)
+    bpy.utils.register_class(MediEvilMaterialData)
+    bpy.types.Material.medievil_data = bpy.props.PointerProperty(type=MediEvilMaterialData)
 
-    bpy.utils.register_class(SaveFroggerOperator)
-    bpy.utils.register_class(LoadFroggerOperator)
+    bpy.utils.register_class(SaveMediEvilOperator)
+    bpy.utils.register_class(LoadMediEvilOperator)
     bpy.types.VIEW3D_MT_object.append(menu_func)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -809,10 +743,10 @@ def register():
 # This is only called when treated as an addon/extension, NOT when run directly inside Blender.
 # Info: https://blender.stackexchange.com/a/332133/86891
 def unregister():
-    bpy.utils.unregister_class(FroggerSceneData)
-    bpy.utils.unregister_class(FroggerMaterialData)
-    bpy.utils.unregister_class(SaveFroggerOperator)
-    bpy.utils.unregister_class(LoadFroggerOperator)
+    bpy.utils.unregister_class(MediEvilSceneData)
+    bpy.utils.unregister_class(MediEvilMaterialData)
+    bpy.utils.unregister_class(SaveMediEvilOperator)
+    bpy.utils.unregister_class(LoadMediEvilOperator)
     bpy.types.VIEW3D_MT_object.remove(menu_func)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)

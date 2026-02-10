@@ -326,7 +326,6 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        regenerate();
         writer.writeUnsignedByte((short) getGridSize());
         writer.writeUnsignedByte((short) getGridSize());
         writer.writeUnsignedShort(getGridSquareSize());
