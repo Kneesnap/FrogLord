@@ -53,6 +53,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
     @Getter private GameUIController<?> currentEditor;
     public static final URL MAIN_MENU_FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-main.fxml");
     public static final FXMLLoader MAIN_MENU_FXML_TEMPLATE_LOADER = new FXMLLoader(MAIN_MENU_FXML_TEMPLATE_URL);
+    private static final int MAX_CONSOLE_HISTORY = 25000;
 
     public MainMenuController(TGameInstance instance) {
         super(instance);
@@ -119,6 +120,8 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
     public void addConsoleEntry(String message) {
         if (this.consoleTextArea != null && Platform.isFxApplicationThread()) {
             this.consoleTextArea.appendText(message + System.lineSeparator());
+            if (this.consoleTextArea.getLength() > MAX_CONSOLE_HISTORY)
+                this.consoleTextArea.deleteText(0, this.consoleTextArea.getLength() - MAX_CONSOLE_HISTORY);
         } else {
             // Queue the message for later.
             synchronized (this.queuedLogMessages) {
@@ -139,7 +142,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         // Show the messages.
         synchronized (this.queuedLogMessages) {
             for (int i = 0; i < this.queuedLogMessages.size(); i++)
-                this.consoleTextArea.appendText(this.queuedLogMessages.get(i) + System.lineSeparator());
+                addConsoleEntry(this.queuedLogMessages.get(i));
             this.queuedLogMessages.clear();
         }
     }
