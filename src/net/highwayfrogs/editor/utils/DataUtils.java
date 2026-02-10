@@ -315,7 +315,7 @@ public class DataUtils {
      */
     public static short unsignedIntToShort(int unsignedInt) {
         if (unsignedInt < 0 || unsignedInt > 0xFFFF)
-            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,65535]. Value: " + unsignedInt);
+            throw new RuntimeException("The provided int value is outside the range of an unsigned short. [0,65535]. Value: " + unsignedInt);
         return (short) unsignedInt;
     }
 
@@ -340,7 +340,7 @@ public class DataUtils {
      */
     public static int unsignedLongToInt(long unsignedLong) {
         if (unsignedLong < 0 || unsignedLong > 0xFFFFFFFFL)
-            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: " + unsignedLong);
+            throw new RuntimeException("The provided long value is outside the range of an unsigned integer. [0,0xFFFFFFFF]. Value: " + unsignedLong);
         return (int) unsignedLong;
     }
 

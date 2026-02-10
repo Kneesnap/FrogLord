@@ -65,7 +65,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     public MediEvilMapPolygon(MediEvilMapFile mapFile) {
         super(mapFile.getGameInstance());
         this.mapFile = mapFile;
-        Arrays.fill(this.vertices, -1);
+        Arrays.fill(this.vertices, 0xFFFF); // Using -1 will break upon save if not replaced with something else. The original game uses 0xFFFF here.
         for (int i = 0; i < this.textureUvs.length; i++)
             this.textureUvs[i] = new SCByteTextureUV();
     }
