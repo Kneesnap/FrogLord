@@ -5,18 +5,23 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.grid.MediEvilMapGridSquare;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a QuadTree.
@@ -31,6 +36,7 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
 
 
     public static final String SIGNATURE = "SRTQ"; // 'QTRS'
+    private static final int MAX_TREE_DEPTH = 8;
 
     public MediEvilMapQuadTree(MediEvilGameInstance instance) {
         super(instance);
@@ -59,6 +65,62 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
             throw new IllegalStateException("File '" + file.getFileDisplayName() + "' could not be resolved to an actual map file! (Was: " + Utils.getSimpleName(file) + ")");
 
         return (MediEvilMapFile) file;
+    }
+
+    /**
+     * Regenerates the contents of the tree to become up-to-date with the other data seen within this level.
+     * Assumes polygon data is up-to-date, and that the GRID packet in the map file is up-to-date.
+     */
+    public void regenerate() {
+        this.nodes.clear();
+        this.gridLinks.clear();
+
+        // Find the polygons belonging to each grid square.
+        IntList gridSquareIds = new IntList();
+        Map<MediEvilMapGridSquare, List<MediEvilMapPolygon>> polygonsByGridSquare = new HashMap<>();
+        List<MediEvilMapPolygon> polygons = getMapFile().getGraphicsPacket().getPolygons();
+        for (int i = 0; i < polygons.size(); i++) {
+            MediEvilMapPolygon polygon = polygons.get(i);
+            gridSquareIds.clear();
+            getMapFile().getGridPacket().getGridSquareIndices(polygon, gridSquareIds);
+            if (gridSquareIds.isEmpty())
+                throw new IllegalStateException("A polygon did not have any grid squares (impossible if the GRID was regenerated previously.)");
+
+            for (int j = 0; j < gridSquareIds.size(); j++) {
+                int gridSquarePosition = gridSquareIds.get(j);
+                MediEvilMapGridSquare gridSquare = getMapFile().getGridPacket().getGridSquareByPosition(gridSquarePosition);
+                polygonsByGridSquare.computeIfAbsent(gridSquare, key -> new ArrayList<>()).add(polygon);
+            }
+        }
+
+        // Go through grid squares in order, adding grid links, then generating their tree.
+        List<MediEvilMapGridSquare> gridSquares = getMapFile().getGridPacket().getGridSquares();
+        for (int i = 0; i < gridSquares.size(); i++) {
+            MediEvilMapGridSquare gridSquare = gridSquares.get(i);
+            MediEvilMapQuadTreeNode newRootNode = new MediEvilMapQuadTreeNode(this, gridSquare);
+            this.gridLinks.add(new MediEvilMapGridInfo(gridSquare, newRootNode));
+
+            // Build tree.
+            List<MediEvilMapPolygon> gridSquarePolygons = polygonsByGridSquare.get(gridSquare);
+            if (gridSquarePolygons != null)
+                for (int j = 0; j < gridSquarePolygons.size(); j++)
+                    newRootNode.tryInsertPolygon(gridSquarePolygons.get(j), MAX_TREE_DEPTH);
+
+            // Insert tree nodes.
+            insertNodesRecursively(newRootNode);
+        }
+    }
+
+    private void insertNodesRecursively(MediEvilMapQuadTreeNode node) {
+        this.nodes.add(node);
+        if (node.getNorthEastChildNode() != null)
+            insertNodesRecursively(node.getNorthEastChildNode());
+        if (node.getSouthEastChildNode() != null)
+            insertNodesRecursively(node.getSouthEastChildNode());
+        if (node.getSouthWestChildNode() != null)
+            insertNodesRecursively(node.getSouthWestChildNode());
+        if (node.getNorthWestChildNode() != null)
+            insertNodesRecursively(node.getNorthWestChildNode());
     }
 
     @Override
@@ -101,6 +163,7 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
+        regenerate();
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(calculatePolygonCount());
         writer.writeUnsignedShort(this.gridLinks.size());
@@ -155,6 +218,4 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
         for (int i = 0; i < this.gridLinks.size(); i++)
             propertyList.addProperties("GridInfo[" + i + "]", this.gridLinks.get(i));
     }
-
-    // TODO: Implement logic to automatically generate these files.
 }

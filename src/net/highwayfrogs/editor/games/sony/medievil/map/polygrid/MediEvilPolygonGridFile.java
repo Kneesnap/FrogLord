@@ -342,8 +342,8 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             MediEvilPolygonGridSquare gridSquare = this.gridSquaresByPosition[i];
             if (gridSquare != null) {
-                if (this.gridSquares.get(i) != gridSquare)
-                    throw new IllegalStateException("The gridSquares list was ordered wrong. Got " + this.gridSquares.get(i) + " at index " + i + ", when " + gridSquare + " was expected.");
+                if (this.gridSquares.get(storageIndex) != gridSquare)
+                    throw new IllegalStateException("The gridSquares list was ordered wrong. Got " + this.gridSquares.get(storageIndex) + " at index " + storageIndex + ", when " + gridSquare + " was expected.");
 
                 writer.writeUnsignedShort(storageIndex);
                 storageIndex++;

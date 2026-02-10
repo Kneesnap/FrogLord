@@ -46,17 +46,32 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
     }
 
     /**
-     * Gets the x grid coordinate of this entry.
+     * Gets the x grid coordinate of this entry, as a 12.4 fixed point value.
      */
     public int getGridX() {
         return this.squareIndex % this.gridPacket.getGridSize();
     }
 
     /**
-     * Gets the y grid coordinate of this entry.
+     * Gets the world Z coordinate where this grid square ends, as a 12.4 fixed point integer.
+     */
+    public int getStartWorldX() {
+        return ((getGridX() * this.gridPacket.getGridSquareSize()) - MediEvilMapGridPacket.GRID_WORLD_CENTER_OFFSET);
+    }
+
+    /**
+     * Gets the y grid coordinate of this entry, as a 12.4 fixed point value.
      */
     public int getGridY() {
         return this.squareIndex / this.gridPacket.getGridSize();
+    }
+
+    /**
+     * Gets the world Z coordinate where this grid square begins, as a 12.4 fixed point integer.
+     * The world Z coordinate is based on the Y grid coordinate. (2D coordinate system vs 3D coordinate system)
+     */
+    public int getStartWorldZ() {
+        return ((getGridY() * this.gridPacket.getGridSquareSize()) - MediEvilMapGridPacket.GRID_WORLD_CENTER_OFFSET);
     }
 
     /**

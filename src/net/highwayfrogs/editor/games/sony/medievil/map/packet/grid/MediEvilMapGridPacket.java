@@ -69,6 +69,15 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
     }
 
     /**
+     * Gets the grid square by its position index.
+     * @param positionIndex the position index to resolve
+     * @return gridSquare
+     */
+    public MediEvilMapGridSquare getGridSquareByPosition(int positionIndex) {
+        return this.gridSquaresByPosition[positionIndex];
+    }
+
+    /**
      * Gets the grid square index containing the given X/Z world position.
      * @param x the world x coordinate
      * @param z the world z coordinate
@@ -89,7 +98,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
      * @param polygon the world x coordinate
      * @param output the list to save to
      */
-    private void getGridSquareIndices(MediEvilMapPolygon polygon, IntList output) {
+    public void getGridSquareIndices(MediEvilMapPolygon polygon, IntList output) {
         if (polygon == null)
             throw new NullPointerException("polygon");
         if (output == null)
@@ -251,6 +260,20 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         this.gridSquares.clear();
 
         IntList gridSquareIds = new IntList();
+
+        // Generate by polygons to ensure the quad tree always has entries if polygons are present.
+        // Example of when this occurs: PP_DATA.MAP
+        List<MediEvilMapPolygon> polygons = getParentFile().getGraphicsPacket().getPolygons();
+        for (int i = 0; i < polygons.size(); i++) {
+            MediEvilMapPolygon polygon = polygons.get(i);
+            gridSquareIds.clear();
+            getGridSquareIndices(polygon, gridSquareIds);
+            for (int j = 0; j < gridSquareIds.size(); j++) {
+                int gridSquareIndex = gridSquareIds.get(j);
+                if (this.gridSquaresByPosition[gridSquareIndex] == null)
+                    addGridSquareToList(this.gridSquaresByPosition[gridSquareIndex]  = new MediEvilMapGridSquare(this, gridSquareIndex));
+            }
+        }
 
         // Generate based on splines.
         List<MediEvilMap2DSpline> splines = getParentFile().getSpline2DPacket().getSplines();
@@ -449,8 +472,8 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             MediEvilMapGridSquare gridSquare = this.gridSquaresByPosition[i];
             if (gridSquare != null) {
-                if (this.gridSquares.get(i) != gridSquare)
-                    throw new IllegalStateException("The gridSquares list was ordered wrong. Got " + this.gridSquares.get(i) + " at index " + i + ", when " + gridSquare + " was expected.");
+                if (this.gridSquares.get(storageIndex) != gridSquare)
+                    throw new IllegalStateException("The gridSquares list was ordered wrong. Got " + this.gridSquares.get(storageIndex) + " at index " + storageIndex + ", when " + gridSquare + " was expected.");
 
                 writer.writeUnsignedShort(storageIndex);
                 storageIndex++;

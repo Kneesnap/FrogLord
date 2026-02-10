@@ -26,6 +26,12 @@ public class MediEvilMapGridInfo extends SCGameData<MediEvilGameInstance> implem
         this.quadTree = quadTree;
     }
 
+    public MediEvilMapGridInfo(MediEvilMapGridSquare gridSquare, MediEvilMapQuadTreeNode quadTreeNode) {
+        this(quadTreeNode.getQuadTree());
+        this.gridSquare = gridSquare;
+        this.quadTreeNode = quadTreeNode;
+    }
+
     @Override
     public void load(DataReader reader) {
         int gridStorageIndex = reader.readUnsignedShortAsInt();
