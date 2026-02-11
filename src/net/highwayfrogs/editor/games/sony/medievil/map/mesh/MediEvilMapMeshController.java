@@ -70,6 +70,11 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
     }
 
     @Override
+    protected boolean mapRendersFirst() {
+        return true;
+    }
+
+    @Override
     public String getMeshDisplayName() {
         return getMap().getFileDisplayName();
     }
