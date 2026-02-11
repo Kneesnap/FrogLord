@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony.shared.model.meshview;
 
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
-import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.PTTransformInstanceData;
@@ -100,7 +100,7 @@ public class PTModelMeshNode extends DynamicMeshAdapterNode<PTStaticPartCel> {
 
             // JavaFX uses counter-clockwise winding order.
             entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
-            entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
+            entry.addFace(vtxIndex4, uvIndex4, vtxIndex2, uvIndex2, vtxIndex3, uvIndex3);
         } else {
             int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
             int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F

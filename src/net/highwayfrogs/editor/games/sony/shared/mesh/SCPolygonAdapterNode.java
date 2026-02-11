@@ -192,8 +192,8 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             int vtxIndex4 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[3];
 
             // JavaFX uses counter-clockwise winding order.
-            faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
-            faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
+            faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1); // 0, 1, 2 -> 2, 1, 0
+            faceEntry.addFace(vtxIndex4, uvIndex4, vtxIndex2, uvIndex2, vtxIndex3, uvIndex3); // 2, 1, 3 -> 3, 1, 2
         } else {
             int uvIndex1 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
             int uvIndex2 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
@@ -205,7 +205,7 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             int vtxIndex3 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[2];
 
             // JavaFX uses counter-clockwise winding order.
-            faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
+            faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1); // 0, 1, 2 -> 2, 1, 0
         }
     }
 

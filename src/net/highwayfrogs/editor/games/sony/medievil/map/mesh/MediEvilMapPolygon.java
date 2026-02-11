@@ -52,10 +52,11 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     // Flag 2 is if it has been rendered. (Runtime only)
     private static final int FLAG_SORT_MASK = Constants.BIT_FLAG_4 | Constants.BIT_FLAG_3;
     private static final int FLAG_SORT_MASK_SHIFT = 3;
-    public static final int FLAG_TRIANGLE_A_DOWN = Constants.BIT_FLAG_5;
-    public static final int FLAG_TRIANGLE_B_DOWN = Constants.BIT_FLAG_6; // Seems unused (?) Is it kept in-sync with the previous flag?
+    public static final int FLAG_TRIANGLE_A_DOWN = Constants.BIT_FLAG_5; // Auto generated in the original data based on the normal.
+    public static final int FLAG_TRIANGLE_B_DOWN = Constants.BIT_FLAG_6; // Seems unused (?) Auto generated in the original data based on the normal.
     private static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9; // Seems to be runtime only, so don't include it.
-    public static final int FLAG_SPECIAL = Constants.BIT_FLAG_10; // TODO: What is this for? Is it runtime only?
+    public static final int FLAG_SPECIAL = Constants.BIT_FLAG_10; // Marks the polygon as findable by the game code. Often used to dynamically change/remove polygons. (Such as the collapsing floor in Desecrated Church, or the staircase in the Hall of Heroes)
+    // TODO: Allow viewing special polygons, and toggling if polygons are special in FrogLord.
 
     private static final int VALIDATION_FLAGS = FLAG_QUAD | FLAG_TEXTURED | FLAG_SORT_MASK
             | FLAG_TRIANGLE_A_DOWN | FLAG_TRIANGLE_B_DOWN | FLAG_SPECIAL;
@@ -84,6 +85,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
+        updateFlags();
         for (int i = 0; i < this.vertices.length; i++)
             writer.writeUnsignedShort(this.vertices[i]);
         writer.writeUnsignedShort(this.textureId);
@@ -134,6 +136,25 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      */
     public MediEvilMapPolygonSortMode getSortMode() {
         return MediEvilMapPolygonSortMode.values()[(this.flags & FLAG_SORT_MASK) >>> FLAG_SORT_MASK_SHIFT];
+    }
+
+    /**
+     * Updates the polygon flags.
+     */
+    private void updateFlags() {
+        boolean triangleADown = getNormalY_A() < 0F;
+        boolean triangleBDown = false;
+        if (getVertexCount() == 4) {
+            if (triangleADown) {
+                triangleBDown = (getNormalY_B() > 0F);
+            } else {
+                triangleBDown = (getNormalY_B() < 0F);
+            }
+        }
+
+        // This isn't a perfect match for the original (likely due to precision loss in the vertices being s16 instead of f32, but it works / does the intent of what the original data shows.
+        setFlagMask(FLAG_TRIANGLE_A_DOWN, triangleADown);
+        setFlagMask(FLAG_TRIANGLE_B_DOWN, triangleBDown);
     }
 
     /**
@@ -248,6 +269,36 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
         TextureRemapArray textureRemap = levelTableEntry.getRemap();
         return textureRemap != null ? textureRemap.resolveTexture(this.textureId, levelTableEntry.getVloFile()) : null;
+    }
+
+    private float getNormalY_A() {
+        return calculateNormalY(0, 1, 2); // Verified PSX winding order.
+    }
+
+    private float getNormalY_B() {
+        return calculateNormalY(2, 1, 3); // Verified PSX winding order.
+    }
+
+    @SuppressWarnings("ExtractMethodRecommender")
+    private float calculateNormalY(int vertexId0, int vertexId1, int vertexId2) {
+        List<SVector> vertices = getMapFile().getGraphicsPacket().getVertices();
+        SVector vertex0 = vertices.get(this.vertices[vertexId0]);
+        SVector vertex1 = vertices.get(this.vertices[vertexId1]);
+        SVector vertex2 = vertices.get(this.vertices[vertexId2]);
+
+        // Two vectors in the face plane.
+        float edge1X = vertex1.getFloatX() - vertex0.getFloatX();
+        //float edge1Y = vertex1.getFloatY() - vertex0.getFloatY();
+        float edge1Z = vertex1.getFloatZ() - vertex0.getFloatZ();
+        float edge2X = vertex2.getFloatX() - vertex0.getFloatX();
+        //float edge2Y = vertex2.getFloatY() - vertex0.getFloatY();
+        float edge2Z = vertex2.getFloatZ() - vertex0.getFloatZ();
+
+        // Outer product. (But just the Y part)
+        //float normalX = (edge1Y * edge2Z) - (edge1Z * edge2Y);
+        float normalY = (edge1Z * edge2X) - (edge1X * edge2Z);
+        //float normalZ = (edge1X * edge2Y) - (edge1Y * edge2X);
+        return normalY;
     }
 
     /**

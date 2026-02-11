@@ -152,16 +152,6 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
                     getEditTarget().setSortMode(newValue);
             });
 
-            this.polygonIsTriangleADownCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (!this.polygonIsTriangleADownCheckBox.isDisabled() && getEditTarget() != null)
-                    getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_TRIANGLE_A_DOWN, newValue);
-            });
-
-            this.polygonIsTriangleBDownCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (!this.polygonIsTriangleBDownCheckBox.isDisabled() && getEditTarget() != null)
-                    getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_TRIANGLE_B_DOWN, newValue);
-            });
-
             this.polygonIsSpecialCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
                 if (!this.polygonIsSpecialCheckBox.isDisabled() && getEditTarget() != null)
                     getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_SPECIAL, newValue);
@@ -173,8 +163,6 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
             if (isStaticUISetup()) {
                 MediEvilMapPolygon polygon = getEditTarget();
                 this.polygonSortModeSelector.setDisable(true);
-                this.polygonIsTriangleADownCheckBox.setDisable(true);
-                this.polygonIsTriangleBDownCheckBox.setDisable(true);
                 this.polygonIsSpecialCheckBox.setDisable(true);
 
                 this.polygonSortModeSelector.getSelectionModel().select(polygon != null ? polygon.getSortMode() : MediEvilMapPolygonSortMode.SORT_BY_AVERAGE_Z_ALLOW_OVERRIDE);
@@ -183,10 +171,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
                 this.polygonIsSpecialCheckBox.setSelected(polygon != null && polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_SPECIAL));
 
                 // These behavior patterns are untested/might not be consistent with the game.
-                boolean isQuad = polygon != null && polygon.getPolygonType().isQuad();
                 this.polygonSortModeSelector.setDisable(polygon == null);
-                this.polygonIsTriangleADownCheckBox.setDisable(polygon == null);
-                this.polygonIsTriangleBDownCheckBox.setDisable(!isQuad);
                 this.polygonIsSpecialCheckBox.setDisable(polygon == null);
             }
 
