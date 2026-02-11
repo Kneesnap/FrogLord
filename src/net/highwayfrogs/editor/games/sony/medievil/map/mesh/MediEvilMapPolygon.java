@@ -279,7 +279,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         return calculateNormalY(2, 1, 3); // Verified PSX winding order.
     }
 
-    @SuppressWarnings("ExtractMethodRecommender")
+    @SuppressWarnings("UnnecessaryLocalVariable")
     private float calculateNormalY(int vertexId0, int vertexId1, int vertexId2) {
         List<SVector> vertices = getMapFile().getGraphicsPacket().getVertices();
         SVector vertex0 = vertices.get(this.vertices[vertexId0]);

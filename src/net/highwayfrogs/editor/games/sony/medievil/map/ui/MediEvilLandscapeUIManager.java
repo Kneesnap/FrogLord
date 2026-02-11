@@ -5,6 +5,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
+import lombok.Getter;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -25,13 +26,22 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.RawColorTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
+
+import java.util.List;
 
 /**
  * Manages UI relating to the landscape/terrain of a MediEvil map.
  * Created by Kneesnap on 3/16/2024.
  */
 public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvilMapMesh, MediEvilMapPolygon> {
+    @Getter private CheckBox highlightSpecialPolygonsCheckBox;
+
+    public static final javafx.scene.paint.Color POLYGON_HIGHLIGHT_BLUE = javafx.scene.paint.Color.rgb(0, 0, 255, .333F);
+    public static final RawColorTextureSource MATERIAL_POLYGON_BLUE = new RawColorTextureSource(POLYGON_HIGHLIGHT_BLUE);
+
+
     public MediEvilLandscapeUIManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);
     }
@@ -116,6 +126,15 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
         return this.cachedSelectedPolygonVertexIds;
     }
 
+    private void updateSpecialPolygonPreview() {
+        List<MediEvilMapPolygon> polygons = getMap().getGraphicsPacket().getPolygons();
+        ITextureSource texturePreview = this.highlightSpecialPolygonsCheckBox.isSelected() ? MATERIAL_POLYGON_BLUE : null;
+        for (int i = 0; i < polygons.size(); i++) {
+            MediEvilMapPolygon polygon = polygons.get(i);
+            getPolygonHighlightNode().setOverlayTexture(getMeshEntryForPolygon(polygon), polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_SPECIAL) ? texturePreview : null);
+        }
+    }
+
     public static class MediEvilPolygonShadingEditor extends BakedLandscapePolygonShadingEditor<MediEvilMapPolygon> {
         private ComboBox<MediEvilMapPolygonSortMode> polygonSortModeSelector;
         private CheckBox polygonIsTriangleADownCheckBox;
@@ -133,12 +152,15 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
 
         @Override
         public void setupStaticUI(GUIEditorGrid grid) {
+            getManager().highlightSpecialPolygonsCheckBox = grid.addCheckBox("Highlight Special Polygons", false, newValue -> getManager().updateSpecialPolygonPreview());
+            grid.addSeparator();
+
             super.setupStaticUI(grid);
             // Polygon type information.
             this.polygonSortModeSelector = grid.addEnumSelector("Sort Mode", MediEvilMapPolygonSortMode.SORT_BY_AVERAGE_Z_ALLOW_OVERRIDE, MediEvilMapPolygonSortMode.values(), false, null);
             this.polygonIsTriangleADownCheckBox = grid.addCheckBox("Triangle A Faces Down", false, null);
             this.polygonIsTriangleBDownCheckBox = grid.addCheckBox("Triangle B Faces Down", false, null);
-            this.polygonIsSpecialCheckBox = grid.addCheckBox("Special", false, null);
+            this.polygonIsSpecialCheckBox = grid.addCheckBox("Special (Usable by game code)", false, null);
             this.polygonSortModeSelector.setDisable(true);
             this.polygonIsTriangleADownCheckBox.setDisable(true);
             this.polygonIsTriangleBDownCheckBox.setDisable(true);
@@ -153,8 +175,10 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
             });
 
             this.polygonIsSpecialCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (!this.polygonIsSpecialCheckBox.isDisabled() && getEditTarget() != null)
+                if (!this.polygonIsSpecialCheckBox.isDisabled() && getEditTarget() != null) {
                     getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_SPECIAL, newValue);
+                    getManager().updateSpecialPolygonPreview();
+                }
             });
         }
 

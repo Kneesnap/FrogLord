@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMesh
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh.MediEvilShadedTextureManager;
+import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
@@ -61,6 +62,7 @@ public class MediEvilMapMesh extends PSXShadedDynamicMesh<MediEvilMapPolygon, Me
         getTextureAtlas().addTexture(YELLOW_COLOR);
         getTextureAtlas().addTexture(GREEN_COLOR);
         getTextureAtlas().addTexture(BakedLandscapeUIManager.MATERIAL_POLYGON_HIGHLIGHT);
+        getTextureAtlas().addTexture(MediEvilLandscapeUIManager.MATERIAL_POLYGON_BLUE);
         this.flatPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
         this.gouraudPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.GREEN_INSTANCE);
     }
