@@ -121,7 +121,8 @@ def create_shaded_material(material, folder, file_name):
 
     clear_material(material)
     material.preview_render_type = 'FLAT'
-    material.use_nodes = True
+    if bpy.app.version[0] < 6:
+        untextured_material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
 
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
@@ -332,7 +333,8 @@ def load_map_file(operator, context, filepath):
     untextured_material = bpy.data.materials[UNTEXTURED_MATERIAL_NAME] if UNTEXTURED_MATERIAL_NAME in bpy.data.materials else bpy.data.materials.new(name=UNTEXTURED_MATERIAL_NAME)
     untextured_material.frogger_data.texture_id = MAGIC_NO_TEXTURE_ID # Mark as different from the default 'no texture ID' value.
     untextured_material_id = len(mesh.materials)
-    untextured_material.use_nodes = True
+    if bpy.app.version[0] < 6:
+        untextured_material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
     clear_material(untextured_material)
 
     untextured_material_nodes = untextured_material.node_tree.nodes
