@@ -183,8 +183,7 @@ public class MFSUtil {
 
         // Apply the results to the map file.
         // 1) Apply new vertices.
-        map.getGraphicsPacket().getVertices().clear();
-        map.getGraphicsPacket().getVertices().addAll(context.getNewVertices());
+        map.getGraphicsPacket().setVertices(context.getNewVertices());
 
         // 2) Apply new polygons.
         map.getGraphicsPacket().getPolygons().clear();
