@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -121,7 +122,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        setVertices(this.vertices); // Since this behavior is accurate to original game data, it is safe to regenerate the vertex tables on save.
+        rebuildVertexGrid(); // Since this behavior is accurate to original game data, it is safe to regenerate the vertex tables on save.
         writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_G3).count());// g3PolyCount
         writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_G4).count());// g4PolyCount
         writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_GT3).count());// gt3PolyCount
@@ -195,10 +196,30 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
     }
 
     /**
+     * Rebuild the vertex grid.
+     */
+    public void rebuildVertexGrid() {
+        SVector[] oldVertices = this.vertices.toArray(new SVector[0]);
+        generateVertexGrid();
+
+        int[] newVertexIds = new int[this.vertices.size()];
+        for (int i = 0; i < this.vertices.size(); i++)
+            newVertexIds[Utils.indexOfIdentity(oldVertices, this.vertices.get(i))] = i;
+
+        // Update polygons to use new IDs.
+        for (int i = 0; i < this.polygons.size(); i++) {
+            MediEvilMapPolygon polygon = this.polygons.get(i);
+            int vertexCount = polygon.getVertexCount();
+            for (int j = 0; j < vertexCount; j++)
+                polygon.getVertices()[j] = newVertexIds[polygon.getVertices()[j]];
+        }
+    }
+
+    /**
      * Sets the vertices which are stored in the packet.
      * @param vertices the vertices to apply
      */
-    public void setVertices(List<SVector> vertices) {
+    public void setVertices(List<SVector> vertices, boolean rebuildVertexGridNow) {
         if (vertices == null)
             throw new NullPointerException("vertices");
 
@@ -208,7 +229,18 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
             this.vertices.addAll(vertices);
         }
 
-        // Sort vertices.
+        // Rebuild vertex grid.
+        if (rebuildVertexGridNow) {
+            if (this.vertices.size() == vertices.size()) {
+                rebuildVertexGrid();
+            } else {
+                this.polygons.clear();
+                generateVertexGrid();
+            }
+        }
+    }
+
+    private void generateVertexGrid() {
         this.vertices.sort(this.vertexOrder);
 
         // Clear the vertex tables.

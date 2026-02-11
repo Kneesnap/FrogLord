@@ -182,14 +182,15 @@ public class MFSUtil {
         context.executeCommands(commandParser, inputFile); // If any error occurs, an exception will be thrown, and changes undone.
 
         // Apply the results to the map file.
-        // 1) Apply new vertices.
-        map.getGraphicsPacket().setVertices(context.getNewVertices());
+        // 1) Apply new vertices to ensure polygons are loaded properly.
+        map.getGraphicsPacket().setVertices(context.getNewVertices(), false);
 
         // 2) Apply new polygons.
         map.getGraphicsPacket().getPolygons().clear();
         map.getGraphicsPacket().getPolygons().addAll(context.getNewPolygons());
 
         // 3) Generate collision data based on the new polygons.
+        map.getGraphicsPacket().rebuildVertexGrid();
         map.regeneratePolygonData();
 
         // 4) Finish.
