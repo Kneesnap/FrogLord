@@ -43,13 +43,14 @@ public class SCMapFileSyncUtils {
         if (mapFile == null)
             throw new NullPointerException("mapFile");
 
-        builder.append("# File Export (.").append(fileExtension).append(") -- By FrogLord ").append(Constants.VERSION).append('\n');
+        SCGameInstance instance = mapFile.getGameInstance();
+        builder.append("# ").append(instance.getGameType().getDisplayName()).append(" File Export (.").append(fileExtension).append(") -- By FrogLord ").append(Constants.VERSION).append('\n');
         builder.append("# Map: ").append(mapFile.getFileDisplayName()).append('\n');
         builder.append("# Export Time: ").append(new Date()).append('\n');
 
         // Write format version.
         builder.append(CommandFormatVersion.LABEL).append(' ').append(currentFormatVersion).append("\n");
-        builder.append(CommandGameVersion.LABEL).append(' ').append(mapFile.getGameInstance().getVersionConfig().getInternalName()).append("\n\n");
+        builder.append(CommandGameVersion.LABEL).append(' ').append(instance.getVersionConfig().getInternalName()).append("\n\n");
     }
 
     /**

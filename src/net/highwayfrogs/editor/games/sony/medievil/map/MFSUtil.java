@@ -27,7 +27,9 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -54,6 +56,13 @@ public class MFSUtil {
 
     // Increment this with any major change to the format.
     public static final int CURRENT_FORMAT_VERSION = 1;
+
+    private static final int FLAG_POLYGON_SPECIAL = Constants.BIT_FLAG_0;
+    // This flag is known as the "Blender fix".
+    // Blender will automatically clear any faces which use the same vertices, even if the winding order is different, material is different, etc.
+    // The solution to this problem is to create new vertices at the same positions as the old vertices, and faces using the same vertices should use these new vertices instead.
+    // This flag marks the polygon as needing this fix, for applications (such as Blender) which have this limitation.
+    private static final int FLAG_POLYGON_NEEDS_DUPLICATE_VERTEX_FIX = Constants.BIT_FLAG_1;
 
     public static final String FILE_EXTENSION = "mfs";
     public static final BrowserFileType FILE_TYPE = new BrowserFileType("MediEvil File Sync", FILE_EXTENSION);
@@ -118,17 +127,29 @@ public class MFSUtil {
         }
         builder.append(Constants.NEWLINE);
 
-        // Faces:
+
+        // Prepare faces by finding polygons with backfaces.
         List<MediEvilMapPolygon> polygons = map.getGraphicsPacket().getPolygons();
+        Set<MediEvilMapPolygon> polygonsNeedingBlenderFix = findPolygonsWhichNeedBlenderFix(polygons, vertices.size());
+
+        // Faces:
         for (MediEvilMapPolygon polygon : polygons) {
             String polygonTypeName = polygon.getPolygonType().name().toLowerCase();
             int underscoreIndex = polygonTypeName.lastIndexOf('_');
             if (underscoreIndex >= 0)
                 polygonTypeName = polygonTypeName.substring(underscoreIndex + 1);
 
-            builder.append(COMMAND_POLYGON_NAME).append(' ')
-                    .append(polygonTypeName).append(' ')
-                    .append(polygon.getFlags());
+            // Write polygon type
+            builder.append(COMMAND_POLYGON_NAME).append(' ').append(polygonTypeName);
+
+            // Write flags.
+            int polygonFlags = 0;
+            if (polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_SPECIAL))
+                polygonFlags |= FLAG_POLYGON_SPECIAL;
+            if (polygonsNeedingBlenderFix.contains(polygon))
+                polygonFlags |= FLAG_POLYGON_NEEDS_DUPLICATE_VERTEX_FIX;
+
+            builder.append(' ').append(polygonFlags);
 
             // Write vertices.
             for (int i = 0; i < polygon.getVertexCount(); i++)
@@ -262,9 +283,11 @@ public class MFSUtil {
                 throw new CommandListSyntaxError("Invalid polygon type name: '" + polygonTypeName + "', was expected to be : 'g3', 'g4', 'gt3', 'gt4'.");
         }
 
-        int flags = args.useNext().getAsInteger();
-        newPolygon.setFlagMask(flags, true); // Apply flags before setting polygon type, since polygon type is tracked as flags.
         newPolygon.setPolygonType(polygonType);
+
+        // Apply flags.
+        int polygonFlags = args.useNext().getAsInteger();
+        newPolygon.setFlagMask(MediEvilMapPolygon.FLAG_SPECIAL, (polygonFlags & FLAG_POLYGON_SPECIAL) == FLAG_POLYGON_SPECIAL);
 
         // Read vertices.
         for (int i = 0; i < newPolygon.getVertexCount(); i++)
@@ -285,5 +308,75 @@ public class MFSUtil {
         }
 
         context.getNewPolygons().add(newPolygon);
+    }
+
+    @SuppressWarnings({"unchecked", "ExtractMethodRecommender"})
+    private static Set<MediEvilMapPolygon> findPolygonsWhichNeedBlenderFix(List<MediEvilMapPolygon> polygons, int totalVertexCount) {
+        Set<MediEvilMapPolygon> polygonsWithBackFace = new HashSet<>();
+
+        // 1) Build hash table.
+        List<MediEvilMapPolygon>[] trianglesByVertexIdSums = new List[(totalVertexCount * 3)];
+        List<MediEvilMapPolygon>[] quadsByVertexIdSums = new List[(totalVertexCount * 4)];
+        for (int i = 0; i < polygons.size(); i++) {
+            MediEvilMapPolygon polygon = polygons.get(i);
+            int vertexCount = polygon.getVertexCount();
+
+            // Calculated vertex ID sum. (Something of a hash code to quickly eliminate most polygons. It's a pretty bad hash, but it's good enough.)
+            int vertexIdSum = 0;
+            for (int j = 0; j < vertexCount; j++)
+                vertexIdSum += polygon.getVertices()[j];
+
+            // Add polygon to list.
+            List<MediEvilMapPolygon>[] vertexIdSums = (vertexCount == 3) ? trianglesByVertexIdSums : quadsByVertexIdSums;
+            List<MediEvilMapPolygon> polygonsBySum = vertexIdSums[vertexIdSum];
+            if (polygonsBySum == null)
+                vertexIdSums[vertexIdSum] = polygonsBySum = new ArrayList<>();
+
+            polygonsBySum.add(polygon);
+        }
+
+        // 2) Find back-face polygons and remove them.
+        for (int i = 0; i < polygons.size(); i++) {
+            MediEvilMapPolygon polygonA = polygons.get(i);
+            int vertexCount = polygonA.getVertexCount();
+
+            // Calculated vertex ID sum. (Something of a hash code to quickly eliminate most polygons. It's a pretty bad hash technically, but it's good enough.)
+            int vertexIdSum = 0;
+            for (int j = 0; j < vertexCount; j++)
+                vertexIdSum += polygonA.getVertices()[j];
+
+            // Get polygon list.
+            List<MediEvilMapPolygon>[] vertexIdSums = (vertexCount == 3) ? trianglesByVertexIdSums : quadsByVertexIdSums;
+            List<MediEvilMapPolygon> polygonsBySum = vertexIdSums[vertexIdSum];
+            polygonsBySum.remove(polygonA); // Prevent access.
+
+            for (int j = 0; j < polygonsBySum.size(); j++) {
+                MediEvilMapPolygon polygonB = polygonsBySum.get(j);
+                if (doPolygonsShareVertices(polygonA, polygonB) && polygonsWithBackFace.add(polygonB))
+                    polygonsBySum.remove(j--); // Remove polygonB.
+            }
+        }
+
+        return polygonsWithBackFace;
+    }
+
+    /**
+     * Test if two polygons form a single face using the same vertices.
+     * If they do, at least one of the polygons needs the "Blender fix" described above.
+     * @param polygonA the first polygon to test
+     * @param polygonB the second polygon to test
+     * @return true iff the polygons share vertices
+     */
+    public static boolean doPolygonsShareVertices(MediEvilMapPolygon polygonA, MediEvilMapPolygon polygonB) {
+        int vertexCount = polygonA.getVertexCount();
+        if (vertexCount != polygonB.getVertexCount())
+            return false; // Same type, same vertex count.
+
+        // If the vertices are not the same across the two polygons, abort, they cannot be backfaces.
+        for (int i = 0; i < vertexCount; i++)
+            if (Utils.indexOf(polygonB.getVertices(), polygonA.getVertices()[i]) < 0)
+                return false;
+
+        return true;
     }
 }

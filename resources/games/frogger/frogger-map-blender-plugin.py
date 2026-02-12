@@ -122,7 +122,7 @@ def create_shaded_material(material, folder, file_name):
     clear_material(material)
     material.preview_render_type = 'FLAT'
     if bpy.app.version[0] < 6:
-        untextured_material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
+        material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
 
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
@@ -621,7 +621,7 @@ def save_map_file(operator, context, filepath):
     writer = open(filepath, "w", encoding="utf-8")
 
     # Write header
-    writer.write("# File Export (.%s) -- By Blender\n" % FILE_EXTENSION)
+    writer.write("# %s File Export (.%s) -- By Blender\n" % (GAME_DISPLAY_NAME, FILE_EXTENSION))
     writer.write("# File: '%s'\n" % (bpy.path.basename(bpy.context.blend_data.filepath) or 'Untitled'))
     writer.write("# Export Time: %s\n" % (str(datetime.now())))
     writer.write("version_ffs %d\n" % (CURRENT_FORMAT_VERSION))

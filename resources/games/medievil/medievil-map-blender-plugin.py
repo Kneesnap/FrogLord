@@ -42,7 +42,9 @@ import re
 import io
 from datetime import datetime
 from mathutils import Vector
+from mathutils import kdtree
 import addon_utils
+import sys
 
 # ImportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
@@ -60,6 +62,8 @@ UNTEXTURED_MATERIAL_NAME = "NoTexture"
 UV_LAYER_NAME = "Texture Uvs"
 VERTEX_COLOR_LAYER_NAME = "Vertex Colors"
 POLYGON_FLAG_LAYER_NAME = "Polygon Flags"
+
+FLAG_POLYGON_FIX_VERTICES = 1 << 1 # This bit flag is a signal to use a fix for duplicate vertices.
 
 def main(context):
     print("Hello from FrogLord Blender (%s)" % GAME_DISPLAY_NAME)
@@ -122,7 +126,7 @@ def create_shaded_material(material, folder, file_name):
     clear_material(material)
     material.preview_render_type = 'FLAT'
     if bpy.app.version[0] < 6:
-        untextured_material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
+        material.use_nodes = True # Removed in 6.0, necessary in < 5.0.
 
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
@@ -448,6 +452,15 @@ def load_map_file(operator, context, filepath):
             if len(duplicate_vertices) > 0:
                 downsized_face_count += 1
 
+            # Blender does not support multiple polygons using the same set of vertex IDs.
+            # This bit flag marks the polygon as needing a fix to work properly.
+            # Our fix is to create new vertices at the same positions as the previous ones, thus the face no longer needs to share vertex IDs with another face.
+            if (polygon_flags & FLAG_POLYGON_FIX_VERTICES) == FLAG_POLYGON_FIX_VERTICES:
+                for i, vertex_id in enumerate(vertices):
+                    vertices[i] = len(pending_vertex_data)
+                    pending_vertex_data.append(pending_vertex_data[vertex_id])
+                    vertex_colors.append(vertex_colors[vertex_id])
+
             # Store the polygon data for later access.
             pending_face_data.append(vertices)
             extra_face_data.append((polygon_flags, material_index, tex_coords))
@@ -513,6 +526,50 @@ def load_map_file(operator, context, filepath):
     operator.report({"INFO"}, "Successfully imported the map!")
     return {'FINISHED'}
 
+# Create a polygon index remap to ensure polygons with the "vertex fix" flag return to using their original vertices.
+def remove_duplicate_vertices(operator, context, mesh, bm, polygon_flag_layer):
+    # 1) Create a kdtree for efficient vertex resolution.
+    kd = kdtree.KDTree(len(mesh.vertices))
+    for id, vertex in enumerate(mesh.vertices):
+        kd.insert(vertex.co, id)
+    kd.balance() # Must be called before using any find() methods.
+
+    # 2) Find a list of vertices which would be nice to remove.
+    removable_vertex_ids = set(range(len(mesh.vertices)))
+    for polygon_index, polygon in enumerate(mesh.polygons):
+        polygon_flags = bm.faces[polygon_index][polygon_flag_layer]
+        if (polygon_flags & FLAG_POLYGON_FIX_VERTICES) == FLAG_POLYGON_FIX_VERTICES:
+            continue # Skip polygons marked as duplicate, since those are the ones we'd like to remove vertices from.
+
+        for vertex_id in polygon.vertices:
+            removable_vertex_ids.discard(vertex_id)
+
+    # 3) For all the vertices we'd like to remove, find replacement vertices for them.
+    # If no replacements are found, the vertex will not be removed.
+    removed_vertex_ids = []
+    vertex_id_remap = []
+    offset_vertex_index = 0
+    for vertex_id in range(len(mesh.vertices)):
+        best_vertex_id = -1
+
+        # Try to remove vertex.
+        if vertex_id in removable_vertex_ids:
+            best_vertex_dist = sys.float_info.max
+            for (pos, index, dist) in kd.find_range(mesh.vertices[vertex_id].co, 0.0625): # Search by one unit of decimal precision in the game data.
+                if index != vertex_id and dist < best_vertex_dist and index not in removable_vertex_ids:
+                    best_vertex_id = index
+                    best_vertex_dist = dist
+
+        # Add to the ID remap.
+        if best_vertex_id >= 0:
+            removed_vertex_ids.append(vertex_id)
+            vertex_id_remap.append(best_vertex_id)
+        else: # Remap to an offset version of the previous index.
+            vertex_id_remap.append(offset_vertex_index)
+            offset_vertex_index += 1
+
+    return removed_vertex_ids, vertex_id_remap
+
 def save_map_file(operator, context, filepath):
     if not LEVEL_MESH_NAME in bpy.data.meshes:
         operator.report({"ERROR"}, "Could not find a mesh named '%s'!" % LEVEL_MESH_NAME)
@@ -560,7 +617,7 @@ def save_map_file(operator, context, filepath):
     writer = open(filepath, "w", encoding="utf-8")
 
     # Write header
-    writer.write("# File Export (.%s) -- By Blender\n" % FILE_EXTENSION)
+    writer.write("# %s File Export (.%s) -- By Blender\n" % (GAME_DISPLAY_NAME, FILE_EXTENSION))
     writer.write("# File: '%s'\n" % (bpy.path.basename(bpy.context.blend_data.filepath) or 'Untitled'))
     writer.write("# Export Time: %s\n" % (str(datetime.now())))
     writer.write("version_format %d\n" % (CURRENT_FORMAT_VERSION))
@@ -583,10 +640,14 @@ def save_map_file(operator, context, filepath):
     if len(seen_materials) > 0:
         writer.write('\n')
 
+    # Create a polygon index remap to ensure polygons with the "vertex fix" flag return to using their original vertices.
+    removed_vertex_ids, vertex_id_remap = remove_duplicate_vertices(operator, context, mesh, bm, polygon_flag_layer)
+
     # Calculate vertex color sums.
     vertex_colors = []
     for polygon in mesh.polygons:
         for i, vertex_id in enumerate(polygon.vertices):
+            vertex_id = vertex_id_remap[vertex_id]
             while vertex_id >= len(vertex_colors):
                 vertex_colors.append((0.0, 0.0, 0.0, 0)) # (r, g, b, count)
 
@@ -604,7 +665,8 @@ def save_map_file(operator, context, filepath):
 
     # Write Vertices:
     for i, vert in enumerate(bm.verts):
-        writer.write("vertex %f %f %f %06X\n" % (vert.co.x, -vert.co.z, vert.co.y, vertex_colors[i]))
+        if i not in removed_vertex_ids:
+            writer.write("vertex %f %f %f %06X\n" % (vert.co.x, -vert.co.z, vert.co.y, vertex_colors[i]))
     writer.write('\n')
 
     # Setup Data:
@@ -625,7 +687,7 @@ def save_map_file(operator, context, filepath):
         # Prepare polygon data for writing.
         vertices = []
         for vertex in polygon.vertices:
-            vertices.append(vertex)
+            vertices.append(vertex_id_remap[vertex])
         vertices = to_froglord_order(vertices)
 
         uvs = []
