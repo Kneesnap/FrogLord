@@ -228,6 +228,10 @@ def get_game_texture_name(material):
     name_match = re.fullmatch(r'[0-9A-Za-z_]+', material.name)
     return material.name if name_match is not None else None
 
+def create_game_texture_name(material):
+    name = material.name.replace(' ', '_')
+    return re.sub('[^a-zA-Z0-9_]+', '', name)
+
 def swap_blender_order(array):
     # Swaps between <Frogger Polygon Data Order> <-> <Blender Data Order>
     if len(array) == 4:
@@ -632,16 +636,40 @@ def save_map_file(operator, context, filepath):
     seen_materials = set()
     material_index_remaps = {}
     for material in mesh.materials:
-        material_id = get_game_texture_id(material)
+        game_texture_id = get_game_texture_id(material)
         texture_name = get_game_texture_name(material)
-        if material_id >= 0 and not material_id in seen_materials:
-            if texture_name is not None:
-                writer.write("texture %d %s\n" % (material_id, texture_name))
-            else:
-                writer.write("texture %d\n" % (material_id))
-            material_index_remaps[material_id] = len(material_index_remaps)
-            seen_materials.add(material_id)
-    if len(seen_materials) > 0:
+
+        # If we have a valid game texture ID, validate it has not been seen before.
+        if game_texture_id >= 0:
+            if game_texture_id in seen_materials:
+                continue # texture ID already present, so skip the material.
+
+            material_index_remaps[game_texture_id] = len(material_index_remaps)
+            seen_materials.add(game_texture_id)
+        elif game_texture_id == MAGIC_UNKNOWN_TEXTURE_ID: # If we have an unknown texture ID, list it as a new material.
+            texture_name = create_game_texture_name(material) # This texture should be added, so FrogLord will create a placeholder texture.
+            if texture_name is None or len(texture_name) == 0:
+                operator.report({"WARNING"}, "Material '%s' had an invalid name, so exporting has been aborted." % (material.name))
+                writer.close()
+                return {'CANCELLED'} # We must cancel because otherwise the material IDs
+
+            if texture_name in material_index_remaps:
+                continue # Duplicate texture name. (Treat as same material)
+
+            material_index_remaps[material.name] = len(material_index_remaps)
+        elif game_texture_id == MAGIC_NO_TEXTURE_ID:
+            continue # No texture.
+        else: # Something unexpected happened, we should warn about it. (Uses of this material will warn later and be treated as untextured)
+            operator.report({"WARNING"}, "Skipping material '%s', because it had an unexpected game texture ID value (%d)." % (material.name, game_texture_id))
+            continue
+
+        # Write the texture definition.
+        if texture_name is not None:
+            writer.write("texture %d %s\n" % (game_texture_id, texture_name))
+        else:
+            writer.write("texture %d\n" % (game_texture_id))
+
+    if len(material_index_remaps) > 0:
         writer.write('\n')
 
     # Write Vertices:
@@ -661,8 +689,10 @@ def save_map_file(operator, context, filepath):
 
         # Resolve material data.
         material = mesh.materials[polygon.material_index] if polygon.material_index >= 0 and len(mesh.materials) > polygon.material_index else None
-        material_texture_id = get_game_texture_id(material)
-        is_textured = material_texture_id >= 0
+        game_texture_id = get_game_texture_id(material)
+        is_registered_texture = game_texture_id >= 0
+        is_unregistered_texture = not is_registered_texture and game_texture_id == MAGIC_UNKNOWN_TEXTURE_ID and material is not None
+        is_textured = is_registered_texture or is_unregistered_texture
 
         # Prepare polygon data for writing.
         vertices = []
@@ -684,8 +714,8 @@ def save_map_file(operator, context, filepath):
 
                 uvs.append((max(0.0, min(1.0, uv[0])), max(0.0, min(1.0, 1.0 - uv[1]))))
             uvs = to_froglord_order(uvs)
-        elif material_texture_id != MAGIC_NO_TEXTURE_ID and material is not None:
-            operator.report({"WARNING"}, "Face %d used material %d/%d/'%s', which was not a recognized %s texture! It will be exported as an untextured polygon!" % (polygon_index, material_texture_id, polygon.material_index, material.name, GAME_DISPLAY_NAME))
+        elif game_texture_id != MAGIC_NO_TEXTURE_ID and material is not None:
+            operator.report({"WARNING"}, "Face %d used material %d/%d/'%s', which was not a recognized %s texture! It will be exported as an untextured polygon!" % (polygon_index, game_texture_id, polygon.material_index, material.name, GAME_DISPLAY_NAME))
 
         # Determine polygon type.
         is_quad = polygon.loop_total == 4
@@ -706,9 +736,13 @@ def save_map_file(operator, context, filepath):
         writer.write(" hide" if polygon.hide else " show")
 
         # Write optional texture data.
+        if is_registered_texture:
+            writer.write(" %d" % material_index_remaps[game_texture_id])
+        elif is_unregistered_texture:
+            writer.write(" %d" % material_index_remaps[material.name])
         if is_textured:
             texture_flags = bm.faces[polygon_index][texture_flag_layer]
-            writer.write(" %d %d" % (material_index_remaps[material_texture_id], texture_flags or 0))
+            writer.write(" %d" % (texture_flags or 0))
 
         # Write Vertices:
         for vertex_id in vertices:

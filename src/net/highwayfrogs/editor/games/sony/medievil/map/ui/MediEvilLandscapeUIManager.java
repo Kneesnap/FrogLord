@@ -266,7 +266,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
 
                     polygon.setTextureId(remapIndex);
                 } else {
-                    polygon.setTextureId(-1);
+                    polygon.setTextureId(MediEvilMapPolygon.NO_TEXTURE_ID);
                 }
 
                 setShadeDefinition(polygon, getManager().createPolygonShadeDefinition(polygon));

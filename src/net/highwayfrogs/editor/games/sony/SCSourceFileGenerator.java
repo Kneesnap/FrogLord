@@ -238,11 +238,7 @@ public class SCSourceFileGenerator {
                 .append(Constants.NEWLINE);
 
         // Calculate and write the texture count.
-        int textureCount = instance.getBmpTexturePointers().size();
-        for (VloFile vloArchive : instance.getMainArchive().getAllFiles(VloFile.class))
-            for (VloImage image : vloArchive.getImages())
-                if (image.getTextureId() >= textureCount)
-                    textureCount = image.getTextureId() + 1;
+        int textureCount = Math.max(instance.getMaximumTextureId() + 1, instance.getBmpTexturePointers().size());
 
         // Write any texture ID to name macros.
         int maxTextureNameLength = TEXTURE_COUNT_NAME.length();

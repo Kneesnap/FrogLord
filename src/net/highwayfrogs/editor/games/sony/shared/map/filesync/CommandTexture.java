@@ -4,10 +4,13 @@ import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloPadding;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.commandparser.CommandListException;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -25,6 +28,7 @@ public class CommandTexture<TContext extends MapFileSyncLoadContext<?>> extends 
     @Override
     public void execute(TContext context, OptionalArguments arguments) throws CommandListException {
         // The remap is updated when the command is run because polygon commands rely on the remap having been updated first.
+        // Note that the texture remap is checked after all commands finish running to see if it overflows.
         short loadedTextureId = arguments.useNext().getAsShort(); // NOTE: This may be for a different version, and thus invalid!
         String textureFileName = arguments.hasNext() ? arguments.useNext().getAsString() : null;
 
@@ -47,8 +51,17 @@ public class CommandTexture<TContext extends MapFileSyncLoadContext<?>> extends 
                 return;
             }
 
-            context.getLogger().severe("No texture could be found which was named '%s'! (Was it imported first?)", textureFileName);
-            textureIds.add((short) -1);
+            if (mapVlo == null) {
+                context.getLogger().severe("No texture could be found which was named '%s'! (Could not create placeholder)", textureFileName);
+                textureIds.add((short) -1);
+                return;
+            }
+
+            // Add a placeholder texture.
+            context.getLogger().warning("No texture could be found which was named '%s'! (Creating a placeholder texture...)", textureFileName);
+            BufferedImage placeholderImage = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
+            VloImage newTempImage = mapVlo.addImage(textureFileName, placeholderImage, VloPadding.DEFAULT, null, null, false);
+            textureIds.add(newTempImage.getTextureId());
             return;
         }
 

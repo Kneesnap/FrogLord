@@ -40,12 +40,13 @@ import java.util.List;
 public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     private final MediEvilMapFile mapFile;
     private final int[] vertices = new int[INTERNAL_VERTEX_COUNT];
-    @Setter private int textureId = -1;
+    @Setter private int textureId = NO_TEXTURE_ID;
     private int flags;
     private final SCByteTextureUV[] textureUvs = new SCByteTextureUV[INTERNAL_VERTEX_COUNT];
 
     private static final SCByteTextureUV[] EMPTY_UV_ARRAY = new SCByteTextureUV[0];
     private static final int INTERNAL_VERTEX_COUNT = 4;
+    public static final int NO_TEXTURE_ID = 0xFFFF;
 
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
