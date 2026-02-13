@@ -666,7 +666,7 @@ def save_map_file(operator, context, filepath):
     # Write Vertices:
     for i, vert in enumerate(bm.verts):
         if i not in removed_vertex_ids:
-            writer.write("vertex %f %f %f %06X\n" % (vert.co.x, -vert.co.z, vert.co.y, vertex_colors[i]))
+            writer.write("vertex %f %f %f %06X\n" % (vert.co.x, -vert.co.z, vert.co.y, vertex_colors[vertex_id_remap[i]]))
     writer.write('\n')
 
     # Setup Data:
