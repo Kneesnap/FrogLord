@@ -118,6 +118,9 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
 
             currentOffset += gridLength;
         }
+
+        if (currentOffset != this.vertices.size())
+            getLogger().warning("FrogLord expected the sum of vertexGridLengths (%d) to be the total number of vertices (%d), but it did not.", currentOffset, this.vertices.size());
     }
 
     @Override
@@ -262,19 +265,21 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         // This algorithm is accurate to how the original algorithm worked, except that the original algorithm may have had some kind of decimal precision/rounding differences.
         // This is more accurate to how the game should work.
         int lastGridIndex = -1;
-        short vertexOffset = 0;
         for (int i = 0; i < this.vertices.size(); i++) {
             SVector vertex = this.vertices.get(i);
             int currentGridIndex = getVertexGridIndex(vertex);
 
             if (currentGridIndex > lastGridIndex) {
-                Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, currentGridIndex, vertexOffset);
+                Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, currentGridIndex + 1, DataUtils.unsignedIntToShort(i));
                 lastGridIndex = currentGridIndex;
-                this.vertexGridOffsetTable[currentGridIndex] = vertexOffset = DataUtils.unsignedIntToShort(i);
+            } else if (currentGridIndex < lastGridIndex) {
+                throw new IllegalStateException("currentGridIndex (" + currentGridIndex + ") < lastGridIndex (" + lastGridIndex + "), this should not be possible!");
             }
 
             this.vertexGridLengthTable[currentGridIndex]++;
         }
+
+        Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, this.vertexGridOffsetTable.length, DataUtils.unsignedIntToShort(this.vertices.size()));
     }
 
     private int getVertexGridIndex(SVector vertex) {
