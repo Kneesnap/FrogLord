@@ -642,7 +642,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                 // We try our best to validate these images, but ultimately, they are difficult to work with due to the lack of accurate information.
                 // As such, we ignore padding failures on these images specifically, because these warnings are not helpful / do not actually indicate the algorithm is inaccurate.
                 if (this.paddedWidth <= MAX_IMAGE_DIMENSION)
-                    getLogger().warning("Pixel[%d,%d] padding was expected to be %08X, but was calculated to be %08X. (PadX: %d, PadY: %d, Stripped PadX: %d, CLUT Index: %d)", i % this.paddedWidth, i / this.paddedWidth, this.pixelBuffer[i], paddedColor, paddingX, paddingY, emptyRightPaddingX, this.clut != null ? this.clut.getColorIndex(getClutColor(new PSXClutColor(), i), false) : Integer.MAX_VALUE);
+                    getLogger().warning("Pixel[%d,%d] padding was expected to be %08X, but was calculated to be %08X. (PadX: %d, PadY: %d, Stripped PadX: %d, CLUT Index: %d firstClutColor: %08X)", i % this.paddedWidth, i / this.paddedWidth, this.pixelBuffer[i], paddedColor, paddingX, paddingY, emptyRightPaddingX, this.clut != null ? this.clut.getColorIndex(getClutColor(new PSXClutColor(), i), false) : Integer.MAX_VALUE, firstClutColor);
             } else if (operation == PaddingOperation.APPLY) {
                 if ((paddedColor & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && !isPsxMode())
                     this.anyFullyBlackPixelPresentPC = true;
@@ -656,13 +656,13 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     private boolean isPaddingPixel(int pixelIndex) {
-        int x = (pixelIndex % this.paddedWidth);
-        int y = (pixelIndex / this.paddedWidth);
         int padMinX = getLeftPadding();
-        int padMaxX = padMinX + this.unpaddedWidth; // DO NOT USE getRightPadding()! That includes the hitX calculation, which should NOT impact padding.
+        int padMaxX = Math.max(padMinX, padMinX + this.unpaddedWidth - 1); // DO NOT USE getRightPadding()! That includes the hitX calculation, which should NOT impact padding.
         int padMinY = getUpPadding();
-        int padMaxY = padMinY + this.unpaddedHeight; // DO NOT USE getDownPadding()! That includes the hitX calculation, which should NOT impact padding.
-        return x < padMinX || x > padMaxX || y < padMinY || y > padMaxY;
+        int padMaxY = Math.max(padMinY, padMinY + this.unpaddedHeight - 1); // DO NOT USE getDownPadding()! That includes the hitX calculation, which should NOT impact padding.
+        int padPixelX = pixelIndex % this.paddedWidth;
+        int padPixelY = pixelIndex / this.paddedWidth;
+        return padPixelX < padMinX || padPixelX > padMaxX || padPixelY < padMinY || padPixelY > padMaxY;
     }
 
     @Override
@@ -1341,7 +1341,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // Get current padding, without PSX alignment.
         boolean hadPreviousImage = (this.pixelBuffer != null);
-        int oldPadding = this.paddingAmount;
 
         // Calculate padding changes.
         // Padding calculation needs: bitDepth, unpaddedWidth
@@ -1351,9 +1350,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Apply new dimensions.
         this.unpaddedWidth = (short) newInputImageWidth;
         this.unpaddedHeight = (short) newInputImageHeight;
-        int newPadding = padding >= 0 ? padding : oldPadding;
+        int newPadding = padding >= 0 ? padding : this.paddingAmount;
 
         // Configure new padding.
+        this.paddingAmount = newPadding;
         this.paddedWidth = (short) (this.unpaddedWidth + calculatePaddingX(isPsxMode(), this.unpaddedWidth, newPadding, getWidthMultiplier()));
         this.paddedHeight = (short) (this.unpaddedHeight + newPadding);
 
@@ -1479,6 +1479,9 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             } else {
                 firstClutColor = 0xFFFFFFFF;
                 for (int i = 0; i < this.pixelBuffer.length; i++) {
+                    if (isPaddingPixel(i))
+                        continue; // Skip padding pixels, since those are always blank when this function is called.
+
                     int color = this.pixelBuffer[i];
                     if ((color & 0xFFFFFFFFL) < (firstClutColor & 0xFFFFFFFFL))
                         firstClutColor = color;
