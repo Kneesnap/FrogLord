@@ -424,7 +424,7 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 > [!CAUTION]  
 > `FrogInst001` (the player) does not seem to be capable of pathfinding in the traditional sense.  
 > One solution is to create entities using the Frogger 3D model, and using camera trickery to hide the real player.  
-> Another solution is to manually force `FrogInst001` into walk/run sequences, ensuring it is facing the target location.  
+> Another solution is to manually force `FrogInst001` into walk/run sequences (eg: `SetSequence "NrmWalk01"`), ensuring it is facing the target location.  
 
 > [!NOTE]  
 > **Pathfind Troubleshooting:**  
@@ -1199,3 +1199,13 @@ SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
 TakeDamage 100 --Melee --AsEntity "FrogInst001"
 ```
 </details>
+
+#### My entity is sliding around for some reason!
+We're not entirely sure why this happens, but somehow certain entities are getting the `EnableTerrainTracking` flag despite not having it set in FrogLord.  
+To prevent entities from sliding, add the following to an entities script:  
+```PowerShell
+[[[Script]]]
+[[[[Function]]]]
+cause=OnLevel BEGIN
+ClearFlags --EnableTerrainTracking
+```
