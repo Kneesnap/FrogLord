@@ -292,11 +292,11 @@ public class kcMaterialLoadContext {
                 kcCResourceTexture texRef = (kcCResourceTexture) resource;
                 GreatQuestImageFile referencedImage = texRef.getReferencedImage();
                 if (referencedImage != null)
-                    cachedImages.put(strippedTextureFileName, referencedImage);
+                    cachedImages.put(FileUtils.stripExtension(texRef.getName()), referencedImage);
             }
         }
 
         // Get data from cache.
-        return cachedImages.get(imageFileName);
+        return cachedImages.get(strippedTextureFileName);
     }
 }
