@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMap2DSplinePacket.MediEvilMap2DSpline;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapPathChainPacket.MediEvilMapPathChain;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -22,7 +24,7 @@ import java.util.List;
  * Created by Kneesnap on 2/3/2026.
  */
 @Getter
-public class MediEvilMap3DSplinePacket extends MediEvilMapPacket {
+public class MediEvilMap3DSplinePacket extends MediEvilMapPacket implements IPropertyListCreator {
     private final List<MediEvilMap3DSpline> splines = new ArrayList<>();
     private int emptySubDivisions; // TODO: What's up with this. Can we delete it? Is it important?
 
@@ -57,6 +59,24 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket {
         // Resolve object references.
         for (int i = 0; i < this.splines.size(); i++)
             this.splines.get(i).resolveReferences();
+
+        // Do this here since it's the last packet in the chain to resolve.
+        getParentFile().getPathChainPacket().validateReferencesAreValid();
+        getParentFile().getSpline2DPacket().validateReferencesAreValid();
+        validateReferencesAreValid();
+    }
+
+    /**
+     * Validates the references found within the splines are valid.
+     */
+    private void validateReferencesAreValid() {
+        for (int i = 0; i < this.splines.size(); i++) {
+            MediEvilMap3DSpline spline = this.splines.get(i);
+            if (spline.pathSpline != null && spline.pathSpline.getCameraSpline() != spline)
+                spline.getLogger().warning("The 3D spline (%s) had an attached 2D path spline (%s) which was not linked to the 3D spline!", spline, spline.pathSpline);
+            if (spline.pathSpline != null && spline.parentChain != null && spline.parentChain != spline.pathSpline.getPathChain())
+                spline.getLogger().warning("The 3D spline (%s) was attached to a different pathChainNode (%s) than its 2D path spline!", spline, spline.parentChain);
+        }
     }
 
     @Override
@@ -82,13 +102,23 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket {
         this.splines.clear();
     }
 
-    public static class MediEvilMap3DSpline extends SCGameData<MediEvilGameInstance> {
-        private final MediEvilMap3DSplinePacket splinePacket;
-        private final List<SVector> subDivisions = new ArrayList<>(); // Padding seems to be garbage.
-        private MediEvilMapPathChain parentChain; // May be unused.
-        private MediEvilMap2DSpline pathSpline; // May be unused.
-        private short uniqueId;
-        private int trailingEmptySubDivisions; // TODO: What's up with these. Can we delete them? Are they important?
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addString(this::addSplines, "3D Splines", String.valueOf(this.splines.size()));
+    }
+
+    private void addSplines(PropertyListNode propertyList) {
+        for (int i = 0; i < this.splines.size(); i++)
+            propertyList.addProperties("Spline " + i, this.splines.get(i));
+    }
+
+    public static class MediEvilMap3DSpline extends SCGameData<MediEvilGameInstance> implements IPropertyListCreator {
+        @Getter private final MediEvilMap3DSplinePacket splinePacket;
+        @Getter private final List<SVector> subDivisions = new ArrayList<>(); // Padding seems to be garbage.
+        @Getter private MediEvilMapPathChain parentChain; // Appears to be unused by the game.
+        @Getter private MediEvilMap2DSpline pathSpline; // Appears to be unused by the game.
+        @Getter private short uniqueId; // TODO: Research/understand. (Is this separate from the unique IDs seen in 2D splines?)
+        @Getter private int trailingEmptySubDivisions; // TODO: What's up with these. Can we delete them? Are they important?
 
         private int tempSplineSubDivPointer = -1;
         private byte tempParentChainId = -1;
@@ -114,6 +144,11 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket {
         @Override
         public ILogger getLogger() {
             return new AppendInfoLoggerWrapper(this.splinePacket.getLogger(), getClass().getSimpleName() + "[" + this.splinePacket.splines.indexOf(this) + "]", AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "{" + this.splinePacket.splines.indexOf(this) + "@" + this.splinePacket.getParentFile().getFileDisplayName() + "}";
         }
 
         @Override
@@ -194,12 +229,26 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket {
                 throw new RuntimeException("Cannot resolve parentChainId, the ID " + this.tempParentChainId + " is invalid.");
 
             int pathChainIndex = (this.tempParentChainId & 0xFF);
-            List<MediEvilMapPathChain> pathChains = this.splinePacket.getParentFile().getPathChainPacket().getPathChains();
+            List<MediEvilMapPathChain> pathChains = this.splinePacket.getParentFile().getPathChainPacket().getPathChainNodes();
             if (pathChainIndex >= pathChains.size())
                 throw new IllegalArgumentException("Invalid pathChainIndex: " + pathChainIndex);
 
             this.parentChain = pathChains.get(pathChainIndex);
             this.tempParentChainId = -1;
+        }
+
+        @Override
+        public void addToPropertyList(PropertyListNode propertyList) {
+            propertyList.addInteger("Unique ID", this.uniqueId);
+            propertyList.addString(this.parentChain, "Parent Chain", this.parentChain != null ? "ID: " + this.parentChain.getId() : "None");
+            propertyList.addString(this.pathSpline, "Path Spline", this.pathSpline != null ? "ID: " + this.pathSpline.getId() : "None");
+            propertyList.addString(this::addSubDivisions, "Positions (Subdivisions)", String.valueOf(this.subDivisions.size()));
+            propertyList.addInteger("Trailing Empty Subdivisions", this.trailingEmptySubDivisions);
+        }
+
+        private void addSubDivisions(PropertyListNode propertyList) {
+            for (int i = 0; i < this.subDivisions.size(); i++)
+                propertyList.add("subDivisions[" + i + "]", this.subDivisions.get(i));
         }
     }
 

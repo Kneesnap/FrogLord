@@ -275,6 +275,7 @@ public class DataUtils {
 
     /**
      * Convert an unsigned byte into a short, which can be converted back into a byte.
+     * TODO: Rename this and similar methods. Idea: "toUnsignedByte()"
      * @param unsignedByte The byte to convert into a short.
      * @return unsignedShort
      */

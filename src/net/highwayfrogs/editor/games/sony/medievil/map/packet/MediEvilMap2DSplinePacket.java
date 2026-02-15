@@ -8,6 +8,9 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMap3DSplinePacket.MediEvilMap3DSpline;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapPathChainPacket.MediEvilMapPathChain;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -22,7 +25,7 @@ import java.util.List;
  * Created by Kneesnap on 2/3/2026.
  */
 @Getter
-public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
+public class MediEvilMap2DSplinePacket extends MediEvilMapPacket implements IPropertyListCreator {
     private final List<MediEvilMap2DSpline> splines = new ArrayList<>();
 
     public static final String IDENTIFIER = "2LPS"; // 'SPL2'
@@ -73,25 +76,61 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
             this.splines.get(i).saveSubDivisions(writer);
     }
 
+    /**
+     * Validates the references found within the splines are valid.
+     */
+    void validateReferencesAreValid() {
+        for (int i = 0; i < this.splines.size(); i++) {
+            MediEvilMap2DSpline spline = this.splines.get(i);
+            if (spline.cameraSpline != null && spline.cameraSpline.getPathSpline() != spline)
+                spline.getLogger().warning("The 2D spline (%s) had an attached camera spline (%s) which was not linked to the spline!", spline, spline.cameraSpline);
+            if (spline.pathChain != null && !spline.pathChain.getPathSplines().contains(spline) && !spline.pathChain.getPathSplines().contains(spline))
+                spline.getLogger().warning("The 2D spline (%s) was attached to a path chain node (%s) which did not seem to know about the spline!", spline, spline.pathChain);
+        }
+    }
+
     @Override
     public void clear() {
         this.splines.clear();
     }
 
-    @Getter
-    public static class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> {
-        private final MediEvilMap2DSplinePacket splinePacket;
-        private final List<SVector> subDivisions = new ArrayList<>(); // Padding seems to be garbage.
-        private MediEvilMap3DSpline cameraSpline;
-        private MediEvilMapPathChain pathChain;
-        private byte numDeadSubDivsStart;
-        private byte numDeadSubDivsEnd;
-        private byte flags;
-        private short uniqueId;
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addString(this::addSplines, "2D Splines", String.valueOf(this.splines.size()));
+    }
+
+    private void addSplines(PropertyListNode propertyList) {
+        for (int i = 0; i < this.splines.size(); i++)
+            propertyList.addProperties("Spline " + i, this.splines.get(i));
+    }
+
+    public static class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implements IPropertyListCreator {
+        @Getter private final MediEvilMap2DSplinePacket splinePacket;
+        @Getter private final List<SVector> subDivisions = new ArrayList<>(); // Padding seems to be garbage.
+        @Getter private MediEvilMap3DSpline cameraSpline; // Used by certain camera modes.
+        @Getter private MediEvilMapPathChain pathChain;
+        @Getter private byte numDeadSubDivsStart; // TODO: Research/understand.
+        @Getter private byte numDeadSubDivsEnd; // TODO: Research/understand.
+        @Getter private byte flags; // TODO: Allow editing?
+        @Getter private short uniqueId; // TODO: Automatically manage. Is this an index? Probably not.
+
+        // NOTE:
+        // My current hypothesis for why the path spline is linked to the camera spline is about progression.
+        // The game probably will find the closest subdivision in the path spline to the player, then use the equivalent subdivision in the camera spline.
+        // This allows syncing up the paths.
 
         private int tempSplineSubDivPointer = -1;
         private byte tempCameraSplineId = -1;
         private byte tempParentChainId = -1;
+
+        public static final int FLAG_DEAD_START_JUMP = Constants.BIT_FLAG_0; // Dead subdivisions at a start should jump the camera.
+        public static final int FLAG_DEAD_END_JUMP = Constants.BIT_FLAG_1; // Dead subdivisions at an end should jump the camera.
+        public static final int FLAG_STATIC_CAMERA = Constants.BIT_FLAG_2; // The camera should be static. (Appears unused)
+        public static final int FLAG_CAMERA_START_CONNECT = Constants.BIT_FLAG_3; // The camera spline has connections at the start. (Appears unused)
+        public static final int FLAG_CAMERA_END_CONNECT = Constants.BIT_FLAG_4; // The camera spline has connections at the end. (Appears unused)
+        public static final int FLAG_NO_CAMERA = Constants.BIT_FLAG_5; // The spline has no camera spline.
+        public static final int FLAG_NO_ENTITY = Constants.BIT_FLAG_6; // Entities will not navigate this spline.
+        public static final int FLAG_INTERMISSION = Constants.BIT_FLAG_7; // Entities will not navigate this spline. (Flag appears unused)
 
         public MediEvilMap2DSpline(MediEvilMap2DSplinePacket splinePacket) {
             super(splinePacket.getGameInstance());
@@ -111,13 +150,29 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
         }
 
         @Override
+        public void addToPropertyList(PropertyListNode propertyList) {
+            propertyList.addInteger("Unique ID", this.uniqueId);
+            propertyList.addString("Flags", String.format("%02X", this.flags));
+            propertyList.addInteger("Number of dead sub-division starts", DataUtils.byteToUnsignedShort(this.numDeadSubDivsStart));
+            propertyList.addInteger("Number of dead sub-division ends", DataUtils.byteToUnsignedShort(this.numDeadSubDivsEnd));
+            propertyList.addString(this.pathChain, "Path Chain", this.pathChain != null ? "ID: " + this.pathChain.getId() : "None");
+            propertyList.addString(this.cameraSpline, "Camera Spline", this.cameraSpline != null ? "ID: " + this.cameraSpline.getId() : "None");
+            propertyList.addString(this::addSubDivisions, "Positions (Subdivisions)", String.valueOf(this.subDivisions.size()));
+        }
+
+        private void addSubDivisions(PropertyListNode propertyList) {
+            for (int i = 0; i < this.subDivisions.size(); i++)
+                propertyList.add("subDivisions[" + i + "]", this.subDivisions.get(i));
+        }
+
+        @Override
         public ILogger getLogger() {
             return new AppendInfoLoggerWrapper(this.splinePacket.getLogger(), getClass().getSimpleName() + "[" + this.splinePacket.splines.indexOf(this) + "]", AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
         }
 
         @Override
         public String toString() {
-            return getClass().getSimpleName() + "{" + this.splinePacket.splines.indexOf(this) + "}";
+            return getClass().getSimpleName() + "{" + this.splinePacket.splines.indexOf(this) + "@" + this.splinePacket.getParentFile().getFileDisplayName() + "}";
         }
 
         @Override
@@ -198,7 +253,7 @@ public class MediEvilMap2DSplinePacket extends MediEvilMapPacket {
                 throw new RuntimeException("Cannot resolve parentChainId, the ID " + this.tempParentChainId + " is invalid.");
 
             int pathChainIndex = (this.tempParentChainId & 0xFF);
-            List<MediEvilMapPathChain> pathChains = this.splinePacket.getParentFile().getPathChainPacket().getPathChains();
+            List<MediEvilMapPathChain> pathChains = this.splinePacket.getParentFile().getPathChainPacket().getPathChainNodes();
             if (pathChainIndex >= pathChains.size())
                 throw new IllegalArgumentException("Invalid pathChainIndex: " + pathChainIndex);
 
