@@ -432,7 +432,7 @@ public class FileUtils {
 
         // Search parent files.
         while (testFile != null) {
-            if (testFile.equals(holdingFolder))
+            if (testFile.getCanonicalFile().toPath().equals(holdingFolder.getCanonicalFile().toPath()))
                 return true;
 
             testFile = testFile.getParentFile();
