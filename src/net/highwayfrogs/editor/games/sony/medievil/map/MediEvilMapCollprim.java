@@ -151,8 +151,9 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         // Allow changing collprim type.
         grid.addEnumSelector("Type", collprimType, MediEvilMapCollprimType.values(), false, newValue -> {
             // Update flags.
+            this.flags &= ~MediEvilMapCollprimType.COLLPRIM_TYPE_FLAG_MASK;
             if (newValue != null)
-                this.flags = newValue.getBitMask();
+                this.flags |= newValue.getBitMask();
 
             // Refresh the editor
             manager.updateEditor();
