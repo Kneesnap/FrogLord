@@ -81,6 +81,10 @@ public class InputManager {
         scene.focusedProperty().addListener(this.stageInputListener);
     }
 
+    /**
+     * Sets the stage/window which the input is tracked for.
+     * @param stage the stage to track
+     */
     public void setStage(Stage stage) {
         if (this.stage == stage)
             return;
@@ -90,6 +94,8 @@ public class InputManager {
 
         resetKeys();
         this.stage = stage;
+        if (stage != null)
+            stage.focusedProperty().addListener(this.stageInputListener);
     }
 
     /**
