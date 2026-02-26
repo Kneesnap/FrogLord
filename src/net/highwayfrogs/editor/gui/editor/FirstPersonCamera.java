@@ -180,6 +180,10 @@ public class FirstPersonCamera extends Parent {
         this.frameDeltaInSecs = (timestamp - this.lastFrameUpdate) * NANOSEC_IN_SECONDS;
         this.lastFrameUpdate = timestamp;
 
+        // Cap the delta-time so lag-spikes don't cause the camera to make major movements, causing the user to .
+        if (this.frameDeltaInSecs > .25)
+            this.frameDeltaInSecs = .25;
+
         // This next block is only really needed for test / debugging right now but is useful to have around!
         this.currFrameUpdate += this.frameDeltaInSecs;
         if (this.currFrameUpdate > this.updatePeriod)
