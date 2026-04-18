@@ -111,15 +111,22 @@ Then, the following flags can be included to configure the sound.
 All the following flags are considered optional, but not including `--Music`, `--VoiceClip`, or `--Repeat` will clear those properties if they were previously present.  
 
 **--Music:**  
-Marks the sound as being music.  
-Not sure what this is actually used for.  
+Sounds with this flag will use the "Music" volume slider in game settings.  
 
 > [!NOTE]  
 > Always include `--Priority 200` with `--Music` to ensure the game properly identifies the sound as music.  
 
+> [!NOTE]  
+> Do not include the `--VoiceClip` flag with `--Music`.  
+
 **--VoiceClip:**  
-Marks the sound as a voice clip.  
-Not sure what this is actually used for.  
+Sounds with this flag will use the "Voice" volume slider in game settings.  
+
+> [!NOTE]  
+> Do not include the `--Music` flag with `--VoiceClip`.
+
+> [!NOTE]  
+> If neither `--Music` or `--VoiceClip` is included, the "SFX" volume slider will be used when playing the sound.  
 
 **--Repeat:**  
 Marks the sound as repeating when it ends.  

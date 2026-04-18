@@ -1035,9 +1035,14 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @param arguments the arguments to load from
          */
         public void applySettingsFromArguments(OptionalArguments arguments) {
+            boolean voiceClip = arguments.useFlag(SfxAttributes.FLAG_NAME_VOICE_CLIP);
+            boolean music = arguments.useFlag(SfxAttributes.FLAG_NAME_MUSIC);
+            if (voiceClip && music)
+                throw new IllegalArgumentException("The flags --" + SfxAttributes.FLAG_NAME_VOICE_CLIP + " and --" + SfxAttributes.FLAG_NAME_MUSIC + " are not possible to use together.");
+
             setFlagState(SfxAttributes.FLAG_REPEAT, arguments.useFlag(SfxAttributes.FLAG_NAME_REPEAT));
-            setFlagState(SfxAttributes.FLAG_VOICE_CLIP, arguments.useFlag(SfxAttributes.FLAG_NAME_VOICE_CLIP));
-            setFlagState(SfxAttributes.FLAG_MUSIC, arguments.useFlag(SfxAttributes.FLAG_NAME_MUSIC));
+            setFlagState(SfxAttributes.FLAG_VOICE_CLIP, voiceClip);
+            setFlagState(SfxAttributes.FLAG_MUSIC, music);
             StringNode priorityNode = arguments.use(SfxAttributes.FLAG_NAME_PRIORITY);
             if (priorityNode != null)
                 setPriority(priorityNode.getAsInteger());
