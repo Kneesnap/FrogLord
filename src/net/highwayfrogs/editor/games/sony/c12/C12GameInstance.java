@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.c12;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -9,11 +10,13 @@ import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
 import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2Config;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelSectionDefinition;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
-import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
@@ -21,12 +24,17 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents an instance of C12 Final Resistance.
  * Created by Kneesnap on 9/22/2025.
  */
 @Getter
 public class C12GameInstance extends SCGameInstance {
+    private final List<SCLevelDefinition> levelTable = new ArrayList<>();
+
     public C12GameInstance() {
         super(SCGameType.C12);
     }
@@ -50,7 +58,7 @@ public class C12GameInstance extends SCGameInstance {
         } else if (resourceEntry.getTypeId() == FILE_TYPE_ANIM) {
             return new PTActionSetFile(this);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
-            return new DummyFile(this, fileData != null ? fileData.length : 0);
+            return new C12MapFile(this);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_VB || resourceEntry.getTypeId() == FILE_TYPE_VB_ALTERNATE) {
             return SCUtils.makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.BODY);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_VH) {
@@ -62,12 +70,27 @@ public class C12GameInstance extends SCGameInstance {
 
     @Override
     protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
-        // Do nothing for now.
+        for (int i = 0; i < this.levelTable.size(); i++) {
+            SCLevelDefinition levelDefinition = this.levelTable.get(i);
+            for (int j = 0; j < levelDefinition.getLevelSections().size(); j++) {
+                SCLevelSectionDefinition levelSection = levelDefinition.getLevelSections().get(j);
+                TextureRemapArray sectionRemap = levelSection.getRemap();
+                if (sectionRemap != null)
+                    addRemap(sectionRemap);
+            }
+        }
     }
 
     @Override
     public MediEvil2Config getVersionConfig() {
         return (MediEvil2Config) super.getVersionConfig();
+    }
+
+    @Override
+    public void onConfigLoad(Config config) {
+        super.onConfigLoad(config);
+        DataReader exeReader = getExecutableReader();
+        readLevelTable(exeReader);
     }
 
     @Override
@@ -84,5 +107,19 @@ public class C12GameInstance extends SCGameInstance {
         // NTSC is probably 512x236, not 512x240. But w/e, it's fine for now.
         this.primaryFrameBuffer = new PsxVramBox(0, 0, 512, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Y: 256 regardless of height of parent.
+    }
+
+    private void readLevelTable(DataReader reader) {
+        if (this.getVersionConfig().getLevelTableAddress() <= 0 || this.getVersionConfig().getLevelTableEntryCount() <= 0)
+            return;
+
+        // Read the level table.
+        this.levelTable.clear();
+        reader.setIndex(this.getVersionConfig().getLevelTableAddress());
+        for (int i = 0; i < this.getVersionConfig().getLevelTableEntryCount(); i++) {
+            SCLevelDefinition levelDefinition = new SCLevelDefinition(this);
+            levelDefinition.load(reader);
+            this.levelTable.add(levelDefinition);
+        }
     }
 }

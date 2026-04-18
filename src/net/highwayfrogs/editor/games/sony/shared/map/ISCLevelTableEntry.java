@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.map;
 
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 
 /**
@@ -17,4 +18,14 @@ public interface ISCLevelTableEntry {
      * Gets the VLO file containing textures loaded for the level.
      */
     VloFile getVloFile();
+
+    /**
+     * Gets the map file available.
+     */
+    SCMapFile<?> getMapFile();
+
+    /**
+     * Gets the level definition.
+     */
+    SCLevelDefinition getLevelDefinition();
 }

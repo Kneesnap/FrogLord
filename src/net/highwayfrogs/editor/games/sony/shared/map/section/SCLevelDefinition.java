@@ -1,16 +1,17 @@
-package net.highwayfrogs.editor.games.sony.medievil2;
+package net.highwayfrogs.editor.games.sony.shared.map.section;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
-import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -19,10 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents an entry in the MediEvil2 level table.
- * Created by Kneesnap on 5/12/2024.
+ * Represents an entry in the game's level table.
+ * Created by Kneesnap on 4/17/2026.
  */
-public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> implements IMediEvil2LevelTableEntry {
+public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTableEntry {
     @Getter private long relocNamePointer;
     @Getter private short vloResourceId;
     @Getter private short wadResourceId;
@@ -35,17 +36,28 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
     // Non-local data:
     @Getter private String levelRelocName;
-    @Getter private final List<MediEvil2LevelSectionDefinition> levelSections = new ArrayList<>();
+    @Getter private final List<SCLevelSectionDefinition> levelSections = new ArrayList<>();
 
     // Cached data. Use MWIResourceEntries so if these files are replaced, their new object instances will be returned.
     private MWIResourceEntry cachedWadFileEntry;
     private MWIResourceEntry cachedVloFileEntry;
     private MWIResourceEntry cachedTimFileEntry;
 
-    private static final int SIZE_IN_BYTES = 0x6C;
+    private static final int MEDIEVIL2_SIZE_IN_BYTES = 0x6C;
+    private static final int C12_PROTOTYPE_SIZE_IN_BYTES = 0x60;
 
-    public MediEvil2LevelDefinition(MediEvil2GameInstance instance) {
+    public SCLevelDefinition(SCGameInstance instance) {
         super(instance);
+    }
+
+    private int getExpectedSizeInBytes() {
+        if (getGameInstance().isC12()) {
+            return C12_PROTOTYPE_SIZE_IN_BYTES;
+        } else if (getGameInstance().isMediEvil2()) {
+            return MEDIEVIL2_SIZE_IN_BYTES;
+        } else {
+            throw new UnsupportedOperationException("Don't know expected size in bytes for this game type.");
+        }
     }
 
     @Override
@@ -54,13 +66,13 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         this.relocNamePointer = reader.readUnsignedIntAsLong();
         this.vloResourceId = reader.readShort();
         this.wadResourceId = reader.readShort();
-        this.timResourceId = reader.readShort();
+        this.timResourceId = reader.readShort(); // Zero (padding) in C-12 Final Resistance.
         this.levelNameId = reader.readShort();
         this.unknown1 = reader.readShort();
         this.unknown2 = reader.readUnsignedByteAsShort();
         short sectionCount = reader.readUnsignedByteAsShort();
         this.sectionDefinitionsPointer = reader.readUnsignedIntAsLong();
-        this.unknownData = reader.readBytes(SIZE_IN_BYTES - (reader.getIndex() - dataReadStartIndex)); // TODO: Figure this data out later.
+        this.unknownData = reader.readBytes(getExpectedSizeInBytes() - (reader.getIndex() - dataReadStartIndex)); // TODO: Figure this data out later.
 
         // Read level name.
         this.levelRelocName = null;
@@ -75,7 +87,8 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         if (sectionCount > 0 && this.sectionDefinitionsPointer > getGameInstance().getRamOffset()) {
             reader.jumpTemp((int) (this.sectionDefinitionsPointer - getGameInstance().getRamOffset()));
             for (int i = 0; i < sectionCount; i++) {
-                MediEvil2LevelSectionDefinition newSectionDefinition = new MediEvil2LevelSectionDefinition(this);
+                // TODO: !
+                SCLevelSectionDefinition newSectionDefinition = new SCLevelSectionDefinition(this);
                 newSectionDefinition.load(reader);
                 this.levelSections.add(newSectionDefinition);
             }
@@ -85,7 +98,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         // Write section info.
         getLogger().info("Read level definition %s:", (this.levelRelocName != null ? "'" + this.levelRelocName + "'" : ""));
         getLogger().info(" Resources: %d, %d, %d, %d, Sections: %d", this.vloResourceId, this.wadResourceId, this.timResourceId, this.levelNameId, sectionCount);
-        for (MediEvil2LevelSectionDefinition sectionDefinition : this.levelSections)
+        for (SCLevelSectionDefinition sectionDefinition : this.levelSections) // TODO: !
             getLogger().info(" Section: %d, %d -> 0x%X", sectionDefinition.getMapResourceId(), sectionDefinition.getVloResourceId(), sectionDefinition.getTextureRemapPointer());
         getLogger().info("");
     }
@@ -121,19 +134,19 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
     }
 
     @Override
-    public MediEvil2Map getMapFile() {
+    public SCMapFile<?> getMapFile() {
         WADFile wadFile = getWadFile();
         if (wadFile != null) {
             for (int i = wadFile.getFiles().size() - 1; i >= 0; i--) {
                 WADEntry wadEntry = wadFile.getFiles().get(i);
-                if (wadEntry.getFile() instanceof MediEvil2Map)
-                    return (MediEvil2Map) wadEntry.getFile();
+                if (wadEntry.getFile() instanceof SCMapFile<?>)
+                    return (SCMapFile<?>) wadEntry.getFile();
             }
         }
 
         SCGameFile<?> gameFile = getGameInstance().getGameFile(this.wadResourceId);
-        if (gameFile instanceof MediEvil2Map) {
-            return (MediEvil2Map) gameFile;
+        if (gameFile instanceof SCMapFile<?>) {
+            return (SCMapFile<?>) gameFile;
         } else {
             getLogger().warning("Don't know how to interpret %s/%s as a map file.", Utils.getSimpleName(gameFile), gameFile.getFileDisplayName());
         }
@@ -143,7 +156,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
     }
 
     @Override
-    public MediEvil2LevelDefinition getLevelDefinition() {
+    public SCLevelDefinition getLevelDefinition() {
         return this;
     }
 
@@ -184,102 +197,5 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
             this.cachedWadFileEntry = getGameInstance().getResourceEntryByID(this.wadResourceId);
 
         return this.cachedWadFileEntry != null ? (WADFile) this.cachedWadFileEntry.getGameFile() : null;
-    }
-
-    /**
-     * Represents a level section definition.
-     */
-    public static class MediEvil2LevelSectionDefinition extends SCGameData<MediEvil2GameInstance> implements IMediEvil2LevelTableEntry {
-        @Getter private final MediEvil2LevelDefinition levelDefinition;
-        @Getter private short mapResourceId;
-        @Getter private short vloResourceId;
-        @Getter private long textureRemapPointer;
-        @Getter private byte[] unknownData;
-
-        // Non-local data.
-        private TextureRemapArray textureRemap;
-
-        // Cached data.
-        private MWIResourceEntry cachedMapEntry;
-        private MWIResourceEntry cachedVloEntry; // TODO: Should probably use MWI entries instead.
-
-        private static final int SIZE_IN_BYTES = 0x44; // (68)
-
-        public MediEvil2LevelSectionDefinition(MediEvil2LevelDefinition levelDefinition) {
-            super(levelDefinition.getGameInstance());
-            this.levelDefinition = levelDefinition;
-        }
-
-        @Override
-        public void load(DataReader reader) {
-            int dataReadStartIndex = reader.getIndex();
-            this.mapResourceId = reader.readShort();
-            this.vloResourceId = reader.readShort();
-            this.textureRemapPointer = reader.readUnsignedIntAsLong();
-            this.unknownData = reader.readBytes(SIZE_IN_BYTES - (reader.getIndex() - dataReadStartIndex)); // TODO: Figure this data out later.
-        }
-
-        @Override
-        public void save(DataWriter writer) {
-            writer.writeShort(this.mapResourceId);
-            writer.writeShort(this.vloResourceId);
-            writer.writeUnsignedInt(this.textureRemapPointer);
-            if (this.unknownData != null)
-                writer.writeBytes(this.unknownData);
-        }
-
-        @Override
-        public TextureRemapArray getRemap() {
-            if (this.textureRemap == null) {
-                MediEvil2Map mapFile = getMapFile();
-                String mapName = (mapFile != null ? FileUtils.stripExtension(mapFile.getFileDisplayName()).toLowerCase() : "map" + this.mapResourceId);
-                if (this.textureRemapPointer > 0) {
-                    this.textureRemap = new TextureRemapArray(getGameInstance(), "txl_" + mapName, this.textureRemapPointer);
-                    if (this.vloResourceId > 0)
-                        this.textureRemap.setVloFileDefinition(getGameInstance().getResourceEntryByID(this.vloResourceId));
-                }
-            }
-
-            return this.textureRemap;
-        }
-
-        @Override
-        public VloFile getVloFile() {
-            if (this.vloResourceId <= 0)
-                return null;
-
-            if (this.cachedVloEntry == null || this.cachedVloEntry.getResourceId() != this.vloResourceId)
-                this.cachedVloEntry = getGameInstance().getResourceEntryByID(this.vloResourceId);
-
-            return this.cachedVloEntry != null ? (VloFile) this.cachedVloEntry.getGameFile() : null;
-        }
-
-        @Override
-        public MediEvil2Map getMapFile() {
-            if (this.cachedMapEntry != null && this.cachedMapEntry.getResourceId() == this.mapResourceId)
-                return (MediEvil2Map) this.cachedMapEntry.getGameFile();
-
-            MediEvil2Map mapFile = null;
-            SCGameFile<?> gameFile =  this.mapResourceId > 0 ? getGameInstance().getGameFile(this.mapResourceId) : null;
-            if (gameFile instanceof MediEvil2Map) {
-                mapFile = (MediEvil2Map) gameFile;
-            } else if (gameFile instanceof WADFile) {
-                WADFile wadFile = (WADFile) gameFile;
-                for (int i = wadFile.getFiles().size() - 1; i >= 0; i--) {
-                    SCGameFile<?> wadEntryFile = wadFile.getFiles().get(i).getFile();
-                    if (wadEntryFile instanceof MediEvil2Map)
-                        mapFile = (MediEvil2Map) wadEntryFile;
-                }
-
-                // Didn't find it in the WAD file.
-            } else if (gameFile == null) {
-                return null; // No file.
-            } else {
-                throw new RuntimeException("Don't know how to interpret " + Utils.getSimpleName(gameFile) + " as a map file.");
-            }
-
-            this.cachedMapEntry = mapFile != null ? mapFile.getIndexEntry() : null;
-            return mapFile;
-        }
     }
 }

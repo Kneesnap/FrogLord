@@ -4,6 +4,8 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray.VLODirectTextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 
@@ -59,5 +61,15 @@ public class MoonWarriorLevelTableEntry implements ISCLevelTableEntry {
             this.mapFile.getLogger().severe("Failed to get VLO for map file '%s'.", this.mapFile.getFileDisplayName());
 
         return (VloFile) this.vloEntry.getGameFile();
+    }
+
+    @Override
+    public SCMapFile<?> getMapFile() {
+        return this.mapFile;
+    }
+
+    @Override
+    public SCLevelDefinition getLevelDefinition() {
+        return null; // I've not found the level table in the executable, so there's no definition for now.
     }
 }

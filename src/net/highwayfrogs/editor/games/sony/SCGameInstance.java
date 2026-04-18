@@ -785,6 +785,13 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     /**
+     * Tests if the game currently being read is C-12 Final Resistance.
+     */
+    public boolean isC12() {
+        return getGameType() == SCGameType.C12;
+    }
+
+    /**
      * Get a byte array of the bytes comprising the game executable.
      * If this array is modified, the changes will be kept for any future save of the executable.
      */

@@ -3,12 +3,11 @@ package net.highwayfrogs.editor.games.sony.shared.map.ui;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import net.highwayfrogs.editor.games.sony.medievil2.IMediEvil2LevelTableEntry;
-import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2LevelDefinition;
-import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2LevelDefinition.MediEvil2LevelSectionDefinition;
-import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
+import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMeshController;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelSectionDefinition;
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapUIManager.SCMapListManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
@@ -18,10 +17,9 @@ import java.util.List;
 
 /**
  * Allows choosing if sections should display.
- * TODO: Generalize this to work with C-12 too.
  * Created by Kneesnap on 5/14/2024.
  */
-public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListManager<TMapMesh, MediEvil2LevelSectionDefinition, MeshView> {
+public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListManager<TMapMesh, SCLevelSectionDefinition, MeshView> {
     public SCMapSectionManager(SCMapMeshController<TMapMesh> controller) {
         super(controller);
         this.disableRemoveButton = true;
@@ -44,17 +42,15 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
     }
 
     @Override
-    public MediEvil2Map getMap() {
-        return (MediEvil2Map) super.getMap();
-    }
-
-    @Override
-    public List<MediEvil2LevelSectionDefinition> getValues() {
-        IMediEvil2LevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
+    public List<SCLevelSectionDefinition> getValues() {
+        ISCLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
         if (levelTableEntry == null)
             return Collections.emptyList();
 
-        MediEvil2LevelDefinition levelDefinition = levelTableEntry.getLevelDefinition();
+        SCLevelDefinition levelDefinition = levelTableEntry.getLevelDefinition();
+        if (levelDefinition == null)
+            return Collections.emptyList();
+
         return levelDefinition.getLevelSections();
     }
 
@@ -65,7 +61,7 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
     }
 
     @Override
-    protected MeshView setupDisplay(MediEvil2LevelSectionDefinition sectionDef) {
+    protected MeshView setupDisplay(SCLevelSectionDefinition sectionDef) {
         MeshView newView = new MeshView();
         newView.setCullFace(CullFace.BACK);
         newView.setDrawMode(DrawMode.FILL);
@@ -84,7 +80,7 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
      * Updates the displayed position / rotation of the level section.
      * @param sectionDef The level section to get positional data from.
      */
-    public void updateEntityPositionRotation(MediEvil2LevelSectionDefinition sectionDef) {
+    public void updateEntityPositionRotation(SCLevelSectionDefinition sectionDef) {
         updateEntityPositionRotation(sectionDef, getDelegatesByValue().get(sectionDef));
     }
 
@@ -93,7 +89,7 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
      * @param sectionDef         The level section to get positional data from.
      * @param sectionMeshView The mesh view to update position for.
      */
-    public void updateEntityPositionRotation(MediEvil2LevelSectionDefinition sectionDef, MeshView sectionMeshView) {
+    public void updateEntityPositionRotation(SCLevelSectionDefinition sectionDef, MeshView sectionMeshView) {
         /*if (entity == null || entityMeshView == null)
             return; // No data to update position from.
 
@@ -135,12 +131,12 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
 
 
     @Override
-    protected void updateEditor(MediEvil2LevelSectionDefinition sectionDef) {
+    protected void updateEditor(SCLevelSectionDefinition sectionDef) {
         // No editor for now.
     }
 
     @Override
-    protected void onDelegateRemoved(MediEvil2LevelSectionDefinition removedSectionDef, MeshView oldMeshView) {
+    protected void onDelegateRemoved(SCLevelSectionDefinition removedSectionDef, MeshView oldMeshView) {
         if (oldMeshView != null) {
             getRenderManager().getRoot().getChildren().remove(oldMeshView);
             MeshViewController.unbindMeshSceneControls(getController(), oldMeshView);
@@ -149,17 +145,17 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
     }
 
     @Override
-    protected void setVisible(MediEvil2LevelSectionDefinition sectionDef, MeshView meshView, boolean visible) {
+    protected void setVisible(SCLevelSectionDefinition sectionDef, MeshView meshView, boolean visible) {
         meshView.setVisible(visible);
     }
 
     @Override
-    protected void onSelectedValueChange(MediEvil2LevelSectionDefinition oldSectionDef, MeshView oldMeshView, MediEvil2LevelSectionDefinition newSectionDef, MeshView newMeshView) {
+    protected void onSelectedValueChange(SCLevelSectionDefinition oldSectionDef, MeshView oldMeshView, SCLevelSectionDefinition newSectionDef, MeshView newMeshView) {
         // Do nothing for now.
     }
 
     @Override
-    protected MediEvil2LevelSectionDefinition createNewValue() {
+    protected SCLevelSectionDefinition createNewValue() {
         throw new RuntimeException("Cannot create new level section.");
     }
 }

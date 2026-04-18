@@ -1,30 +1,28 @@
-package net.highwayfrogs.editor.games.sony.medievil2.map;
+package net.highwayfrogs.editor.games.sony.c12;
 
-import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
-import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelSectionDefinition;
 
 /**
- * Represents a map file from MediEvil 2.
- * Created by Kneesnap on 5/12/2024.
+ * Represents a map file from C-12 Final Resistance.
+ * Created by Kneesnap on 4/17/2026.
  */
-public class MediEvil2Map extends SCMapFile<MediEvil2GameInstance>  {
+public class C12MapFile extends SCMapFile<C12GameInstance> {
     private ISCLevelTableEntry cachedLevelTableEntry;
 
-    public MediEvil2Map(MediEvil2GameInstance instance) {
+    public C12MapFile(C12GameInstance instance) {
         super(instance);
     }
 
     @Override
-    public MediEvil2Map getParentMap() {
+    public C12MapFile getParentMap() {
         ISCLevelTableEntry levelTableEntry = getLevelTableEntry();
         if (levelTableEntry instanceof SCLevelDefinition)
             return null; // This is already the parent map.
 
         ISCLevelTableEntry levelDefinition = levelTableEntry != null ? levelTableEntry.getLevelDefinition() : null;
-        return levelDefinition != null ? (MediEvil2Map) levelDefinition.getMapFile() : null;
+        return levelDefinition != null ? (C12MapFile) levelDefinition.getMapFile() : null;
     }
 
     @Override
@@ -37,7 +35,7 @@ public class MediEvil2Map extends SCMapFile<MediEvil2GameInstance>  {
 
                 // Check level sections.
                 for (int j = 0; j < levelDefinition.getLevelSections().size(); j++) {
-                    SCLevelSectionDefinition levelSection = levelDefinition.getLevelSections().get(j);
+                    ISCLevelTableEntry levelSection = levelDefinition.getLevelSections().get(j);
                     if (levelSection.getMapFile() == this)
                         return this.cachedLevelTableEntry = levelSection;
                 }

@@ -9,10 +9,11 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
-import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2LevelDefinition.MediEvil2LevelSectionDefinition;
 import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
+import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelSectionDefinition;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
@@ -37,7 +38,7 @@ import java.util.List;
  */
 @Getter
 public class MediEvil2GameInstance extends SCGameInstance {
-    private final List<MediEvil2LevelDefinition> levelTable = new ArrayList<>();
+    private final List<SCLevelDefinition> levelTable = new ArrayList<>();
 
     public MediEvil2GameInstance() {
         super(SCGameType.MEDIEVIL2);
@@ -75,9 +76,9 @@ public class MediEvil2GameInstance extends SCGameInstance {
     @Override
     protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         for (int i = 0; i < this.levelTable.size(); i++) {
-            MediEvil2LevelDefinition levelDefinition = this.levelTable.get(i);
+            SCLevelDefinition levelDefinition = this.levelTable.get(i);
             for (int j = 0; j < levelDefinition.getLevelSections().size(); j++) {
-                MediEvil2LevelSectionDefinition levelSection = levelDefinition.getLevelSections().get(j);
+                SCLevelSectionDefinition levelSection = levelDefinition.getLevelSections().get(j);
                 TextureRemapArray sectionRemap = levelSection.getRemap();
                 if (sectionRemap != null)
                     addRemap(sectionRemap);
@@ -121,7 +122,7 @@ public class MediEvil2GameInstance extends SCGameInstance {
         this.levelTable.clear();
         reader.setIndex(this.getVersionConfig().getLevelTableAddress());
         for (int i = 0; i < this.getVersionConfig().getLevelTableEntryCount(); i++) {
-            MediEvil2LevelDefinition levelDefinition = new MediEvil2LevelDefinition(this);
+            SCLevelDefinition levelDefinition = new SCLevelDefinition(this);
             levelDefinition.load(reader);
             this.levelTable.add(levelDefinition);
         }
