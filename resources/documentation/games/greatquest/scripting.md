@@ -1123,7 +1123,6 @@ The following detail specifics about how the scripting system works at a more te
 In most cases, understanding these will not be necessary.  
 
 #### When specifically do script functions and their effects run, and in what order?  
-**Ordering Notes:**  
 - If a script command causes another function (Eg: SendNumber causing OnReceiveNumber), the first function will still run all of its commands before the second one runs.
 - The function for a cause will run on the next game tick AFTER the cause is sent, UNLESS it is caused by the script itself (eg: OnReceiveNumber triggered by using SendNumber).
 - Script effects/commands in a function do not run in the order written. Instead, effects/commands execute on a per-entity basis. The last effect/command's execution entity will be the first entity to run ALL of its effects.
@@ -1209,3 +1208,43 @@ To prevent entities from sliding, add the following to an entities script:
 cause=OnLevel BEGIN
 ClearFlags --EnableTerrainTracking
 ```
+
+#### The game crashes!
+This game has some crashing problems, especially on modern systems.  
+Here are some of the crashes which have been explored.  
+This game isn't great! We all know that. There are some crashes which we haven't explored, but so far we have explanations and fixes for some.
+
+**1) Rivatuner:**  
+The most common cause of crashes is forgetting to start RivaTuner, which prevents most game crashes.    
+
+**2) If the game crashes at the end of the loading screen**  
+The most common cause of this is from sound effects.  
+The details of this crash are not currently understood, but if you've just made changes to sounds, undo them.  
+The game will continue to crash even after undoing these changes, so manually replace the `.SBR` files in the sound folder with original copies.  
+
+TODO: @Kneesnap see if increasing the total game heap size fixes this problem on PC.  
+
+**3) Dialog doesn't work, and pausing the game triggers a crash:**  
+This is a problem with the game engine and needs a patch in order to be fixed.
+In practice, the easiest option is to copy a patched executable from a mod which already exists.  
+Another option is to do the following change with a hex editor (or [Noodle](../../froglord/noodle-scripting.md)).  
+
+Replace the bytes `80 00` with `00 10` at the following file addresses:  
+```
+PC: TODO
+PS2 PAL: TODO
+PS2 NTSC: TODO
+```
+
+<details>
+  <summary>Technical details</summary>
+
+The kcScript system has a fixed size buffer for the script effects queued for execution next tick.  
+In the vanilla game, this buffer only has 128 slots (See: `kcCPriQueue::Init`).  
+Even worse, the length check of `kcCPriQueue::Push` doesn't actually work.  
+So in practice, pushing to a full buffer will write beyond the end of the object.  
+In this case, because `kcMalloc` treats the heap as a giant linked list, we very reliably find the static `kcEventMgr` instance immediately after the command queue.  
+The way in which this is corrupted is that `kcCPriQueue::Push` overwrites the linked list malloc entry for `kcEventMgr`, and marks the `kcEventMgr` as unallocated memory.  
+Thus, after enough `kcMalloc` calls, eventually `kcEventMgr` will be returned to some other part of the game, which will write its own data there.  
+The game is stable up until the next time the `kcEventMgr` is used (such as pausing the game), where the game will crash.  
+</details>
