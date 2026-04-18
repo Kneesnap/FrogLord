@@ -47,12 +47,13 @@ public class TranslationGizmo extends DynamicMesh {
     private static final RawColorTextureSource LIGHT_GREEN_TEXTURE_SOURCE = new RawColorTextureSource(0xFF197F19);
     private static final RawColorTextureSource LIGHT_BLUE_TEXTURE_SOURCE = new RawColorTextureSource(0xFF19197F);
     private static final RawColorTextureSource ORANGE_TEXTURE_SOURCE = new RawColorTextureSource(Color.ORANGE);
+    private static final RawColorTextureSource LIGHT_YELLOW_TEXTURE_SOURCE = new RawColorTextureSource(javafx.scene.paint.Color.LIGHTYELLOW);
     private static final RawColorTextureSource WHITE_TEXTURE_SOURCE = new RawColorTextureSource(Color.WHITE);
     private static final Point3D ALL_AXIS = new Point3D(1, 1, 1);
     private static final double BAR_THICKNESS = 2D;
     private static final double BAR_LENGTH = 25D;
     private static final double BOX_SIZE = 6D;
-    private static final double SNAPPING_THRESHOLD = 3.5D;
+    public static final double SNAPPING_THRESHOLD = 3.5D;
 
     private final Map<MeshView, GizmoMeshViewState> meshViewStates = new HashMap<>();
     private final KeyHandler keyListener = this::onKeyPressed;
@@ -72,13 +73,16 @@ public class TranslationGizmo extends DynamicMesh {
     private int lightGreenTextureUvIndex = -1;
     private int lightBlueTextureUvIndex = -1;
     private AtlasTexture orangeTexture;
+    private AtlasTexture lightYellowTexture;
     private AtlasTexture whiteTexture;
     private int orangeTextureUvIndex = -1;
+    private int lightYellowTextureUvIndex = -1;
     private int whiteTextureUvIndex = -1;
     private DynamicMeshUnmanagedNode baseNode;
     private DynamicMeshUnmanagedNode xAxisNode; // Red
     private DynamicMeshUnmanagedNode yAxisNode; // Green
     private DynamicMeshUnmanagedNode zAxisNode; // Blue
+    @Setter private boolean highlightBaseNode;
 
     // Drag/user interaction state.
     private Box axisPlane;
@@ -90,6 +94,7 @@ public class TranslationGizmo extends DynamicMesh {
     public static final int X_CHANGED_FLAG = Constants.BIT_FLAG_0;
     public static final int Y_CHANGED_FLAG = Constants.BIT_FLAG_1;
     public static final int Z_CHANGED_FLAG = Constants.BIT_FLAG_2;
+    public static final int FLAG_ACCEPTED_POSITION = Constants.BIT_FLAG_3;
 
     public TranslationGizmo() {
         this(true, true, true);
@@ -113,12 +118,14 @@ public class TranslationGizmo extends DynamicMesh {
         this.lightGreenTexture = getTextureAtlas().addTexture(LIGHT_GREEN_TEXTURE_SOURCE);
         this.lightBlueTexture = getTextureAtlas().addTexture(LIGHT_BLUE_TEXTURE_SOURCE);
         this.orangeTexture = getTextureAtlas().addTexture(ORANGE_TEXTURE_SOURCE);
+        this.lightYellowTexture = getTextureAtlas().addTexture(LIGHT_YELLOW_TEXTURE_SOURCE);
         this.whiteTexture = getTextureAtlas().addTexture(WHITE_TEXTURE_SOURCE);
         getTextureAtlas().endBulkOperations();
     }
 
     private void setupMesh() {
         Vector2f whiteTextureUv = getTextureAtlas().getUV(this.whiteTexture, WHITE_TEXTURE_SOURCE.getUv());
+        Vector2f lightYellowTextureUv = getTextureAtlas().getUV(this.lightYellowTexture, LIGHT_YELLOW_TEXTURE_SOURCE.getUv());
         Vector2f redTextureUv = getTextureAtlas().getUV(this.redTexture, RED_TEXTURE_SOURCE.getUv());
         Vector2f greenTextureUv = getTextureAtlas().getUV(this.greenTexture, GREEN_TEXTURE_SOURCE.getUv());
         Vector2f blueTextureUv = getTextureAtlas().getUV(this.blueTexture, BLUE_TEXTURE_SOURCE.getUv());
@@ -127,7 +134,8 @@ public class TranslationGizmo extends DynamicMesh {
         Vector2f lightBlueTextureUv = getTextureAtlas().getUV(this.lightBlueTexture, LIGHT_BLUE_TEXTURE_SOURCE.getUv());
         Vector2f orangeTextureUv = getTextureAtlas().getUV(this.orangeTexture, ORANGE_TEXTURE_SOURCE.getUv());
         final double halfThickness = BAR_THICKNESS / 2;
-        final double halfBoxSize = (BOX_SIZE / 2);
+        final double arrowScale = 2 / 3D;
+        final double halfBoxSize = (BOX_SIZE / 2) * arrowScale;
         final double barEnd = BAR_LENGTH + halfBoxSize;
 
         // Prevent constant updates of the FX array.
@@ -141,7 +149,7 @@ public class TranslationGizmo extends DynamicMesh {
             this.lightRedTextureUvIndex = xNodeEntry.addTexCoordValue(lightRedTextureUv);
             this.redTextureUvIndex = xNodeEntry.addTexCoordValue(redTextureUv);
             MeshEntryBox.createBox(xNodeEntry, halfBoxSize, -halfThickness, -halfThickness, barEnd, halfThickness, halfThickness, this.redTextureUvIndex);
-            MeshUtils.createXAxisPyramid(xNodeEntry, BAR_LENGTH, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.redTextureUvIndex);
+            MeshUtils.createXAxisPyramid(xNodeEntry, BAR_LENGTH, 0, 0, BOX_SIZE, BOX_SIZE * arrowScale, BOX_SIZE * arrowScale, this.redTextureUvIndex);
             this.xAxisNode.addEntry(xNodeEntry);
         }
 
@@ -153,7 +161,7 @@ public class TranslationGizmo extends DynamicMesh {
             this.lightBlueTextureUvIndex = zNodeEntry.addTexCoordValue(lightBlueTextureUv);
             this.blueTextureUvIndex = zNodeEntry.addTexCoordValue(blueTextureUv);
             MeshEntryBox.createBox(zNodeEntry, -halfThickness, -halfThickness, halfBoxSize, halfThickness, halfThickness, barEnd, this.blueTextureUvIndex);
-            MeshUtils.createZAxisPyramid(zNodeEntry, 0, 0, BAR_LENGTH, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.blueTextureUvIndex);
+            MeshUtils.createZAxisPyramid(zNodeEntry, 0, 0, BAR_LENGTH, BOX_SIZE * arrowScale, BOX_SIZE, BOX_SIZE * arrowScale, this.blueTextureUvIndex);
             this.zAxisNode.addEntry(zNodeEntry);
         }
 
@@ -166,7 +174,7 @@ public class TranslationGizmo extends DynamicMesh {
             this.lightGreenTextureUvIndex = yNodeEntry.addTexCoordValue(lightGreenTextureUv);
             this.greenTextureUvIndex = yNodeEntry.addTexCoordValue(greenTextureUv);
             MeshEntryBox.createBox(yNodeEntry, -halfThickness, -halfBoxSize, -halfThickness, halfThickness, -barEnd, halfThickness, this.greenTextureUvIndex);
-            MeshUtils.createYAxisPyramid(yNodeEntry, 0, -BAR_LENGTH, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.greenTextureUvIndex);
+            MeshUtils.createYAxisPyramid(yNodeEntry, 0, -BAR_LENGTH, 0, BOX_SIZE * arrowScale, BOX_SIZE * arrowScale, BOX_SIZE * arrowScale, this.greenTextureUvIndex);
             this.yAxisNode.addEntry(yNodeEntry);
         }
 
@@ -176,6 +184,7 @@ public class TranslationGizmo extends DynamicMesh {
         addNode(this.baseNode);
         DynamicMeshDataEntry baseNodeEntry = new DynamicMeshDataEntry(this);
         this.whiteTextureUvIndex = baseNodeEntry.addTexCoordValue(whiteTextureUv);
+        this.lightYellowTextureUvIndex = baseNodeEntry.addTexCoordValue(lightYellowTextureUv);
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
         MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
@@ -208,6 +217,7 @@ public class TranslationGizmo extends DynamicMesh {
         // Setup listeners.
         // Uses the simple press-drag-release gesture as described by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/input/MouseEvent.html
         view.setOnMouseEntered(this::onMouseEnter);
+        view.setOnMouseMoved(this::onMouseMove);
         view.setOnMouseExited(this::onMouseExit);
         view.setOnMousePressed(this::onDragStart);
         view.setOnMouseDragged(this::onDragUpdate);
@@ -217,18 +227,20 @@ public class TranslationGizmo extends DynamicMesh {
 
     @Override
     public boolean removeView(MeshView view) {
+        // Remove plane. (Must happen before removing from the view, so positions are valid)
+        stopDragging(view, false);
+
         if (!super.removeView(view))
             return false;
 
         // Remove listeners.
         view.setOnMouseEntered(null);
+        view.setOnMouseMoved(null);
         view.setOnMouseExited(null);
         view.setOnMousePressed(null);
         view.setOnMouseDragged(null);
         view.setOnMouseReleased(null);
 
-        // Remove plane.
-        stopDragging(view, false);
         this.meshViewStates.remove(view);
         return true;
     }
@@ -416,32 +428,7 @@ public class TranslationGizmo extends DynamicMesh {
         return this.movementAxis != null && this.axisPlane != null && this.dragStartPosition != null;
     }
 
-    private void onMouseEnter(MouseEvent event) {
-        if (event.isPrimaryButtonDown())
-            return; // If the button is currently held, don't do anything here.
-
-        // Find the node clicked.
-        DynamicMeshDataEntry clickedMeshEntry = getDataEntryByFaceIndex(event.getPickResult().getIntersectedFace());
-        DynamicMeshNode clickedMeshNode = clickedMeshEntry != null ? clickedMeshEntry.getMeshNode() : null;
-        if (clickedMeshNode == null)
-            return;
-
-        if (clickedMeshNode == this.xAxisNode) {
-            this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.lightRedTextureUvIndex);
-            this.movementAxis = Rotate.X_AXIS;
-        } else if (clickedMeshNode == this.yAxisNode) {
-            this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.lightGreenTextureUvIndex);
-            this.movementAxis = Rotate.Y_AXIS;
-        } else if (clickedMeshNode == this.zAxisNode) {
-            this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.lightBlueTextureUvIndex);
-            this.movementAxis = Rotate.Z_AXIS;
-        }
-    }
-
-    private void onMouseExit(MouseEvent event) {
-        if (event.isPrimaryButtonDown())
-            return; // If the button is currently held, don't do anything here.
-
+    private void removeHighlightPreview() {
         if (this.movementAxis == Rotate.X_AXIS) {
             this.xAxisNode.updateTextureIndex(this.lightRedTextureUvIndex, this.redTextureUvIndex);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
@@ -449,6 +436,48 @@ public class TranslationGizmo extends DynamicMesh {
         } else if (this.movementAxis == Rotate.Z_AXIS) {
             this.zAxisNode.updateTextureIndex(this.lightBlueTextureUvIndex, this.blueTextureUvIndex);
         }
+
+        this.movementAxis = null;
+        if (this.highlightBaseNode)
+            this.baseNode.updateTextureIndex(this.lightYellowTextureUvIndex, this.whiteTextureUvIndex);
+    }
+
+    private void updateHighlightedNode(MouseEvent event) {
+        // Find the node clicked.
+        DynamicMeshDataEntry clickedMeshEntry = getDataEntryByFaceIndex(event.getPickResult().getIntersectedFace());
+        DynamicMeshNode clickedMeshNode = clickedMeshEntry != null ? clickedMeshEntry.getMeshNode() : null;
+
+        if (clickedMeshNode == this.xAxisNode && this.movementAxis != Rotate.X_AXIS && this.xAxisNode != null) {
+            removeHighlightPreview();
+            this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.lightRedTextureUvIndex);
+            this.movementAxis = Rotate.X_AXIS;
+        } else if (clickedMeshNode == this.yAxisNode && this.movementAxis != Rotate.Y_AXIS && this.yAxisNode != null) {
+            removeHighlightPreview();
+            this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.lightGreenTextureUvIndex);
+            this.movementAxis = Rotate.Y_AXIS;
+        } else if (clickedMeshNode == this.zAxisNode && this.movementAxis != Rotate.Z_AXIS&& this.zAxisNode != null) {
+            removeHighlightPreview();
+            this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.lightBlueTextureUvIndex);
+            this.movementAxis = Rotate.Z_AXIS;
+        } else if (clickedMeshNode == this.baseNode && this.highlightBaseNode && this.baseNode != null) {
+            removeHighlightPreview();
+            this.baseNode.updateTextureIndex(this.whiteTextureUvIndex, this.lightYellowTextureUvIndex);
+        }
+    }
+
+    private void onMouseEnter(MouseEvent event) {
+        if (!event.isPrimaryButtonDown())
+            updateHighlightedNode(event);
+    }
+
+    private void onMouseMove(MouseEvent event) {
+        if (!event.isPrimaryButtonDown())
+            updateHighlightedNode(event);
+    }
+
+    private void onMouseExit(MouseEvent event) {
+        if (!event.isPrimaryButtonDown())
+            removeHighlightPreview();
     }
 
     private void onDragStart(MouseEvent event) {
@@ -513,12 +542,19 @@ public class TranslationGizmo extends DynamicMesh {
         meshView.setCursor(Cursor.CROSSHAIR);
 
         // Prevent the drag updates from moving the camera view.
+        // Should run last to avoid breaking secondary listeners like FX3DDragController.
         event.consume();
     }
 
     private void onDragUpdate(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
-        event.consume(); // Prevent this drag from moving the camera view.
+
+        // If there's no axis currently selected, or no drag start, we're probably selecting the base, which shouldn't do anything here.
+        GizmoMeshViewState state = this.meshViewStates.get(meshView);
+        if (!isDraggingActive())
+            return;
+
+        event.consume(); // Prevent this drag from moving the camera view. (Do this after validating a drag is active, so that other handlers can run, potentially with their own drag behavior)
 
         // Abort if no known spot is found.
         PickResult result = event.getPickResult();
@@ -527,11 +563,6 @@ public class TranslationGizmo extends DynamicMesh {
 
         // Ensure that the picked node is either the gizmo MeshView, or the AxisPlane. (Prevents other nodes such as 2D UI from breaking the position)
         if ((result.getIntersectedNode() != meshView) && (result.getIntersectedNode() != this.axisPlane))
-            return;
-
-        // If there's no axis currently selected, or no drag start, we're probably selecting the base, which shouldn't do anything here.
-        GizmoMeshViewState state = this.meshViewStates.get(meshView);
-        if (!isDraggingActive())
             return;
 
         // Test if there's an intersection point.
@@ -591,8 +622,10 @@ public class TranslationGizmo extends DynamicMesh {
     private void onDragStop(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
 
-        event.consume(); // Prevent the drag updates from moving the camera view.
-        stopDragging(meshView, false); // Stop dragging.
+        if (isDraggingActive()) {
+            event.consume(); // Prevent the drag updates from moving the camera view.
+            stopDragging(meshView, false); // Stop dragging.
+        }
     }
 
     private void onKeyPressed(InputManager manager, KeyEvent event) {
@@ -614,17 +647,23 @@ public class TranslationGizmo extends DynamicMesh {
         }
 
         // Make the arrow be highlighted no longer.
+        double oldX = getPositionX(meshView), newX = oldX; // It's okay for these to be invalid when restoreOriginalPosition is false.
+        double oldY = getPositionY(meshView), newY = oldY;
+        double oldZ = getPositionZ(meshView), newZ = oldZ;
         if (this.movementAxis != null) {
             if (this.movementAxis == Rotate.X_AXIS) {
                 this.xAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.redTextureUvIndex);
+                oldX = this.originalPosition;
                 if (restoreOriginalPosition)
                     setPositionX(meshView, this.originalPosition, true);
             } else if (this.movementAxis == Rotate.Y_AXIS) {
                 this.yAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.greenTextureUvIndex);
+                oldY = this.originalPosition;
                 if (restoreOriginalPosition)
                     setPositionY(meshView, this.originalPosition, true);
             } else if (this.movementAxis == Rotate.Z_AXIS) {
                 this.zAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.blueTextureUvIndex);
+                oldZ = this.originalPosition;
                 if (restoreOriginalPosition)
                     setPositionZ(meshView, this.originalPosition, true);
             }
@@ -640,6 +679,9 @@ public class TranslationGizmo extends DynamicMesh {
         // Re-enable dragging on the gizmo.
         meshView.setMouseTransparent(false);
         meshView.setCursor(Cursor.DEFAULT);
+
+        if (!restoreOriginalPosition && state != null)
+            state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, newY, newZ, FLAG_ACCEPTED_POSITION);
     }
 
     @Getter
@@ -675,7 +717,7 @@ public class TranslationGizmo extends DynamicMesh {
          * @param runnable The runnable to run on change.
          * @return newListener, or null
          */
-        public static IPositionChangeListener makeListener(Runnable runnable) {
+        static IPositionChangeListener makeListener(Runnable runnable) {
             return runnable != null ? (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> runnable.run() : null;
         }
 
@@ -684,7 +726,7 @@ public class TranslationGizmo extends DynamicMesh {
          * @param listener The consumer to run on change.
          * @return newListener, or null
          */
-        public static IPositionChangeListener makeListener(Consumer<MeshView> listener) {
+        static IPositionChangeListener makeListener(Consumer<MeshView> listener) {
             return listener != null ? (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> listener.accept(meshView) : null;
         }
     }

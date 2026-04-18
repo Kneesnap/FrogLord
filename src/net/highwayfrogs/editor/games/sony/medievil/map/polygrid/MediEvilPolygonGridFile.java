@@ -295,7 +295,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
                 MediEvilMapPolygon polygon = polygons.get(j);
                 gridSquareIndices.clear();
                 getGridSquareIndices(polygon, gridSquareIndices);
-                if (!gridSquareIndices.contains(gridSquare.getSquareIndex()))
+                if (!gridSquareIndices.contains(gridSquare.getSquareIndex()) && !getGameInstance().getVersionConfig().isAtOrBeforeEctsAlpha())
                     getLogger().warning("gridSquarePosition[%d] contained a polygon (%s) which was not observed to be part of that grid square.",
                             gridSquare.getSquareIndex(), polygon);
             }

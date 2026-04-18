@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mesh.SCPolygonAdapterNode;
 import net.highwayfrogs.editor.system.math.Vector2f;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,15 +31,30 @@ public class MediEvilMapMeshNode extends SCPolygonAdapterNode<MediEvilMapPolygon
 
         // Setup polygons.
         // First, setup the non-transparent polygons.
+        List<MediEvilMapPolygon> transparentPolygons = new ArrayList<>();
         MediEvilLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
-        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            if (polygon.isFullyOpaque(levelTableEntry))
+        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons()) {
+            if (polygon.isFullyOpaque(levelTableEntry)) {
                 this.add(polygon);
+            } else {
+                transparentPolygons.add(polygon);
+            }
+        }
 
         // Second, add the transparent polygons.
-        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            if (!polygon.isFullyOpaque(levelTableEntry))
-                this.add(polygon);
+        // Add them lowest to highest to ensure polygons aren't invisible.
+        transparentPolygons.sort(Comparator.comparingInt(MediEvilMapMeshNode::getAverageY).reversed());
+        for (MediEvilMapPolygon polygon : transparentPolygons)
+            this.add(polygon);
+    }
+
+    private static int getAverageY(MediEvilMapPolygon polygon) {
+        int sumY = 0;
+        List<SVector> vertices = polygon.getMapFile().getGraphicsPacket().getVertices();
+        for (int i = 0; i < polygon.getVertexCount(); i++)
+            sumY += vertices.get(polygon.getVertices()[i]).getY();
+
+        return sumY / polygon.getVertexCount();
     }
 
     @Override

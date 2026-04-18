@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 /**
  * Represents the "VECTOR" struct defined in 'libgte.h' of the PSX PsyQ SDK.
  * Because a class named "Vector" would be easy to accidentally use in the wrong place, the name "IVector" has been chosen to make it clear this is an integer vector.
+ * TODO: Future design: This should be a generic integer vector, design similar to Vector3f. (Vector3i)
  * Created by Kneesnap on 8/24/2018.
  */
 @Setter
@@ -27,6 +28,8 @@ public class IVector implements IBinarySerializable, Vector {
 
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.INTEGER_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.INTEGER_SIZE;
+
+    public static final int NORMAL_FIXED_PT_BITS = 12;
 
     public IVector(IVector other) {
         this(other.x, other.y, other.z);
@@ -92,6 +95,17 @@ public class IVector implements IBinarySerializable, Vector {
 
     /**
      * Set the values of this vector.
+     * Equivalent to MR_VEC_EQUALS_SVEC.
+     * @param copyVector the vector to copy values from
+     */
+    public void setValues(SVector copyVector) {
+        this.x = copyVector.getX();
+        this.y = copyVector.getY();
+        this.z = copyVector.getZ();
+    }
+
+    /**
+     * Set the values of this vector.
      * @param copyVector the vector to copy values from
      */
     public void setValues(IVector copyVector) {
@@ -125,26 +139,6 @@ public class IVector implements IBinarySerializable, Vector {
     }
 
     /**
-     * Equivalent to MR_VEC_EQUALS_SVEC
-     * @param vec The array to read info from.
-     */
-    public void vecEqualsSvec(short[] vec) {
-        this.x = vec[0];
-        this.y = vec[1];
-        this.z = vec[2];
-    }
-
-    /**
-     * Equivalent to MR_VEC_EQUALS_SVEC
-     * @param vec The array to read info from.
-     */
-    public void vecEqualsSvec(SVector vec) {
-        this.x = vec.getX();
-        this.y = vec.getY();
-        this.z = vec.getZ();
-    }
-
-    /**
      * Equivalent to MRNormaliseVec ?? I think [AndyEder]
      */
     public IVector normalise() {
@@ -156,9 +150,9 @@ public class IVector implements IBinarySerializable, Vector {
             throw new RuntimeException("Tried to normalise a vector which exceeded the limit! " + added);
          */
 
-        double tmpX = DataUtils.fixedPointIntToFloatNBits(this.x, 12);
-        double tmpY = DataUtils.fixedPointIntToFloatNBits(this.y, 12);
-        double tmpZ = DataUtils.fixedPointIntToFloatNBits(this.z, 12);
+        double tmpX = DataUtils.fixedPointIntToFloatNBits(this.x, NORMAL_FIXED_PT_BITS);
+        double tmpY = DataUtils.fixedPointIntToFloatNBits(this.y, NORMAL_FIXED_PT_BITS);
+        double tmpZ = DataUtils.fixedPointIntToFloatNBits(this.z, NORMAL_FIXED_PT_BITS);
 
         double res = Math.sqrt((tmpX * tmpX) + (tmpY * tmpY) + (tmpZ * tmpZ));
         if (Math.abs(res) <= .000001)
@@ -168,9 +162,9 @@ public class IVector implements IBinarySerializable, Vector {
         tmpY /= res;
         tmpZ /= res;
 
-        this.x = DataUtils.floatToFixedPointInt((float) tmpX, 12);
-        this.y = DataUtils.floatToFixedPointInt((float) tmpY, 12);
-        this.z = DataUtils.floatToFixedPointInt((float) tmpZ, 12);
+        this.x = DataUtils.floatToFixedPointInt((float) tmpX, NORMAL_FIXED_PT_BITS);
+        this.y = DataUtils.floatToFixedPointInt((float) tmpY, NORMAL_FIXED_PT_BITS);
+        this.z = DataUtils.floatToFixedPointInt((float) tmpZ, NORMAL_FIXED_PT_BITS);
         return this;
     }
 
@@ -203,6 +197,41 @@ public class IVector implements IBinarySerializable, Vector {
         this.y += other.getY();
         this.z += other.getZ();
         return this;
+    }
+
+    /**
+     * Subtract another SVector from this one.
+     * @param other The other SVector to subtract.
+     */
+    public IVector subtract(SVector other) {
+        this.x -= other.getX();
+        this.y -= other.getY();
+        this.z -= other.getZ();
+        return this;
+    }
+
+    /**
+     * Subtract another IVector from this one.
+     * @param other The other IVector to subtract.
+     */
+    public IVector subtract(IVector other) {
+        this.x -= other.getX();
+        this.y -= other.getY();
+        this.z -= other.getZ();
+        return this;
+    }
+
+    /**
+     * Gets the distance squared between the point specified by the xyz components in this IVector and another one.
+     * @param other the other vector
+     * @param bits the decimal bits to use
+     * @return distanceSquared
+     */
+    public double distanceSquared(IVector other, int bits) {
+        float xDiff = getFloatX(bits) - other.getFloatX(bits);
+        float yDiff = getFloatY(bits) - other.getFloatY(bits);
+        float zDiff = getFloatZ(bits) - other.getFloatZ(bits);
+        return (xDiff * xDiff) + (yDiff * yDiff) + (zDiff * zDiff);
     }
 
     @Override

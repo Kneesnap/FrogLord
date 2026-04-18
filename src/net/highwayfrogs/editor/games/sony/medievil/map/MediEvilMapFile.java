@@ -9,8 +9,14 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
-import net.highwayfrogs.editor.games.sony.medievil.map.packet.*;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapCollprimsPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapEntitiesPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.grid.MediEvilMapGridPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.pathchain.MediEvilMapPathChainPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.spline.MediEvilMap2DSplinePacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.spline.MediEvilMap3DSplinePacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.polygrid.MediEvilPolygonGridFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.quadtree.MediEvilMapQuadTree;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
@@ -31,7 +37,6 @@ import java.util.List;
  * TODO:
  *  - 1) Can we figure out the skybox? It'd be very nice to have the skybox automatically load and display. (Allow turning it off though)
  *  - 2) Can we figure out lighting? (Allow turning off)
- *  - 3) Get splines working in 3D space.
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter

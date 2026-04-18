@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.games.sony.shared.spline;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * This data structure represents 'MR_SPLINE_MATRIX', a spline coefficient matrix.
@@ -87,8 +87,8 @@ public class MRSplineMatrix extends SCSharedGameData {
      * @param t A value between 0 (0.0) and 2048 (1.0) representing how far along the spline curve to evaluate.
      * @return tangentLine
      */
-    public IVector calculateTangentLine(int t) {
-        return calculateTangentLine(null, t);
+    public IVector evaluateRotation(int t) {
+        return evaluateRotation(null, t);
     }
 
     /**
@@ -98,7 +98,7 @@ public class MRSplineMatrix extends SCSharedGameData {
      * @param t A value between 0 (0.0) and 2048 (1.0) representing how far along the spline curve to evaluate.
      * @return tangentLine
      */
-    public IVector calculateTangentLine(IVector result, int t) {
+    public IVector evaluateRotation(IVector result, int t) {
         if (result == null)
             result = new IVector();
 

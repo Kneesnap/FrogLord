@@ -27,6 +27,7 @@ import java.text.DecimalFormat;
 
 /**
  * Represents MediEvil map collprim data.
+ * TODO: Consider moving to a collprim folder in packet.
  * IMPORTANT NOTE: It seems like MediEvil is NOT using the MR_COLLPRIM system after all.
  * Created by Kneesnap on 3/15/2024.
  */
@@ -149,11 +150,20 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         MediEvilMapCollprimType collprimType = getType();
 
         // Allow changing collprim type.
-        grid.addEnumSelector("Type", collprimType, MediEvilMapCollprimType.values(), false, newValue -> {
+        grid.addEnumSelector("Type", collprimType, MediEvilMapCollprimType.values(), false, newType -> {
+            if (newType == collprimType)
+                return; // Ignore if unchanged.
+
             // Update flags.
-            this.flags &= ~MediEvilMapCollprimType.COLLPRIM_TYPE_FLAG_MASK;
-            if (newValue != null)
-                this.flags |= newValue.getBitMask();
+            if (newType != MediEvilMapCollprimType.NONE && collprimType != MediEvilMapCollprimType.NONE) {
+                // Erase all flags, the type has been changed.
+                this.flags = newType.getBitMask();
+            } else {
+                // If raw flags are/were present, keep the previous flags.
+                this.flags &= ~MediEvilMapCollprimType.COLLPRIM_TYPE_FLAG_MASK;
+                this.flags |= newType.getBitMask();
+            }
+
 
             // Refresh the editor
             manager.updateEditor();

@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.pathchain.ui.MediEvilPathManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilCollprimManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilLandscapeUIManager;
@@ -65,8 +66,8 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
     protected void setupManagers() {
         addManager(new MediEvilCollprimManager(this));
         addManager(new MediEvilEntityManager(this));
+        addManager(new MediEvilPathManager(this));
         addManager(new MediEvilLandscapeUIManager(this));
-        // TODO: Setup more managers.
     }
 
     @Override

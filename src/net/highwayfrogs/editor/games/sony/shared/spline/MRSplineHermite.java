@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.sony.shared.spline;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.UUID;
 
@@ -25,8 +25,9 @@ public class MRSplineHermite extends SCSharedGameData {
     private final IVector endTangent = new IVector(); // sh_r4
 
     public static final int SIZE_IN_BYTES = (2 * SVector.PADDED_BYTE_SIZE) + (2 * IVector.PADDED_BYTE_SIZE);
-    private static final int MR_SPLINE_WORLD_SHIFT = 3;
     private static final UUID EDITOR_ID = UUID.randomUUID();
+    public static final int MR_SPLINE_WORLD_SHIFT = 3;
+    public static final int SPLINE_DECIMAL_BITS = 9;
 
     public MRSplineHermite(SCGameInstance instance) {
         super(instance);
@@ -61,8 +62,8 @@ public class MRSplineHermite extends SCSharedGameData {
 
         grid.addPositionEditor(controller, EDITOR_ID, "Start Point", this.startPoint, changeHook);
         grid.addPositionEditor(controller, EDITOR_ID, "End Point", this.endPoint, changeHook);
-        grid.addPositionOffsetEditor(controller, EDITOR_ID, "Start Tangent", this.startTangent, this.startPoint, changeHook);
-        grid.addPositionOffsetEditor(controller, EDITOR_ID, "End Tangent", this.endTangent, this.endPoint, changeHook);
+        grid.addPositionOffsetEditor(controller, EDITOR_ID, "Start Tangent", this.startTangent, SPLINE_DECIMAL_BITS, this.startPoint, changeHook);
+        grid.addPositionOffsetEditor(controller, EDITOR_ID, "End Tangent", this.endTangent, SPLINE_DECIMAL_BITS, this.endPoint, changeHook);
     }
 
     /**

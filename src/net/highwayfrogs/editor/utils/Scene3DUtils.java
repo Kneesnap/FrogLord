@@ -6,9 +6,7 @@ import javafx.scene.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.TriangleMesh;
-import javafx.scene.shape.VertexFormat;
+import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
@@ -76,6 +74,16 @@ public class Scene3DUtils {
         }
     }
 
+    /**
+     * Creates an X/Z-axis plane used for flat mouse-picking.
+     * @param node the node to create the XZ axis plane relative to
+     * @param group the group to add the axis plane to
+     * @return newAxisPlaneNode
+     */
+    public static Box createAxisPlaneXZ(Node node, Group group) {
+        return createAxisPlane(node, group, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
+    }
+
     private static Box createAxisPlane(Node node, Group group, double boxWidth, double boxHeight, double boxDepth) {
         // Add axis-aligned plane.
         Box axisPlane = new Box(boxWidth, boxHeight, boxDepth);
@@ -92,7 +100,8 @@ public class Scene3DUtils {
         if (rotation != null)
             axisPlane.getTransforms().add(rotation);
 
-        group.getChildren().add(axisPlane);
+        if (group != null)
+            group.getChildren().add(axisPlane);
         return axisPlane;
     }
 
@@ -936,5 +945,58 @@ public class Scene3DUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Adds a cylindrical representation of a 3D line.
+     * @param x0        The x-coordinate defining the start of the line segment.
+     * @param y0        The y-coordinate defining the start of the line segment.
+     * @param z0        The z-coordinate defining the start of the line segment.
+     * @param x1        The x-coordinate defining the end of the line segment.
+     * @param y1        The y-coordinate defining the end of the line segment.
+     * @param z1        The z-coordinate defining the end of the line segment.
+     * @param radius    The radius of the cylinder (effectively the 'width' of the line).
+     * @param material  The material used to render the line segment.
+     * @return The newly created/added cylinder (cylinder primitive only!)
+     */
+    public static Cylinder addCylindricalLine(double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, int divisions) {
+        Cylinder line = new Cylinder(radius, 2, Math.max(divisions, 3));
+        line.setMaterial(material);
+        line.setDrawMode(DrawMode.FILL);
+        line.setCullFace(CullFace.BACK);
+        line.setMouseTransparent(false);
+        updateCylindricalLine(line, x0, y0, z0, x1, y1, z1);
+        return line;
+    }
+
+    /**
+     * Updates the start/end points of a cylindrical representation of a 3D line.
+     * @param cylinder  The cylindrical 3D line representation
+     * @param x0        The x-coordinate defining the start of the line segment.
+     * @param y0        The y-coordinate defining the start of the line segment.
+     * @param z0        The z-coordinate defining the start of the line segment.
+     * @param x1        The x-coordinate defining the end of the line segment.
+     * @param y1        The y-coordinate defining the end of the line segment.
+     * @param z1        The z-coordinate defining the end of the line segment.
+     */
+
+    public static void updateCylindricalLine(Cylinder cylinder, double x0, double y0, double z0, double x1, double y1, double z1) {
+        final Point3D p0 = new Point3D(x0, y0, z0);
+        final Point3D p1 = new Point3D(x1, y1, z1);
+        final Point3D diff = p1.subtract(p0);
+        final double length = diff.magnitude();
+        cylinder.setHeight(length);
+
+        // Setup position.
+        final Point3D mid = p1.midpoint(p0);
+        setNodePosition(cylinder, mid.getX(), mid.getY(), mid.getZ());
+
+        // Setup rotation.
+        Rotate rotateAroundCenter = get3DRotation(cylinder, true);
+        final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
+        final Point3D axisOfRotation = diff.crossProduct(yAxis);
+        final double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        rotateAroundCenter.setAxis(axisOfRotation);
+        rotateAroundCenter.setAngle(-Math.toDegrees(angle));
     }
 }

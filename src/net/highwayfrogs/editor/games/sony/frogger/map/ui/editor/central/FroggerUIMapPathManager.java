@@ -54,6 +54,7 @@ import java.util.function.Consumer;
  * TODO: Allow calculating position and rotation independently, more closely to how the old Frogger system does it? Not sure.
  * TODO: Consider the value of a path editor editable in 3D space/based on gizmos?
  * TODO: A button that counts the entities on the path and separates them evenly. Or something makes doing that easier. Lots of math manually placing these atm
+ * TODO: Start using FX3DDragController for each path start/end/control point for a very intuitive path editor.
  * Created by Kneesnap on 6/2/2024.
  */
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {
@@ -170,7 +171,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                 pathEntityCount++;
 
         if (pathEntityCount > 0) {
-            FXUtils.makePopUp(pathEntityCount + (pathEntityCount == 1 ? " entity was" : " entities were") + " using the path, so it cannot be removed.", AlertType.WARNING);
+            FXUtils.showPopup(AlertType.WARNING, "Cannot remove path.", pathEntityCount + (pathEntityCount == 1 ? " entity was" : " entities were") + " using the path, so it cannot be removed.");
             return false;
         }
 

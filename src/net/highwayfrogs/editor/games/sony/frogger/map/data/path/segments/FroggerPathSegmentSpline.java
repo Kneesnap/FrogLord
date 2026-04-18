@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
+import java.awt.geom.CubicCurve2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
@@ -111,11 +112,14 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         return (d << 1) >> 1; // Happens outside the function in the original.
 
         /*
-        return (((((((
-                (((this.smoothC[i][0] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13)
-                + (this.smoothC[i][1] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13)
-                + (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13) >> 5)
+        return ((((((((((
+                (((this.smoothC[i][0] >> MRSplineMatrix.SPLINE_PARAM_SHIFT)) * e) >> 13)
+                + (this.smoothC[i][1] >> MRSplineMatrix.SPLINE_PARAM_SHIFT)) * e) >> 13)
+                + (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT)) * e) >> 13) >> 5)
                 + (i * SPLINE_FIX_INTERVAL)) << 1) >> 1;
+         return (((((((((( // Pretending it wasn't fixed point. TODO: smoothC is based on pathLength, and the matrix.
+                (this.smoothC[i][0] * e^3) + (this.smoothC[i][1]) * e^2) + (this.smoothC[i][2] * e)
+                + (i * SPLINE_FIX_INTERVAL);
          */
     }
 
@@ -130,7 +134,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
 
     private IVector calculateSplineTangent(int distance) {
         int t = getSplineParamFromLength(distance);
-        return this.splineMatrix.calculateTangentLine(t);
+        return this.splineMatrix.evaluateRotation(t);
     }
 
     @Override
@@ -224,11 +228,64 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         makeSmoothingCurveEditor(pathPreview, editor);
     }
 
+    // TODO: is smooth C the second derivative of position Y? (derivative of rotation Y?) -> Would make sense. Gotta be more complex though. Absolute value.
+    //  -> Try plotting it along the image, and see if it lines up.
+
+    // TODO: Solve the function for distance -> t. -> What does that look like?
+    // pos(t) = ((short) (((t3 * this.matrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+    //                ((t2 * this.matrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+    //                ((t * this.matrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
+    //                ((this.matrix[3][1]) << SPLINE_WORLD_SHIFT)));
+    // pos(t) = t^3 * m[0][1] + t^2 * m[1][1] + t * m[2][1] + m[3][1]
+    // t = smooth(d) # d is path distance.
+    // d^2 = ((posX(t+1)^2) - (posX(t)^2)) + ((posY(t+1)^2) - (posY(t)^2)) + ((posZ(t+1)^2) - (posZ(t)^2))
+    // delta pos(t) = ((t + 1)^3 * m[0][axis] + (t + 1)^2 * m[1][axis] + (t + 1) * m[2][1] + m[3][axis])^2 - (t^3 * m[0][axis] + t^2 * m[1][axis] + t * m[2][axis] + m[3][axis])^2
+    // But isn't delta pos... just the derivative? Aka rotation?
+    // Yes. Okay.
+    // So, if we use an approximation of pathDistance = rotation(t).magnitude() (MAKE SURE NOT TO NORMALIZE)
+    //  -> Then, we must solve for 't' so that pathDistance = the real path distance.
+
+
+    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1] + m[3][1]) - (t^3 * m[0][1] + t^2 * m[1][1] + t * m[2][1] + m[3][1])
+    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1] + m[3][1]) - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1] - m[3][1]
+    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1]) - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1]
+
+    //
+
+    // d = ((t + 1)^3 * m[0][1] + (t * t + 2t + 1) * m[1][1] + (t * m[2][1]) + m[2][1] - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1]
+    // d = ((t + 1)^3 * m[0][1] + (t * t) * m[1][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1] - t^2 * m[1][1]
+    // d = ((t + 1)^3 * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
+    // d = ((t * (t * t + 2t + 1)) + (t * t + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
+    // d = ((t^3 + 2t^2 + t) + (t * t + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
+    // d = ((2t^2 + t) + (t^2 + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1]
+    // d = (3t^2 + 3t + 1) * m[0][1] + (2t + 1) * m[1][1] + m[2][1]
+    // d - m[2][1] = (3t^2 + t) * m[0][1] + (2t + 1) * m[0][1] + (2t + 1) * m[1][1]
+    // (d - m[2][1]) / (2t + 1) = ((3t^2 + t) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
+    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + ((2t^2 + t) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
+    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + (t(2t + 1) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
+    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + (t * m[0][1]) + m[0][1] + m[1][1]
+    // TODO: Sum the derivative coefficients of the rotation for Frogger?
+
     @SuppressWarnings("CommentedOutCode")
     private void makeSmoothingCurveEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         // TODO: We'll need a real smoothing curve editor in the future. Refer to Blender's RGB Curve Shader node for an example of what this should probably look like.
         editor.addBoldLabel("Smoothing Curve (Not Editable Yet):");
         editor.addCenteredImageView(createImageView());
+
+        // TODO: IDEA
+        for (int i = 0; i < this.smoothC.length; i++) {
+            double[] values = new double[this.smoothC[i].length + 1];
+            for (int j = 0; j < this.smoothC[i].length; j++)
+                values[j] = DataUtils.fixedPointIntToFloatNBits(this.smoothC[i][j], 9);
+            double[] results = values.clone();
+
+            int rootCount = CubicCurve2D.solveCubic(values, results);
+            for (int j = 0; j < values.length; j++)
+                editor.addLabel("Input[" + i + "][" + j + "]", String.valueOf(values[j]));
+            for (int j = 0; j < rootCount; j++)
+                editor.addLabel("Roots[" + j + "]", String.valueOf(results[j]));
+            editor.addSeparator();
+        }
 
         /*editor.addBoldLabel("Segment Length Percentages:");
         float[] smoothingT = calculateSmoothingAsPercentages();
@@ -380,6 +437,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      * Recalculates smooth T values.
      */
     public void calculateSmoothT() {
+        // TODO: Would it be feasible to use CubicCurve2D.solveCubic()?
         float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
         for (int i = 0; i < this.smoothT.length; i++)
             this.smoothT[i] = DataUtils.floatToFixedPointInt((length * (i + 1) * .25F), 12);

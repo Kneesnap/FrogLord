@@ -336,6 +336,38 @@ public abstract class PropertyListNode {
     }
 
     /**
+     * Adds an enum value to the property list, allowing the user to edit the value.
+     * @param name the name of the value to add
+     * @param value the value to add
+     * @param handler the handling behavior for a new value
+     * @return newEntry
+     */
+    public <TEnum extends Enum<TEnum>> PropertyListDataEntry<TEnum>  addEnum(String name, TEnum value, TEnum[] enumValues, Consumer<TEnum> handler) {
+        // Determine enum class.
+        Class<TEnum> enumClass = getEnumClass(value, enumValues);
+        return addEnum(name, value)
+                .setDataFromStringConverter(newText -> StringUtils.isNullOrEmpty(newText) || "null".equals(newText) ? null : Enum.valueOf(enumClass, newText))
+                .setDataValidator(Utils.contains(enumValues, null) ? null : Objects::nonNull)
+                .setDataHandler(handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <TEnum extends Enum<TEnum>> Class<TEnum> getEnumClass(TEnum value, TEnum[] enumValues) {
+        if (value != null)
+            return (Class<TEnum>) value.getClass();
+
+        if (enumValues.length > 0) {
+            for (int i = 0; i < enumValues.length; i++) {
+                TEnum testValue = enumValues[i];
+                if (testValue != null)
+                    return (Class<TEnum>) testValue.getClass();
+            }
+        }
+
+        throw new IllegalArgumentException("Could not resolve the enumClass from any of the provided arguments.");
+    }
+
+    /**
      * Clear all child entries.
      */
     public void clearChildEntries() {

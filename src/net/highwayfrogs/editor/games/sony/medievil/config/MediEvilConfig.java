@@ -38,4 +38,11 @@ public class MediEvilConfig extends SCGameConfig {
         this.levelTableSize = config.getInt("levelTableSize", this.levelTableSize);
         this.levelTableEntryByteSize = config.getInt("levelTableEntryByteSize", this.levelTableEntryByteSize);
     }
+
+    /**
+     * Returns true iff this build is at/before the ECTS pre-alpha build in September 1997.
+     */
+    public boolean isAtOrBeforeEctsAlpha() {
+        return "1997-08-14-rolling-demo".equals(getInternalName()) || "1997-09-07-ects-pre-alpha".equals(getInternalName());
+    }
 }

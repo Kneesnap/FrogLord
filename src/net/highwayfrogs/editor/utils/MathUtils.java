@@ -151,4 +151,46 @@ public class MathUtils {
         int d4 = crossProduct(line2X1, line2Y1, line2X2, line2Y2, line1X2, line1Y2);
         return ((d1 > 0 && d2 < 0 || d1 < 0 && d2 > 0) && (d3 > 0 && d4 < 0 || d3 < 0 && d4 > 0));
     }
+
+    /**
+     * Test if a sphere intersects a cube.
+     * @param sphereX the x position at the center of the sphere
+     * @param sphereY the y position at the center of the sphere
+     * @param sphereZ the z position at the center of the sphere
+     * @param sphereRadius  the radius of the sphere
+     * @param cubeMinX the x position of the cube's minimum corner
+     * @param cubeMinY the y position of the cube's minimum corner
+     * @param cubeMinZ the z position of the cube's minimum corner
+     * @param cubeMaxX the x position of the cube's maximum corner
+     * @param cubeMaxY the y position of the cube's maximum corner
+     * @param cubeMaxZ the z position of the cube's maximum corner
+     * @return true iff the sphere and cube intersect
+     */
+    public static boolean doesSphereIntersectCube(float sphereX, float sphereY, float sphereZ, float sphereRadius,
+                                                  float cubeMinX, float cubeMinY, float cubeMinZ,
+                                                  float cubeMaxX, float cubeMaxY, float cubeMaxZ) {
+        float distSquared = 0;
+        if (sphereX < cubeMinX) {
+            distSquared += (sphereX - cubeMinX) * (sphereX - cubeMinX);
+        } else if (sphereX > cubeMaxX) {
+            distSquared += (sphereX - cubeMaxX) * (sphereX - cubeMaxX);
+        }
+
+        if (sphereY < cubeMinY) {
+            distSquared += (sphereY - cubeMinY) * (sphereY - cubeMinY);
+        } else if (sphereY > cubeMaxY) {
+            distSquared += (sphereY - cubeMaxY) * (sphereY - cubeMaxY);
+        }
+
+        if (sphereZ < cubeMinZ) {
+            distSquared += (sphereZ - cubeMinZ) * (sphereZ - cubeMinZ);
+        } else if (sphereZ > cubeMaxZ) {
+            distSquared += (sphereZ - cubeMaxZ) * (sphereZ - cubeMaxZ);
+        }
+
+        return (sphereRadius * sphereRadius) >= distSquared
+                || ((sphereX >= cubeMinX) && (sphereX <= cubeMaxX) // Not 100% sure if this is necessary, but I think so, if there's a small sphere in a large cube.
+                && (sphereY >= cubeMinY) && (sphereY <= cubeMaxY)
+                && (sphereZ >= cubeMinZ) && (sphereZ <= cubeMaxZ));
+    }
 }

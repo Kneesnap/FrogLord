@@ -9,6 +9,7 @@ import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
@@ -193,9 +194,9 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 PointLight parallelLight = fxLight instanceof PointLight ? (PointLight) fxLight : new PointLight();
                 parallelLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 // Use direction as a vector to set a position to simulate a parallel light as best as we can
-                parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
-                parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
-                parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
+                parallelLight.setTranslateX(-light.getDirection().getFloatX(IVector.NORMAL_FIXED_PT_BITS) * 1024);
+                parallelLight.setTranslateY(-light.getDirection().getFloatY(IVector.NORMAL_FIXED_PT_BITS) * 1024);
+                parallelLight.setTranslateZ(-light.getDirection().getFloatZ(IVector.NORMAL_FIXED_PT_BITS) * 1024);
                 fxLight = parallelLight;
                 break;
 
@@ -386,9 +387,9 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
                 SVector direction = this.mapLight.getDirection();
                 this.directionalLine = this.lightingManager.getLightList().addLine(startX, startY, startZ,
-                        startX + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatX(12)),
-                        startY + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatY(12)),
-                        startZ + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatZ(12)),
+                        startX + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatX(IVector.NORMAL_FIXED_PT_BITS)),
+                        startY + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatY(IVector.NORMAL_FIXED_PT_BITS)),
+                        startZ + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatZ(IVector.NORMAL_FIXED_PT_BITS)),
                         3, Scene3DUtils.makeUnlitSharpMaterial(Color.RED));
                 this.directionalLine.setOnMouseClicked(event -> this.lightingManager.getValueSelectionBox().getSelectionModel().select(this.mapLight));
             }
@@ -410,7 +411,10 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                     float radius = (float) Math.tan(Math.PI * (this.mapLight.getAttribute0() / 4096F)) * height;
                     Cone3D.createCone(mesh, 30, radius, height);
                     Scene3DUtils.setNodePosition(this.meshView, this.mapLight.getPosition().getFloatX(), this.mapLight.getPosition().getFloatY(), this.mapLight.getPosition().getFloatZ());
-                    Scene3DUtils.setNodeRotation(this.meshView, (float) Math.asin(this.mapLight.getDirection().getFloatZ(12)), 0, (float) -Math.asin(this.mapLight.getDirection().getFloatX(12)));
+                    Scene3DUtils.setNodeRotation(this.meshView,
+                            (float) Math.asin(this.mapLight.getDirection().getFloatZ(IVector.NORMAL_FIXED_PT_BITS)),
+                            0,
+                            (float) -Math.asin(this.mapLight.getDirection().getFloatX(IVector.NORMAL_FIXED_PT_BITS)));
                     this.meshView.setMaterial(Scene3DUtils.makeUnlitSharpMaterial(ColorUtils.fromRGB(ColorUtils.swapRedBlue(this.mapLight.getColor()), .333F)));
                 } else if (this.meshView != null) {
                     this.meshView.setMesh(null);
@@ -422,9 +426,9 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
             float startX = this.mapLight.getPosition().getFloatX();
             float startY = this.mapLight.getPosition().getFloatY();
             float startZ = this.mapLight.getPosition().getFloatZ();
-            float dirX = this.mapLight.getDirection().getFloatX(12);
-            float dirY = this.mapLight.getDirection().getFloatY(12);
-            float dirZ = this.mapLight.getDirection().getFloatZ(12);
+            float dirX = this.mapLight.getDirection().getFloatX(IVector.NORMAL_FIXED_PT_BITS);
+            float dirY = this.mapLight.getDirection().getFloatY(IVector.NORMAL_FIXED_PT_BITS);
+            float dirZ = this.mapLight.getDirection().getFloatZ(IVector.NORMAL_FIXED_PT_BITS);
 
             int gridSquaresMissed = 0;
             float currX = startX, currY = startY, currZ = startZ;
@@ -467,9 +471,9 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
             float startX = this.mapLight.getPosition().getFloatX();
             float startY = this.mapLight.getPosition().getFloatY();
             float startZ = this.mapLight.getPosition().getFloatZ();
-            float dirX = this.mapLight.getDirection().getFloatX(12);
-            float dirY = this.mapLight.getDirection().getFloatY(12);
-            float dirZ = this.mapLight.getDirection().getFloatZ(12);
+            float dirX = this.mapLight.getDirection().getFloatX(IVector.NORMAL_FIXED_PT_BITS);
+            float dirY = this.mapLight.getDirection().getFloatY(IVector.NORMAL_FIXED_PT_BITS);
+            float dirZ = this.mapLight.getDirection().getFloatZ(IVector.NORMAL_FIXED_PT_BITS);
 
             int gridSquaresMissed = 0;
             float currX = startX, currY = startY, currZ = startZ;

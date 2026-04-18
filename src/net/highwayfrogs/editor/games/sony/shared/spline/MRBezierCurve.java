@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.shared.spline;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -49,8 +50,28 @@ public class MRBezierCurve extends SCSharedGameData {
     }
 
     /**
+     * Gets the position corresponding to the given point type.
+     * @param pointType the point type to get the value from
+     * @return the position vector
+     */
+    public SVector getPosition(MRBezierCurvePointType pointType) {
+        switch (pointType) {
+            case START_POINT:
+                return this.start;
+            case CONTROL_POINT_1:
+                return this.control1;
+            case CONTROL_POINT_2:
+                return this.control2;
+            case END_POINT:
+                return this.end;
+            default:
+                throw new UnsupportedOperationException("Unsupported MRBezierCurvePointType: " + pointType);
+        }
+    }
+
+    /**
      * Calculate the length of this bezier curve. Doesn't seem very accurate.
-     * Nabbed from http://steve.hollasch.net/cgindex/curves/cbezarclen.html
+     * Nabbed from <a href="http://steve.hollasch.net/cgindex/curves/cbezarclen.html"/>
      * @return splineLength
      */
     public double calculateLength() {
@@ -149,5 +170,20 @@ public class MRBezierCurve extends SCSharedGameData {
         splineMatrix[2][2] = -uZ + vZ;
 
         return matrix;
+    }
+
+    /**
+     * Represents the various curve point types.
+     * Created by Kneesnap on 2/23/2026.
+     */
+    @Getter
+    @RequiredArgsConstructor
+    public enum MRBezierCurvePointType {
+        START_POINT("Start Point"),
+        CONTROL_POINT_1("Control Point #1"),
+        CONTROL_POINT_2("Control Point #2"),
+        END_POINT("End Point");
+
+        private final String displayName;
     }
 }

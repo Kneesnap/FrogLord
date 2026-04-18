@@ -27,7 +27,6 @@ import java.util.logging.*;
 /**
  * The entry point to FrogLord.
  * TODO: At some point we want to:
- *  -> PropertyList with nested portions.
  *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
  *  -> Use new config system in existing code parts?
  *  -> Improve the file path system by thinking about all the places we use it, and if we want to combine any usages.
@@ -36,12 +35,14 @@ import java.util.logging.*;
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
- * TODO: I think we should make unit tests at some point. Mesh system, texture tree system, Noodle? Utils? Math classes? DataReader/Writer? Config? Gradle, hrmm.
+ * TODO: I think we should make unit tests at some point. Mesh system, texture tree system, Noodle? Utils? Math classes? DataReader/Writer? Config? Gradle, hrmm. Port from MTF?
  *
  * TODO: I'd like to buff the MOF viewer to allow previewing all of the things in this file format.
  *  -> Animations probably should be viewable independently of each other? Not sure. But can they compound? Not sure.
  *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
  *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
+ *
+ * TODO: One day, when merging to a Java version accepting the Vector API, consider where we might benefit from using AVX & SIMD instructions, with <a href="https://openjdk.org/jeps/529"/>.
  */
 public class FrogLordApplication extends Application {
     @Getter private static Config mainConfig;

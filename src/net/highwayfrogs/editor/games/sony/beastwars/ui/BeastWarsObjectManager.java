@@ -6,6 +6,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapObject;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
@@ -115,9 +116,9 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
             return; // No data to update position from.
 
         SVector rotation = object.getRotation();
-        float roll = (float) (2 * Math.PI * rotation.getFloatX(12));
-        float pitch = (float) (2 * Math.PI * rotation.getFloatY(12));
-        float yaw = (float) (2 * Math.PI * rotation.getFloatZ(12));
+        float roll = (float) (2 * Math.PI * rotation.getFloatX(IVector.NORMAL_FIXED_PT_BITS));
+        float pitch = (float) (2 * Math.PI * rotation.getFloatY(IVector.NORMAL_FIXED_PT_BITS));
+        float yaw = (float) (2 * Math.PI * rotation.getFloatZ(IVector.NORMAL_FIXED_PT_BITS));
 
         int foundRotations = 0;
         for (Transform transform : entityMeshView.getTransforms()) { // Update existing rotations.
@@ -147,9 +148,9 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
         entityMeshView.setTranslateY(object.getWorldPositionY());
         entityMeshView.setTranslateZ(object.getWorldPositionZ());
         SVector scale = object.getScale();
-        entityMeshView.setScaleX(scale.getFloatX(12));
-        entityMeshView.setScaleY(scale.getFloatY(12));
-        entityMeshView.setScaleZ(scale.getFloatZ(12));
+        entityMeshView.setScaleX(scale.getFloatX(IVector.NORMAL_FIXED_PT_BITS));
+        entityMeshView.setScaleY(scale.getFloatY(IVector.NORMAL_FIXED_PT_BITS));
+        entityMeshView.setScaleZ(scale.getFloatZ(IVector.NORMAL_FIXED_PT_BITS));
     }
 
     @Override
