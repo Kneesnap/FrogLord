@@ -401,6 +401,13 @@ public abstract class SCGameInstance extends GameInstance {
             TextureRemapArray textureRemap = this.textureRemaps.get(i);
             TextureRemapArray nextTextureRemap = this.textureRemaps.size() > i + 1 ? this.textureRemaps.get(i + 1) : null;
 
+            // Skip overlapped remaps? TODO: Can I create a system to save updated remap pointers to the executable, then test if there's enough room in the total remap area for all the texture remaps before saving them?
+            while (nextTextureRemap != null && textureRemap.getTextureIds().size() > (int) ((nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE)) {
+                getLogger().warning("Skipping the texture remap '%s' because the previous remap(s) took up too much space.", nextTextureRemap.getDebugName());
+                i++;
+                nextTextureRemap = this.textureRemaps.size() > i + 1 ? this.textureRemaps.get(i + 1) : null;
+            }
+
             // Verify there is enough space.
             if (nextTextureRemap != null) {
                 int availableSlots = (int) ((nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE);
