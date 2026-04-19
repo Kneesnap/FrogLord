@@ -7,7 +7,10 @@ GQS files are a special FrogLord format which detail the changes applied to a ch
 In order to understand how `.gqs` configuration files work, make sure to read about [FrogLord configuration files](../../froglord/config-files.md).  
 
 ## Getting Started
-The recommended editor to use for `.gqs` files is [Visual Studio Code](https://code.visualstudio.com/download), however any text editor such as [Notepad++](https://notepad-plus-plus.org/downloads/) will work as well.  
+The recommended editor to use for `.gqs` files is [Visual Studio Code](https://code.visualstudio.com/download) because of the official [FrogLord GQS plugin](https://github.com/Eli-bassoon/great-quest-script-vscode/).
+
+### When not using the plugin, the following options are available for decent syntax highlighting:  
+If you do not wish to use Visual Studio code, technically any text editor such as [Notepad++](https://notepad-plus-plus.org/downloads/) will work as well, but will not have any support for GQS such as "correct" syntax highlighting.  
 While using Visual Studio Code, it is recommended to set the syntax highlighting to either `Shell` with the `Configure File Association for 'gqs'` option when clicking on the file type in the bottom-right hand corner of the UI.  
 While using Notepad++, it is recommended to set the syntax highlighting to either `Shell` or `PowerShell` with the `Language > ...` menu, to color the scripts.  
 
