@@ -9,8 +9,11 @@ import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinim
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
+import java.util.*;
+
 /**
- * Contains VAG data, compatible with the minimal header.
+ * Contains VAG data, compatible with the minimal header (MediEvil II, C-12 Final Resistance).
+ * NOTE: This is a heavily simplified format, not similar to the .VH formats seen in previous games.
  * Created by Kneesnap on 5/13/2024.
  */
 public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCPlayStationMinimalSoundBankHeaderEntry, SCPlayStationVabSound> {
@@ -23,13 +26,18 @@ public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCP
         if (!(other instanceof SCPlayStationMinimalSoundBankHeader) || other.getEntries().isEmpty())
             return false; // Can't read without header.
 
+        // Generate a mapping of the header entries to their audio sizes.
+        Map<SCPlayStationMinimalSoundBankHeaderEntry, Integer> audioSizesByEntry = getAudioSizeMap(other.getEntries(), reader.getSize());
+
+        // Load audio entries.
         this.entries.clear();
         for (int i = 0; i < other.getEntries().size(); i++) {
-            int audioSize = i >= other.getEntries().size() - 1 ? reader.getRemaining() : other.getEntries().get(i + 1).getDataStartAddress(); // Where the reading ends.
-            if (audioSize == 0)
+            SCPlayStationMinimalSoundBankHeaderEntry entry = other.getEntries().get(i);
+            Integer audioSize = audioSizesByEntry.get(entry); // Where the reading ends.
+            if (audioSize == null || audioSize == 0)
                 break;
 
-            SCPlayStationVabSound newSound = new SCPlayStationVabSound(this, other.getEntries().get(i), i, audioSize);
+            SCPlayStationVabSound newSound = new SCPlayStationVabSound(this, entry, i, audioSize);
             newSound.load(reader);
             this.entries.add(newSound);
         }
@@ -41,5 +49,26 @@ public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCP
     public void save(DataWriter writer, SCSplitSoundBankHeader<SCPlayStationMinimalSoundBankHeaderEntry, SCPlayStationVabSound> other) {
         for (int i = 0; i < this.entries.size(); i++)
             this.entries.get(i).save(writer);
+    }
+
+    private static Map<SCPlayStationMinimalSoundBankHeaderEntry, Integer> getAudioSizeMap(List<SCPlayStationMinimalSoundBankHeaderEntry> entries, int fileSize) {
+        List<SCPlayStationMinimalSoundBankHeaderEntry> sortedEntries = new ArrayList<>(entries);
+        sortedEntries.sort(Comparator.comparingInt(SCPlayStationMinimalSoundBankHeaderEntry::getDataStartAddress));
+
+        // Use the sorted option.
+        Map<SCPlayStationMinimalSoundBankHeaderEntry, Integer> audioSizesByEntry = new HashMap<>(sortedEntries.size());
+        SCPlayStationMinimalSoundBankHeaderEntry lastEntry = null;
+        for (int i = 0; i < sortedEntries.size(); i++) {
+            SCPlayStationMinimalSoundBankHeaderEntry currentEntry = sortedEntries.get(i);
+            if (lastEntry != null)
+                audioSizesByEntry.put(lastEntry, currentEntry.getDataStartAddress() - lastEntry.getDataStartAddress());
+
+            lastEntry = currentEntry;
+        }
+
+        if (lastEntry != null)
+            audioSizesByEntry.put(lastEntry, fileSize - lastEntry.getDataStartAddress());
+
+        return audioSizesByEntry;
     }
 }
