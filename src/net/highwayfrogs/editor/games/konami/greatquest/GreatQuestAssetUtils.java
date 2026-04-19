@@ -41,7 +41,7 @@ import java.util.Map.Entry;
  */
 public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_TEXTURES = "Textures";
-    private static final String CONFIG_SECTION_MODELS = "Models";
+    public static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     public static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
@@ -54,7 +54,7 @@ public class GreatQuestAssetUtils {
     public static final String CONFIG_SECTION_ENTITIES = "Entities";
     private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
     private static final String CONFIG_SECTION_INCLUDE = "Include";
-    private static final String CONFIG_OPTION_CREATE_MODEL_DESC = "CreateModelDesc";
+    public static final String CONFIG_OPTION_CREATE_MODEL_DESC = "CreateModelDesc";
 
     /**
      * Reads a great quest script group from a config, and applies it to the chunked file.

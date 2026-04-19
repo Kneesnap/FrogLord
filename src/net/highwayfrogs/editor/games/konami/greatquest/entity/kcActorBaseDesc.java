@@ -31,6 +31,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -312,14 +313,31 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
      */
     public Config toCopyResourcesConfig() {
         Config root = new Config("clipboard");
+
+        // Model description section.
+        kcModelDesc modelDesc = getModelDescription();
+        kcModelWrapper modelWrapper;
+        boolean createdModelSection = false;
+        if (modelDesc != null && (modelWrapper = modelDesc.getModelWrapper()) != null) {
+            createdModelSection = true;
+            Config modelDescSection = new Config(GreatQuestAssetUtils.CONFIG_SECTION_MODELS);
+            root.addChildConfig(modelDescSection);
+
+            // Add the model wrapper.
+            OptionalArguments arguments = OptionalArguments.parse(modelWrapper.getFilePath());
+            arguments.getOrCreate(GreatQuestAssetUtils.CONFIG_OPTION_CREATE_MODEL_DESC).setAsString(modelDesc.getResourceName(), true);
+            modelDescSection.getInternalText().add(new ConfigValueNode(arguments.toString()));
+        }
+
+        // Copy resources section.
         Config copyResources = new Config(GreatQuestAssetUtils.CONFIG_SECTION_COPY_RESOURCES);
         root.addChildConfig(copyResources);
         Config levelNode = new Config(getParentFile().getFilePath());
         copyResources.addChildConfig(levelNode);
 
         levelNode.getInternalText().add(new ConfigValueNode(getResourceName()));
-        if (getModelDescription() != null)
-            levelNode.getInternalText().add(new ConfigValueNode(getModelDescription().getResourceName()));
+        if (modelDesc != null && !createdModelSection)
+            levelNode.getInternalText().add(new ConfigValueNode(modelDesc.getResourceName()));
         if (getSkeleton() != null)
             levelNode.getInternalText().add(new ConfigValueNode(getSkeleton().getName()));
         if (getAnimationSet() != null)
