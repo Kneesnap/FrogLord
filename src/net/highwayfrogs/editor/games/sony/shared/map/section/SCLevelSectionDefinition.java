@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.c12.C12GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
@@ -34,7 +35,8 @@ public class SCLevelSectionDefinition extends SCGameData<SCGameInstance> impleme
     private MWIResourceEntry cachedVloEntry;
 
     private static final int MEDIEVIL2_SIZE_IN_BYTES = 0x44; // (68)
-    private static final int C12_PROTOTYPE_SIZE_IN_BYTES = 0x48; // (72)
+    private static final int C12_SIZE_IN_BYTES_MAY_PROTOTYPE = 0x48; // (72)
+    private static final int C12_SIZE_IN_BYTES = 0x5C; // (92)
 
     public SCLevelSectionDefinition(SCLevelDefinition levelDefinition) {
         super(levelDefinition.getGameInstance());
@@ -43,7 +45,11 @@ public class SCLevelSectionDefinition extends SCGameData<SCGameInstance> impleme
 
     private int getExpectedSizeInBytes() {
         if (getGameInstance().isC12()) {
-            return C12_PROTOTYPE_SIZE_IN_BYTES;
+            if (((C12GameInstance) getGameInstance()).getVersionConfig().isAtLeastBetaCandidate3()) {
+                return C12_SIZE_IN_BYTES;
+            } else {
+                return C12_SIZE_IN_BYTES_MAY_PROTOTYPE;
+            }
         } else if (getGameInstance().isMediEvil2()) {
             return MEDIEVIL2_SIZE_IN_BYTES;
         } else {

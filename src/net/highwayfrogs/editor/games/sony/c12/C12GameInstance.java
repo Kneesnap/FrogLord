@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
-import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2Config;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelDefinition;
@@ -82,8 +81,8 @@ public class C12GameInstance extends SCGameInstance {
     }
 
     @Override
-    public MediEvil2Config getVersionConfig() {
-        return (MediEvil2Config) super.getVersionConfig();
+    public C12Config getVersionConfig() {
+        return (C12Config) super.getVersionConfig();
     }
 
     @Override

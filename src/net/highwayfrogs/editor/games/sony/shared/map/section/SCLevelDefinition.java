@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.c12.C12GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
@@ -44,7 +45,8 @@ public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTable
     private MWIResourceEntry cachedTimFileEntry;
 
     private static final int MEDIEVIL2_SIZE_IN_BYTES = 0x6C;
-    private static final int C12_PROTOTYPE_SIZE_IN_BYTES = 0x60;
+    private static final int C12_SIZE_IN_BYTES_MAY_PROTOTYPE = 0x60;
+    private static final int C12_SIZE_IN_BYTES = 0x5C;
 
     public SCLevelDefinition(SCGameInstance instance) {
         super(instance);
@@ -52,7 +54,11 @@ public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTable
 
     private int getExpectedSizeInBytes() {
         if (getGameInstance().isC12()) {
-            return C12_PROTOTYPE_SIZE_IN_BYTES;
+            if (((C12GameInstance) getGameInstance()).getVersionConfig().isAtLeastBetaCandidate3()) {
+                return C12_SIZE_IN_BYTES;
+            } else {
+                return C12_SIZE_IN_BYTES_MAY_PROTOTYPE;
+            }
         } else if (getGameInstance().isMediEvil2()) {
             return MEDIEVIL2_SIZE_IN_BYTES;
         } else {
@@ -66,7 +72,7 @@ public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTable
         this.relocNamePointer = reader.readUnsignedIntAsLong();
         this.vloResourceId = reader.readShort();
         this.wadResourceId = reader.readShort();
-        this.timResourceId = reader.readShort(); // Zero (padding) in C-12 Final Resistance.
+        this.timResourceId = reader.readShort(); // TODO: Figure out what this is in C-12 Final Resistance.
         this.levelNameId = reader.readShort();
         this.unknown1 = reader.readShort();
         this.unknown2 = reader.readUnsignedByteAsShort();
