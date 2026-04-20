@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.games.sony.shared.map.ui;
 
+import javafx.application.Platform;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import net.highwayfrogs.editor.games.sony.c12.C12GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMeshController;
@@ -11,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.section.SCLevelSectionDefin
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapUIManager.SCMapListManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +60,11 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
     @Override
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
-        getValueDisplaySetting().setValue(ListDisplayType.ALL);
+        if (getGameInstance() instanceof C12GameInstance) {
+            Platform.runLater(getValueSelectionBox().getSelectionModel()::selectFirst); // Schedule this after the values have been added.
+        } else {
+            getValueDisplaySetting().setValue(ListDisplayType.ALL); // This does not run for C-12, because C-12 has lots of lag due to the sheer amount of shaded texture data generated.
+        }
     }
 
     @Override
@@ -65,14 +72,14 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
         MeshView newView = new MeshView();
         newView.setCullFace(CullFace.BACK);
         newView.setDrawMode(DrawMode.FILL);
-        MeshViewController.bindMeshSceneControls(getController(), newView);
-        SCMapMesh mapMesh = new SCMapMesh(sectionDef.getMapFile());
-        mapMesh.addView(newView, getController().getMeshTracker());
         updateEntityPositionRotation(sectionDef, newView);
         getRenderManager().getRoot().getChildren().add(newView);
         getController().getLightingGroup().getChildren().add(newView);
 
-        newView.setOnMouseClicked(evt -> handleClick(evt, sectionDef));
+        newView.setOnMouseClicked(evt -> {
+            evt.consume();
+            getValueSelectionBox().getSelectionModel().select(sectionDef);
+        });
         return newView;
     }
 
@@ -138,15 +145,26 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
     @Override
     protected void onDelegateRemoved(SCLevelSectionDefinition removedSectionDef, MeshView oldMeshView) {
         if (oldMeshView != null) {
+            setVisible(removedSectionDef, oldMeshView, false);
             getRenderManager().getRoot().getChildren().remove(oldMeshView);
-            MeshViewController.unbindMeshSceneControls(getController(), oldMeshView);
-            getController().getLightingGroup().getChildren().add(oldMeshView);
+            getController().getLightingGroup().getChildren().remove(oldMeshView);
         }
     }
 
     @Override
     protected void setVisible(SCLevelSectionDefinition sectionDef, MeshView meshView, boolean visible) {
         meshView.setVisible(visible);
+
+        // Create/remove map meshes on visibility control, as to avoid the major lag seen in places like C-12 Final Resistance due to the sheer scale of its maps.
+        if (visible && !(meshView.getMesh() instanceof SCMapMesh)) {
+            MeshViewController.bindMeshSceneControls(getController(), meshView);
+            SCMapMesh mapMesh = new SCMapMesh(sectionDef.getMapFile());
+            mapMesh.addView(meshView, getController().getMeshTracker());
+        } else if (!visible && (meshView.getMesh() instanceof SCMapMesh)) {
+            MeshViewController.unbindMeshSceneControls(getController(), meshView);
+            DynamicMesh.tryRemoveMesh(meshView);
+            System.gc(); // This is here as a prayer to avoid increasing the max heap size when switching between sections.
+        }
     }
 
     @Override
