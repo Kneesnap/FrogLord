@@ -450,6 +450,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             return null;
 
         String fileName = levelId + ".sbr";
+
+        // Ruins of Joy Town has no SBR file on PC, and I don't see any "proper" way to address this, so this hack will suffice.
+        if ("16".equals(levelId))
+            fileName = "15.sbr";
+
         for (GreatQuestGameFile file : getGameInstance().getLooseFiles())
             if (file instanceof SBRFile && fileName.equalsIgnoreCase(file.getFileName()))
                 return (SBRFile) file;
