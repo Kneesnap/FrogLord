@@ -159,17 +159,21 @@ public class kcScriptList extends kcCResource {
      */
     public void printAdvancedWarnings(ILogger logger) {
         Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
+        kcScriptDisplaySettings scriptDisplaySettings = null;
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
             kcCResourceEntityInst entity = script.getEntity();
 
             if (entity == null) {
-                for (int j = 0; j < script.getFunctions().size(); j++)
-                    script.getFunctions().get(j).getCause().printWarning(logger, "the function/script was not attached to a valid entity");
+                if (scriptDisplaySettings == null && getParentFile() != null)
+                    scriptDisplaySettings = getParentFile().createScriptDisplaySettings();
 
                 // This happens in The Ruins of Joy Town, and presumably also could happen if earlier prototypes surface.
-                logger.warning("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: %d)",
-                        script.getFunctions().get(0).getCause().getUserLineNumber());
+                // It has not been observed to occur otherwise.
+                logger.info("Removing a script which doesn't have an entity linked! (Line Number: %d)%n%s",
+                        script.getFunctions().get(0).getCause().getUserLineNumber(), script.toConfigNode(logger, scriptDisplaySettings));
+                removeScript(i--);
+                continue;
             }
 
             kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
