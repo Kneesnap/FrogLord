@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
@@ -99,6 +100,22 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
+
+        int[] controlTypeCounts = new int[kcControlType.values().length];
+        for (int i = 0; i < this.tracks.size(); i++) {
+            kcTrack track = this.tracks.get(i);
+            controlTypeCounts[track.getTrackControlType().ordinal()]++;
+        }
+
+        for (int i = 0; i < kcControlType.values().length; i++) {
+            if (controlTypeCounts[i] <= 0)
+                continue;
+
+            kcControlType type = kcControlType.values()[i];
+            propertyList.add(type.name() + " Tracks", controlTypeCounts[i]);
+        }
+
+
         for (int i = 0; i < this.tracks.size(); i++) {
             kcTrack track = this.tracks.get(i);
             propertyList.addProperties("Track " + i + " (Tag: " + track.getTag() + ")", track);

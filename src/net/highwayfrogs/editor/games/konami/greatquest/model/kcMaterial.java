@@ -9,8 +9,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Represents a material.
@@ -48,7 +51,12 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
 
     private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found. Used by kcOTARenderCallbackBuffer::FlushBuffer
     private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE. Used by kcOTARenderCallbackBuffer::AddVtxBuffer to determine if there is transparency/if it should render later.
-    private static final int MATERIAL_FLAG_UNKNOWN = Constants.BIT_FLAG_4; // 0x10, seen on materials named "water", likely indicating something such as UV scrolling, transparency, or just that something is in fact, water. I have not yet found where this flag is checked, if it is checked. Maybe on the GPU it will indicate texture transform? Not sure! We should try removing this flag to see if it changes anything.
+    // The unknown flag is exclusively seen on materials named 'water', with no texture file name.
+    // However, not all materials named "water" without a texture file name have this flag.
+    // This does not appear to be used on map terrain, but instead appears exclusively on .VTX files.
+    // Many of the models this material is found on have nothing to do with water, such as \GameSource\Level05MushroomValley\Props\GrasRamp\Grasramp.vtx.
+    // Given that none of these materials have textures or even seem to be used for anything, this flag most likely is unused/does not matter.
+    private static final int MATERIAL_FLAG_UNKNOWN = Constants.BIT_FLAG_4; // 0x10
     private static final int FLAG_VALIDATION_MASK = MATERIAL_FLAG_UNKNOWN | MATERIAL_FLAG_ENABLE_ALPHA_BLEND | MATERIAL_FLAG_TEXTURED;
 
     public kcMaterial(GreatQuestInstance instance) {
@@ -67,6 +75,19 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
      */
     public boolean hasAlphaBlend() {
         return (this.flags & MATERIAL_FLAG_ENABLE_ALPHA_BLEND) == MATERIAL_FLAG_ENABLE_ALPHA_BLEND;
+    }
+
+    /**
+     * Gets the information used when logging messages.
+     */
+    private String getLoggerInfo() {
+        return "kcMaterial['" + this.materialName + "'"
+                + (StringUtils.isNullOrEmpty(this.textureFileName) ? "" : "|'" + this.textureFileName + "'") + "]";
+    }
+
+    @Override
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), kcMaterial::getLoggerInfo, this);
     }
 
     @Override
@@ -100,7 +121,7 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
         // kcCResourceModel::Load(char*) sets the texture path to be the folder containing the .vtx file, enabling textures to be resolved by their filename instead of this.
         // The value is overwritten when kcImportMaterialTexture is called (Specifically, the call to kcImportTexture will overwrite the existing value, if it exists), which occurs when loading maps + models.
         reader.skipInt();
-        warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK, "kcMaterial['" + this.materialName + "']");
+        warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK, "kcMaterial");
     }
 
     /**
