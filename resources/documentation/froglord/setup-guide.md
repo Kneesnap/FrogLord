@@ -9,7 +9,7 @@ If at any point there are questions, issues, or other support required, please j
 FrogLord can be downloaded from [here](https://github.com/Kneesnap/FrogLord/releases).  
 Make sure to extract the full FrogLord zip file before running FrogLord, not just the `.exe` file.  
 
-> [!WARNING]
+> [!WARNING]  
 > Please check the file path where FrogLord is kept. No part of it (including parent folders!) may contain a semicolon ';' character!
 > This is because a tool FrogLord relies on called `jpackage` has a bug that will cause FrogLord to not launch properly.
 > Even worse, it will keep trying to launch FrogLord over and over causing your PC to eventually get overloaded with processes!
@@ -29,7 +29,7 @@ Select the game you'd like to open from the dropdown list.
 For the purposes of this guide, we will select `Frogger: He's Back`, which is also known as `Frogger (1997)`.
 
 ## 4) Configuring the game
-> [!WARNING]
+> [!WARNING]  
 > Each game may vary with the steps required to get the files necessary for setup.
 > For example, Gamecube games would need Dolphin or some other software which can extract files from Gamecube isos.
 > The following steps are written for `Frogger (1997)`.

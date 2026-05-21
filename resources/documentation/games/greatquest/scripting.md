@@ -57,7 +57,7 @@ FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog."
 
 # Note how there's only one layer of square braces here.
 # This is because we do not want this data to be linked to [Entities], thus being treated as an entity.
-[EntityDefinitions]
+[EntityDescriptions]
 # Entity definition data can also be placed here, similarly to how it works for entities, with a new section for each definition.
 
 [Scripts]
@@ -767,6 +767,9 @@ The only way to use a variable is with the `SendNumber` effect.
 
 > [!NOTE]  
 > Variables can only represent whole numbers, between `-32768` and `32767`.  
+
+> [!WARNING]  
+> The player (`FrogInst001`)'s variables reset to zero when they die.  
 
 ### AddToVariable (Script Only)
 **Summary:** Adds a value to one of the script owner's entity variables by its ID.  
