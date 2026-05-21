@@ -28,6 +28,7 @@ import java.util.function.Predicate;
  */
 @RequiredArgsConstructor
 public class kcScriptValidationData {
+    @Getter private final kcScriptValidationDataTracker parentTracker;
     @Getter private final kcCResourceEntityInst entity;
     @Getter private final ILogger logger;
     private final Map<kcActionID, List<kcAction>> actionsByType = new HashMap<>();

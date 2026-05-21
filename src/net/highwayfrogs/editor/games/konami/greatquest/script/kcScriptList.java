@@ -21,7 +21,6 @@ import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
-import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.util.*;
 
@@ -158,7 +157,7 @@ public class kcScriptList extends kcCResource {
      * @param logger the logger to print the warnings to
      */
     public void printAdvancedWarnings(ILogger logger) {
-        Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
+        kcScriptValidationDataTracker entityTracker = new kcScriptValidationDataTracker(logger);
         kcScriptDisplaySettings scriptDisplaySettings = null;
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
@@ -176,7 +175,7 @@ public class kcScriptList extends kcCResource {
                 continue;
             }
 
-            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
+            kcScriptValidationData functionData = entityTracker.getOrCreateValidationData(entity);
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
 
@@ -192,7 +191,7 @@ public class kcScriptList extends kcCResource {
                         continue;
 
                     // Apply it to the target entity, not to the attached script entity.
-                    kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntity(true));
+                    kcScriptValidationData validationData = entityTracker.getOrCreateValidationData(effect.getTargetEntity(true));
                     if (validationData != null)
                         validationData.addAction(action);
                     if (functionData != null)
@@ -214,7 +213,7 @@ public class kcScriptList extends kcCResource {
                             kcAction action = sequence.getActions().get(k);
 
                             // Apply it to the target entity, not to the attached script entity.
-                            kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, entity);
+                            kcScriptValidationData validationData = entityTracker.getOrCreateValidationData(entity);
                             if (validationData != null) {
                                 validationData.addAction(action);
                                 validationData.addSendNumberToOwner(action);
@@ -229,7 +228,7 @@ public class kcScriptList extends kcCResource {
         Set<kcScriptCause> seenCauses = new HashSet<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
-            kcScriptValidationData functionCauseData = getOrCreateValidationData(logger, dataMap, script.getEntity());
+            kcScriptValidationData functionCauseData = entityTracker.getOrCreateValidationData(script.getEntity());
 
             seenCauses.clear();
             for (int j = 0; j < script.getFunctions().size(); j++) {
@@ -258,25 +257,12 @@ public class kcScriptList extends kcCResource {
                     if (action == null || action.isLoadedFromGame())
                         continue;
 
-                    kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntity(true));
+                    kcScriptValidationData actionData = entityTracker.getOrCreateValidationData(effect.getTargetEntity(true));
                     if (actionData != null)
                         action.printAdvancedWarnings(actionData);
                 }
             }
         }
-    }
-
-    private static kcScriptValidationData getOrCreateValidationData(ILogger logger, Map<kcCResourceEntityInst, kcScriptValidationData> dataMap, kcCResourceEntityInst entity) {
-        if (entity == null)
-            return null;
-
-        kcScriptValidationData validationData = dataMap.get(entity);
-        if (validationData == null) {
-            ILogger tempLogger = new AppendInfoLoggerWrapper(logger, entity.getName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
-            dataMap.put(entity, validationData = new kcScriptValidationData(entity, tempLogger));
-        }
-
-        return validationData;
     }
 
     /**

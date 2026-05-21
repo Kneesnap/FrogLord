@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -95,16 +97,40 @@ public class kcActionNumber extends kcAction {
 
         // Ensure there is a cause listening for this number.
         if (this.operation == NumberOperation.VARIABLE) {
-            if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, action -> ((kcActionChangeVariable) action).getVariableID() == this.number)
-                    && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, action -> ((kcActionChangeVariable) action).getVariableID() == this.number))
+            if (getExecutor() instanceof kcScriptEffect) {
+                kcScriptEffect scriptEffect = (kcScriptEffect) getExecutor();
+                kcCResourceEntityInst targetEntity = scriptEffect.getTargetEntity(false);
+                kcCResourceEntityInst variableOwner = scriptEffect.getScriptOwner();
+
+                // SendNumber VARIABLE is special, since unlike any other command, it executes as the script owner even if --AsEntity is used.
+                // It then uses --AsEntity as the entity who should receive the number.
+                // So, in order to properly test variable usage, we must check variables from the script owner.
+                if (targetEntity != variableOwner && variableOwner != null)
+                    data = data.getParentTracker().getOrCreateValidationData(variableOwner);
+            }
+
+            if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, this::canCauseVariableSlot)
+                    && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, this::canCauseVariableSlot))
                 printWarning(data.getLogger(), data.getEntityName() + " uses SendNumber on entity variable slot " + this.number + ", but that slot is never assigned to a number!");
         } else if (this.operation == NumberOperation.LITERAL) {
-            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))
+            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, this::canCauseLiteral))
                 printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling number " + this.number + ".");
         } else if (this.operation == NumberOperation.RANDOM) {
-            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.couldRandomValueMatch(this.number)))
+            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, this::canCauseRandom))
                 printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling any of the numbers between 0 and " + this.number + ".");
         }
+    }
+
+    private boolean canCauseVariableSlot(kcActionChangeVariable action) {
+        return action.getVariableID() == this.number;
+    }
+
+    private boolean canCauseLiteral(kcScriptCauseNumber cause) {
+        return cause.doesValueMatch(this.number);
+    }
+
+    private boolean canCauseRandom(kcScriptCauseNumber cause) {
+        return cause.couldRandomValueMatch(this.number);
     }
 
     public enum NumberOperation {

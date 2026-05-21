@@ -68,6 +68,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     }
 
     /**
+     * Gets the entity who owns the script which this effect exists within.
+     * This is different from {@code getTargetEntity}, which returns the entity which the effect executes as (controlled by --AsEntity)
+     * @return scriptOwner
+     */
+    public kcCResourceEntityInst getScriptOwner() {
+        return getParentFunction().getScript().getEntity();
+    }
+
+    /**
      * Gets the chunked file which contains the script tree containing this script effect.
      */
     public GreatQuestChunkedFile getChunkedFile() {
