@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
+import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
@@ -16,6 +17,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -147,9 +149,10 @@ public class GreatQuestUtils {
 
         loadedFileListConfiguration = true;
 
-        Config config = new Config(GreatQuestGameType.INSTANCE.getEmbeddedResourceStream("file-list.cfg"));
-        for (Config fileListCfg : config.getOrderedChildren()) {
-            for (String filePath : fileListCfg.getText()) {
+        String fileListName = "file-list.cfg";
+        Config config = Config.loadTextConfigFromInputStream(GreatQuestGameType.INSTANCE.getEmbeddedResourceStream(fileListName), fileListName);
+        for (Config fileListCfg : config.getChildConfigNodes()) {
+            for (String filePath : fileListCfg.getTextWithoutComments()) {
                 if (filePath.equalsIgnoreCase("UNKNOWN") || filePath.trim().isEmpty())
                     continue;
 
@@ -451,6 +454,32 @@ public class GreatQuestUtils {
      */
     public static void writeTGQByteBoolean(DataWriter writer, boolean value) {
         writer.writeByte(value ? (byte) 1 : (byte) 0);
+    }
+
+    /**
+     * Creates a gqs config section and copies it to the user's clipboard.
+     * @param configData the config data to create the gqs config for
+     * @param sectionNames the parent section names to create
+     */
+    public static void createAndCopyGqsConfigToClipboard(IConfigData configData, String... sectionNames) {
+        Config root = new Config("clipboard");
+
+        // Attach parent section names.
+        Config parentConfig = root;
+        if (sectionNames != null) {
+            for (int i = 0; i < sectionNames.length; i++) {
+                Config newConfig = new Config(sectionNames[i]);
+                parentConfig.addChildConfig(newConfig);
+                parentConfig = newConfig;
+            }
+        }
+
+        parentConfig.addChildConfig(configData.toConfig());
+
+        // Apply gqs to clipboard.
+        String configText = root.toString();
+        FXUtils.setClipboardText(configText);
+        FXUtils.showPopup(AlertType.INFORMATION, "Applied GQS to clipboard.", configText);
     }
 
     /**

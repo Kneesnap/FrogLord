@@ -316,7 +316,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
 
             ILogger sequenceLogger = new BasicWrappedLogger(logger, sequence.getName() + "@" + logger.getName());
             try {
-                sequence.loadFromConfigNode(sequenceCfg, sequenceLogger);
+                sequence.fromConfig(sequenceLogger, sequenceCfg);
             } catch (Throwable th) {
                 Utils.handleError(sequenceLogger, th, false, "Could not load the sequence named '%s' as part of '%s'.", sequenceName, getName());
                 continue; // Don't register anything that loaded via error.

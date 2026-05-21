@@ -298,7 +298,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
-        MenuItem copyGqsItem = new MenuItem("Apply [" + GreatQuestAssetUtils.CONFIG_SECTION_COPY_RESOURCES + "] to Clipboard");
+        MenuItem copyGqsItem = new MenuItem("Apply [" + GreatQuestAssetUtils.CONFIG_SECTION_COPY_RESOURCES + "] to clipboard");
         contextMenu.getItems().add(copyGqsItem);
         copyGqsItem.setOnAction(event -> {
             Config config = toCopyResourcesConfig();

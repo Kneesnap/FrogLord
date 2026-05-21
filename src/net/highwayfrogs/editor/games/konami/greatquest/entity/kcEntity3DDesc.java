@@ -7,6 +7,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.IConfigData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -134,6 +135,15 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
             this.fromConfig(getLogger(), entityCfg);
             getLogger().info("Loaded '%s' from '%s'.", getResourceName(), inputFile.getName());
         });
+
+        MenuItem copyGqsItem = new MenuItem("Copy GQS to clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> GreatQuestUtils.createAndCopyGqsConfigToClipboard(this, GreatQuestAssetUtils.CONFIG_SECTION_ENTITY_DESCRIPTIONS));
+    }
+
+    @Override
+    public String getConfigName() {
+        return getResourceName();
     }
 
     @Override

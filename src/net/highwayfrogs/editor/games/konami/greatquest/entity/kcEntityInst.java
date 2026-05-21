@@ -258,6 +258,11 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IConfi
     public static final String CONFIG_SECTION_SCRIPT = "Script";
 
     @Override
+    public String getConfigName() {
+        return this.resource != null ? this.resource.getName() : "<UNREGISTERED ENTITY>";
+    }
+
+    @Override
     public void fromConfig(ILogger logger, Config input) {
         if (this.resource == null)
             throw new NullPointerException("this.resource");

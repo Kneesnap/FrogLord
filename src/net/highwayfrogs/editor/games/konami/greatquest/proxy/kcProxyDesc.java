@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.games.konami.greatquest.proxy;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.IConfigData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
@@ -91,6 +94,13 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     }
 
     @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyGqsItem = new MenuItem("Copy GQS to clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> GreatQuestUtils.createAndCopyGqsConfigToClipboard(this, GreatQuestAssetUtils.CONFIG_SECTION_COLLISION_PROXIES));
+    }
+
+    @Override
     public kcCResourceGeneric getResource() {
         return (kcCResourceGeneric) super.getResource();
     }
@@ -99,6 +109,11 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     private static final String CONFIG_KEY_REACTION = "reaction";
     private static final String CONFIG_KEY_COLLISION_GROUP = "collisionGroups";
     private static final String CONFIG_KEY_COLLIDE_WITH = "collideWith";
+
+    @Override
+    public String getConfigName() {
+        return getResourceName();
+    }
 
     @Override
     public void fromConfig(ILogger logger, Config input) {

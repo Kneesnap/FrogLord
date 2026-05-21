@@ -1,6 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.IConfigData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
@@ -97,11 +101,13 @@ import java.util.List;
  * Created by Kneesnap on 3/23/2020.
  */
 
-public class kcCActionSequence extends kcCResource implements kcActionExecutor, ILateResourceResolver {
+public class kcCActionSequence extends kcCResource implements kcActionExecutor, ILateResourceResolver, IConfigData {
     @Getter private final List<kcAction> actions = new ArrayList<>();
     private final GreatQuestHash<kcCResourceGeneric> cachedActorBaseDescRef = new GreatQuestHash<>();
 
     public static final String HASH_CONFIG_FIELD = "hash";
+
+    private static final String HASH_COMMENT = "This random number uniquely identifies the sequence.";
 
     public kcCActionSequence(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ACTIONSEQUENCE);
@@ -152,11 +158,13 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
         return baseName.substring(openIndex + 1, baseName.length() - 1);
     }
 
-    /**
-     * Loads the sequence from a Config node.
-     * @param config The config to load the script from
-     */
-    public void loadFromConfigNode(Config config, ILogger logger) {
+    @Override
+    public String getConfigName() {
+        return getSequenceName();
+    }
+
+    @Override
+    public void fromConfig(ILogger logger, Config config) {
         if (config == null)
             throw new NullPointerException("config");
 
@@ -195,6 +203,11 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
         }
     }
 
+    @Override
+    public void toConfig(Config output) {
+        saveToConfigNode(output, getLogger(), getChunkedFile().createScriptDisplaySettings());
+    }
+
     /**
      * Saves the sequence to a gqs-compliant config node.
      * @param logger the logger to write messages to
@@ -202,12 +215,21 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
      * @return configNode
      */
     public Config saveToConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
-        Config result = new Config(getSequenceName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
-        ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
+        return saveToConfigNode(new Config(getConfigName()), logger, settings);
+    }
+
+    /**
+     * Saves the sequence to a gqs-compliant config node.
+     * @param logger the logger to write messages to
+     * @param settings the settings to save the sequence with
+     * @return configNode
+     */
+    public Config saveToConfigNode(Config output, ILogger logger, kcScriptDisplaySettings settings) {
+        ConfigValueNode hashNode = output.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
         hashNode.setAsString("0x" + getSelfHash().getHashNumberAsString());
-        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
-        writeSequenceToConfig(logger, result, settings);
-        return result;
+        hashNode.setComment(HASH_COMMENT);
+        writeSequenceToConfig(logger, output, settings);
+        return output;
     }
 
     private void writeSequenceToConfig(ILogger logger, Config config, kcScriptDisplaySettings settings) {
@@ -246,7 +268,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
         Config result = new Config(entry.getKeyName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
         ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
         hashNode.setAsString("0x" + entry.getValueRef().getHashNumberAsString());
-        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
+        hashNode.setComment(HASH_COMMENT);
 
         ILogger logger = entry.getParentHashTable().getLogger();
         kcCActionSequence sequence = entry.getSequence();
@@ -332,5 +354,12 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
             if (!GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceTrack.class, getParentFile(), this, animationRef, animationRef.getHashNumber(), false))
                 logger.warning("Sequence '%s' contains an action '%s' uses an animation which was not made accessible to this level.", getName(), action.getAsGqsStatement());
         }
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyGqsItem = new MenuItem("Copy GQS to clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> GreatQuestUtils.createAndCopyGqsConfigToClipboard(this, GreatQuestAssetUtils.CONFIG_SECTION_ACTION_SEQUENCES, getEntityDescriptionName()));
     }
 }

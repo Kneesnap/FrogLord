@@ -757,8 +757,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
             if (entityDesc != null) {
-                Config entityDescCfg = new Config(generic.getName());
-                entityDesc.toConfig(entityDescCfg);
+                Config entityDescCfg = entityDesc.toConfig();
                 entityDescriptionCfg.addChildConfig(entityDescCfg);
                 exportCount++;
             }
@@ -786,8 +785,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcProxyDesc proxyDesc = generic.getAsProxyDescription();
             if (proxyDesc != null) {
-                Config proxyDescCfg = new Config(generic.getName());
-                proxyDesc.toConfig(proxyDescCfg);
+                Config proxyDescCfg = proxyDesc.toConfig();
                 collisionProxiesCfg.addChildConfig(proxyDescCfg);
                 exportCount++;
             }
@@ -815,8 +813,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (generic.getResourceType() != kcCResourceGenericType.LAUNCHER_DESCRIPTION)
                 continue;
 
-            Config launcherParamCfg = new Config(generic.getName());
-            generic.getAsLauncherParams().toConfig(launcherParamCfg);
+            Config launcherParamCfg = generic.getAsLauncherParams().toConfig();
             launcherCfg.addChildConfig(launcherParamCfg);
         }
 

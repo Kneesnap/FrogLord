@@ -1,9 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
@@ -104,6 +107,11 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     private static final String CONFIG_KEY_SPEED = "projectileSpeed";
 
     @Override
+    public String getConfigName() {
+        return getResourceName();
+    }
+
+    @Override
     public void toConfig(Config output) {
         super.toConfig(output);
         kcScriptDisplaySettings settings = getParentFile().createScriptDisplaySettings();
@@ -115,5 +123,12 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
             output.getOrCreateKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT).setAsString(this.hitParticleEffectRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_PROJECTILE_LIFE_TIME).setAsFloat(this.projectileLifeTime  / 1000F);
         output.getOrCreateKeyValueNode(CONFIG_KEY_SPEED).setAsFloat(this.speed);
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyGqsItem = new MenuItem("Copy GQS to clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> GreatQuestUtils.createAndCopyGqsConfigToClipboard(this, GreatQuestAssetUtils.CONFIG_SECTION_LAUNCHERS));
     }
 }

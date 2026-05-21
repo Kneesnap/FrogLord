@@ -1,8 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
@@ -153,6 +157,13 @@ public class kcCResourceEntityInst extends kcCResource {
         super.addToPropertyList(propertyList);
         if (this.instance != null)
             this.instance.addToPropertyList(propertyList);
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyGqsItem = new MenuItem("Copy GQS to clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> GreatQuestUtils.createAndCopyGqsConfigToClipboard(this.instance, GreatQuestAssetUtils.CONFIG_SECTION_ENTITIES));
     }
 
     /**
