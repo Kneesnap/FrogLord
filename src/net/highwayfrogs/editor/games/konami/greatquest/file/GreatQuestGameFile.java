@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectio
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.reader.FileSource;
@@ -33,6 +36,8 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
     private ILogger cachedLogger;
 
     private static final Function<GreatQuestGameFile, String> LOGGER_NAME_GETTER = file -> Utils.getSimpleName(file) + "{" + file.getFileName() + "}";
+    private static final SavedFilePath EXPORT_FILE_PATH = new SavedFilePath("exportRawFilePath", "Please select the file to save as...", BrowserFileType.ALL_FILES);
+    private static final SavedFilePath IMPORT_FILE_PATH = new SavedFilePath("exportRawFilePath", "Please select the file to load", BrowserFileType.ALL_FILES);
 
     public GreatQuestGameFile(GreatQuestInstance instance) {
         super(instance);
@@ -76,7 +81,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         MenuItem exportFileData = new MenuItem("Export File");
         contextMenu.getItems().add(exportFileData);
         exportFileData.setOnAction(event -> {
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), EXPORT_FILE_PATH, getFileName());
             if (outputFile != null)
                 saveToFile(outputFile);
         });
@@ -84,7 +89,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         MenuItem importFileData = new MenuItem("Import File");
         contextMenu.getItems().add(importFileData);
         importFileData.setOnAction(event -> {
-            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Please select the file to import as '" + getFileName() + "'...", "All Files", "*");
+            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), IMPORT_FILE_PATH);
             if (inputFile != null) {
                 try {
                     loadFromFile(inputFile);
@@ -108,9 +113,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         DataReader reader = new DataReader(new FileSource(file));
 
         try {
-            // TODO: PROBLEM!!! I think we need to clear tracking so afterLoad() can be valid to run.
             load(reader);
-            // TODO: PROBLEM!!! We need to run the afterLoad hooks
         } catch (Throwable th) {
             throw new RuntimeException("Failed to load contents of file from '" + file.getName() + "'. This has the potential to break things in weird ways, so be careful!", th);
         }

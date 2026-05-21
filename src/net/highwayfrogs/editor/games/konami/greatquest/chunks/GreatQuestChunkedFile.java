@@ -31,6 +31,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMap
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.*;
@@ -139,6 +140,15 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         kcScriptList scriptList = getScriptList();
         if (scriptList != null)
             scriptList.loadScriptsFromInterim();
+    }
+
+    @Override
+    public void loadFromFile(File file) throws IOException {
+        super.loadFromFile(file);
+
+        // Run afterLoad hooks to resolve after load hooks.
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Loading Game Data...",
+                getGameInstance().getMainArchive()::applyAfterLoadHooks);
     }
 
     @Override

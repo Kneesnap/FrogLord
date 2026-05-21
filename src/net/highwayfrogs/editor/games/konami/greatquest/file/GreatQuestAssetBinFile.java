@@ -164,6 +164,15 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             lastFile = currentFile;
         }
 
+        applyAfterLoadHooks(progressBar);
+    }
+
+    /**
+     * Applies after load hooks, so that materials and models resolve correctly.
+     * @param progressBar the progressBar to show
+     * @return loadContext
+     */
+    public kcLoadContext applyAfterLoadHooks(ProgressBarComponent progressBar) {
         // Handle post-load setup.
         kcLoadContext context = new kcLoadContext(this);
         if (progressBar != null)
@@ -188,6 +197,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         }
 
         context.onComplete();
+        return context;
     }
 
     private GreatQuestAssetBinFileHeader readFileHeader(DataReader reader, String filePath, int nameHash, boolean hasCollision, ProgressBarComponent progressBar) {
