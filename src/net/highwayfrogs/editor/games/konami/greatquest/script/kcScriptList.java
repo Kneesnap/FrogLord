@@ -168,10 +168,8 @@ public class kcScriptList extends kcCResource {
                     script.getFunctions().get(j).getCause().printWarning(logger, "the function/script was not attached to a valid entity");
 
                 // This happens in The Ruins of Joy Town, and presumably also could happen if earlier prototypes surface.
-                logger.warning("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: %d)\nThis warning can be ignored if you are editing The Ruins of Joy Town.",
+                logger.warning("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: %d)",
                         script.getFunctions().get(0).getCause().getUserLineNumber());
-
-                continue;
             }
 
             kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
