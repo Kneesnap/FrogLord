@@ -81,23 +81,23 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
             entry.addFace(vtxStartIndex + i, uvStartIndex + i, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i + 2, uvStartIndex + i + 2);
     }
 
-    private  void writeTriangleStrip(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
+    private void writeTriangleStrip(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
         for (int i = 0; i < vertexCount - 2; i++) {
+            // vtx1/vtx2 point to the vertices on the last edge of the previous polygon.
             int vtx1 = vtxStartIndex + i;
             int uv1 = uvStartIndex + i;
             int vtx2 = vtxStartIndex + i + 1;
             int uv2 = uvStartIndex + i + 1;
 
-            if (i % 2 > 0) { // Alternate the indices so faces always orient consistently
-                int temp = vtx1;
-                vtx1 = vtx2;
-                vtx2 = temp;
-                temp = uv1;
-                uv1 = uv2;
-                uv2 = temp;
-            }
+            // vtx3 points to the new vertex forming the next triangle.
+            int vtx3 = vtxStartIndex + i + 2;
+            int uv3 = uvStartIndex + i + 2;
 
-            entry.addFace(vtx1, uv1, vtx2, uv2, vtxStartIndex + i + 2, uvStartIndex + i + 2);
+            if (i % 2 > 0) { // Alternate the indices so faces always orient consistently
+                entry.addFace(vtx2, uv2, vtx1, uv1, vtx3, uv3);
+            } else {
+                entry.addFace(vtx1, uv1, vtx2, uv2, vtx3, uv3);
+            }
         }
     }
 
