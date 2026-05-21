@@ -23,7 +23,7 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
     @Getter @Setter private int sampleRate; // Samples per second.
     private int averageBytesPerSecond;
     private short blockAlign;
-    private short bitDepth;
+    @Getter private short bitDepth;
     @Getter @Setter private byte[] extraHeaderBytes;
     @Getter @Setter private byte[] rawAudioData;
     @Getter @Setter private byte[] extraBytesAtEnd;

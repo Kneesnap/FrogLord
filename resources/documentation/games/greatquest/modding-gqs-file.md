@@ -168,6 +168,10 @@ Only usable on streamed sounds (not embedded).
 Re-encode the sound with the new sample-rate.  
 Common Values: `11025, 22050, 24000, 48000`  
 
+> [!WARNING]  
+> For streamed sounds, the PlayStation 2 version only supports sample rates of `24000` or `48000`.  
+> FrogLord will automatically convert these sounds to the closest sample rate.
+
 **--BitDepth \<newBitDepth\>:**  
 Re-encode the sound with the new bit-depth.  
 Valid Values: `8, 16, 24, 32`
@@ -180,7 +184,7 @@ Re-encode the sound with the new number of channels.
 Valid Values: `1, 2`  
 
 > [!WARNING]  
-> PlayStation 2 builds of the game only support mono embedded sounds, while `--Channel` can still be used, the audio file will then be converted to mono.  
+> PlayStation 2 builds of the game only support mono sounds, while `--Channel` can still be used, the audio file will then be converted to mono.  
 
 **--Embedded:**  
 Embeds the sound into the per-level .SBR file.  

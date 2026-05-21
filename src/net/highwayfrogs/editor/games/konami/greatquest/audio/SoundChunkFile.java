@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Clip;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,6 +47,11 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
     @Getter private final List<SoundChunkEntry> entries = new ArrayList<>();
     private final SoundChunkIndexFile index;
     private final SoundChunkBodyFile body;
+
+    public static final int PS2_REQUIRED_CHANNEL_COUNT = 1;
+    public static final int PS2_REQUIRED_BIT_DEPTH = 16;
+    public static final int PS2_REQUIRED_SAMPLE_RATE_LOW = 24000;
+    public static final int PS2_REQUIRED_SAMPLE_RATE_HIGH = 48000;
 
     public SoundChunkFile(GreatQuestInstance instance, File idxFile, File sckFile) {
         super(instance);
@@ -471,8 +477,23 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             DataReader reader = new DataReader(new ArraySource(wavFileData));
             if (getGameInstance().isPC() || getGameInstance().isPS2()) {
                 this.wavFile.load(reader);
-                // TODO: Figure out what kinds of sounds are not allowed on each version (if any), and then warn if one is imported.
-                //  PS2 needs audio type of PCM. I think other settings are okay. PC can probably accept anything.
+
+                // PS2 streamed sounds have limits to what can be played. See: pcmStartChannel in PCMSTRM.IRX.
+                if (getGameInstance().isPS2()) {
+                    boolean convertAudio = false;
+                    int sampleRate = this.wavFile.getSampleRate();
+                    if (this.wavFile.getChannelCount() != PS2_REQUIRED_CHANNEL_COUNT || this.wavFile.getBitDepth() != PS2_REQUIRED_BIT_DEPTH)
+                        convertAudio = true;
+
+                    if (sampleRate != PS2_REQUIRED_SAMPLE_RATE_LOW && sampleRate != PS2_REQUIRED_SAMPLE_RATE_HIGH) {
+                        sampleRate = Math.abs(sampleRate - PS2_REQUIRED_SAMPLE_RATE_LOW) <= Math.abs(sampleRate - PS2_REQUIRED_SAMPLE_RATE_HIGH)
+                                ? PS2_REQUIRED_SAMPLE_RATE_LOW : PS2_REQUIRED_SAMPLE_RATE_HIGH;
+                        convertAudio = true;
+                    }
+
+                    if (convertAudio)
+                        this.wavFile.convertToAudioFormat(new AudioFormat(sampleRate, PS2_REQUIRED_BIT_DEPTH, PS2_REQUIRED_CHANNEL_COUNT, true, false));
+                }
             } else {
                 throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
             }

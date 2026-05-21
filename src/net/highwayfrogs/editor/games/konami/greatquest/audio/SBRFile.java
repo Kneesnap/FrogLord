@@ -483,7 +483,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 importFromWav(inputFile);
                 return true;
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, true, "Failed to load/apply sound file '%s'.", inputFile.getName());
+                Utils.handleError(getLogger(), th, true, "Failed to import sound file '%s'.", inputFile.getName());
                 return false;
             }
         }
