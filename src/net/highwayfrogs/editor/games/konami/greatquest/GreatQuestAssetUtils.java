@@ -119,7 +119,7 @@ public class GreatQuestAssetUtils {
         applyLauncherParams(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_LAUNCHERS)); // Must run after particle emitter params (entity descriptions) and .vtx references are imported, but before scripts.
 
         // Run before scripts, but after entity descriptions.
-        applyEntityInstances(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList);
+        List<kcCResourceEntityInst> entities = applyEntityInstances(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList);
         applyScripts(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList);
 
         // Warn about unused sequences. (Likely indicates a typo.)
@@ -130,6 +130,10 @@ public class GreatQuestAssetUtils {
         // Resolve all remaining resolves. This may show warnings if certain things are not resolved.
         for (int i = 0; i < lateResolvers.size(); i++)
             lateResolvers.get(i).resolvePendingResources(logger);
+
+        // Display entity creation warnings, must run after resources have been resolved.
+        for (int i = 0; i < entities.size(); i++)
+            entities.get(i).logEntityCreationWarnings(logger);
 
         // Must be done before the unused test is performed to ensure this section isn't seen as unused.
         Config includeCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_INCLUDE);
@@ -614,12 +618,13 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, ILogger logger, Config entityCfg, kcScriptList scriptList) {
+    private static List<kcCResourceEntityInst> applyEntityInstances(GreatQuestChunkedFile chunkedFile, ILogger logger, Config entityCfg, kcScriptList scriptList) {
         if (entityCfg == null)
-            return;
+            return Collections.emptyList();
 
         // Add all entities first, so it becomes possible to reference other entities defined together.
         String sourceName = entityCfg.getRootNode().getSectionName();
+        List<kcCResourceEntityInst> entities = new ArrayList<>();
         for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
             String entityInstName = entityInstanceCfg.getSectionName();
             kcCResourceEntityInst entity = chunkedFile.getResourceByName(entityInstName, kcCResourceEntityInst.class);
@@ -629,6 +634,8 @@ public class GreatQuestAssetUtils {
                 entity.setInstance(new kcEntity3DInst(entity));
                 chunkedFile.addResource(entity);
             }
+
+            entities.add(entity);
         }
 
         // Load entity data.
@@ -650,6 +657,8 @@ public class GreatQuestAssetUtils {
         // Scripts are loaded last in order to ensure entity data is correct. (Prevents incorrect resolutions and warnings.)
         for (Entry<kcEntityInst, Config> entry : scriptCfgsPerEntity.entrySet())
             entry.getKey().addScriptFunctions(logger, scriptList, entry.getValue(), sourceName, true, false);
+
+        return entities;
     }
 
     private static void applyScripts(GreatQuestChunkedFile chunkedFile, ILogger logger, Config scriptCfg, kcScriptList scriptList) {

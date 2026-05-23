@@ -7,6 +7,8 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
@@ -86,7 +88,7 @@ public class kcCResourceEntityInst extends kcCResource {
             this.dummyBytes = reader.readBytes(sizeInBytes);
         }
 
-        // Print warning.
+        // Print warnings.
         String targetEntityWarning = getCurrentFaceTargetEntityWarning();
         if (targetEntityWarning != null)
             getLogger().warning("%s", targetEntityWarning);
@@ -115,6 +117,38 @@ public class kcCResourceEntityInst extends kcCResource {
         }
 
         super.onRemovedFromChunkFile();
+    }
+
+    /**
+     * The game is sometimes capable of silently failing to create entities.
+     * During an entity's load process, kcCResourceEntityInst::Prepare calls kcCGameSystem::CreateInstance, which can silently fail.
+     * This function attempts to return a warning message if such a situation will occur.
+     * @return entityCreationWarning
+     */
+    private String getEntityCreationWarning() {
+        if (!(this.instance instanceof kcEntity3DInst))
+            return null;
+
+        kcEntity3DInst entityInst = (kcEntity3DInst) this.instance;
+        kcEntity3DDesc entityDesc = entityInst.getDescription();
+        if (entityDesc == null)
+            return "The entity description " + entityInst.getDescriptionRef().getDisplayString(true)
+                    + " cannot be resolved, so '" + getName() + "' will be skipped by the game.";
+
+        // This behavior can be found in kcCActorBase::Init(kcActorBaseDesc*)
+        if (entityDesc instanceof kcActorBaseDesc) {
+            kcActorBaseDesc actorBaseDesc = (kcActorBaseDesc) entityDesc;
+            if (!actorBaseDesc.getHierarchyRef().isHashNull() && actorBaseDesc.getSkeleton() == null)
+                return "The skeleton/hierarchy " + actorBaseDesc.getHierarchyRef().getDisplayString(true)
+                        + " cannot be resolved, so '" + getName() + "' (using description: '" + entityDesc.getResourceName() + "') will be skipped by the game.";
+
+            if (!actorBaseDesc.getProxyDescRef().isHashNull() && actorBaseDesc.getCollisionProxyDescription() == null)
+                return "The collision proxy " + actorBaseDesc.getProxyDescRef().getDisplayString(true)
+                        + " cannot be resolved, so '" + getName() + "' (using description: '" + entityDesc.getResourceName() + "') will be skipped by the game.";
+        }
+
+        return null;
+
     }
 
     /**
@@ -189,5 +223,20 @@ public class kcCResourceEntityInst extends kcCResource {
             logger.warning(targetEntityWarning);
 
         return entityInst;
+    }
+
+    /**
+     * Logs the entity creation warnings if there are any
+     * @param logger the logger to write to
+     */
+    public void logEntityCreationWarnings(ILogger logger) {
+        String entityCreationWarning = getEntityCreationWarning();
+        if (entityCreationWarning == null)
+            return;
+
+        if (logger == null)
+            logger = getLogger();
+
+        logger.warning(entityCreationWarning);
     }
 }
