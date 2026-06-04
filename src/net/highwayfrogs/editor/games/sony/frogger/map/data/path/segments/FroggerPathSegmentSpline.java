@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
-import java.awt.geom.CubicCurve2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
@@ -117,9 +116,6 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
                 + (this.smoothC[i][1] >> MRSplineMatrix.SPLINE_PARAM_SHIFT)) * e) >> 13)
                 + (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT)) * e) >> 13) >> 5)
                 + (i * SPLINE_FIX_INTERVAL)) << 1) >> 1;
-         return (((((((((( // Pretending it wasn't fixed point. TODO: smoothC is based on pathLength, and the matrix.
-                (this.smoothC[i][0] * e^3) + (this.smoothC[i][1]) * e^2) + (this.smoothC[i][2] * e)
-                + (i * SPLINE_FIX_INTERVAL);
          */
     }
 
@@ -187,20 +183,6 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
                  + Math.sqrt(position3.distanceSquared(positionEnd)))) + 32; // Without the + 32 offset, all mismatches is off by no more than 70 units, with +32, everything is off by no more than 38 units.
     }
 
-    /**
-     * Calculates linear smoothing for the given path.
-     * TODO: This is not consistent with the original behavior, we need a better system.
-     */
-    public void calculateLinearSmoothing() {
-        // Generate linear smoothing curve to update the spline.
-        calculateSmoothT();
-        int newSmoothingConstant = ((SPLINE_FIX_INTERVAL << 21) / Math.max(32, getLength())) << 5;
-        for (int i = 0; i < this.smoothC.length; i++) {
-            Arrays.fill(this.smoothC[i], 0);
-            this.smoothC[i][2] = newSmoothingConstant;
-        }
-    }
-
     @Override
     protected String getCalculatedIncorrectLengthString() {
         return null;
@@ -225,107 +207,13 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
                 (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
 
-        makeSmoothingCurveEditor(pathPreview, editor);
+        // The user doesn't really need to see this or even know it exists, this is just around for debugging purposes.
+        /*editor.addBoldLabel("Smoothing Curve:");
+        editor.addCenteredImageView(createSmoothingCurveImageView());*/
     }
 
-    // TODO: is smooth C the second derivative of position Y? (derivative of rotation Y?) -> Would make sense. Gotta be more complex though. Absolute value.
-    //  -> Try plotting it along the image, and see if it lines up.
-
-    // TODO: Solve the function for distance -> t. -> What does that look like?
-    // pos(t) = ((short) (((t3 * this.matrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-    //                ((t2 * this.matrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-    //                ((t * this.matrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-    //                ((this.matrix[3][1]) << SPLINE_WORLD_SHIFT)));
-    // pos(t) = t^3 * m[0][1] + t^2 * m[1][1] + t * m[2][1] + m[3][1]
-    // t = smooth(d) # d is path distance.
-    // d^2 = ((posX(t+1)^2) - (posX(t)^2)) + ((posY(t+1)^2) - (posY(t)^2)) + ((posZ(t+1)^2) - (posZ(t)^2))
-    // delta pos(t) = ((t + 1)^3 * m[0][axis] + (t + 1)^2 * m[1][axis] + (t + 1) * m[2][1] + m[3][axis])^2 - (t^3 * m[0][axis] + t^2 * m[1][axis] + t * m[2][axis] + m[3][axis])^2
-    // But isn't delta pos... just the derivative? Aka rotation?
-    // Yes. Okay.
-    // So, if we use an approximation of pathDistance = rotation(t).magnitude() (MAKE SURE NOT TO NORMALIZE)
-    //  -> Then, we must solve for 't' so that pathDistance = the real path distance.
-
-
-    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1] + m[3][1]) - (t^3 * m[0][1] + t^2 * m[1][1] + t * m[2][1] + m[3][1])
-    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1] + m[3][1]) - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1] - m[3][1]
-    // d = ((t + 1)^3 * m[0][1] + (t + 1)^2 * m[1][1] + (t + 1) * m[2][1]) - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1]
-
-    //
-
-    // d = ((t + 1)^3 * m[0][1] + (t * t + 2t + 1) * m[1][1] + (t * m[2][1]) + m[2][1] - t^3 * m[0][1] - t^2 * m[1][1] - t * m[2][1]
-    // d = ((t + 1)^3 * m[0][1] + (t * t) * m[1][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1] - t^2 * m[1][1]
-    // d = ((t + 1)^3 * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
-    // d = ((t * (t * t + 2t + 1)) + (t * t + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
-    // d = ((t^3 + 2t^2 + t) + (t * t + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1] - t^3 * m[0][1]
-    // d = ((2t^2 + t) + (t^2 + 2t + 1)) * m[0][1] + (2t + 1) * m[1][1] + m[2][1]
-    // d = (3t^2 + 3t + 1) * m[0][1] + (2t + 1) * m[1][1] + m[2][1]
-    // d - m[2][1] = (3t^2 + t) * m[0][1] + (2t + 1) * m[0][1] + (2t + 1) * m[1][1]
-    // (d - m[2][1]) / (2t + 1) = ((3t^2 + t) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
-    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + ((2t^2 + t) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
-    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + (t(2t + 1) * m[0][1]) / (2t + 1) + m[0][1] + m[1][1]
-    // (d - m[2][1]) / (2t + 1) = (t^2 * m[0][1]) / (2t + 1) + (t * m[0][1]) + m[0][1] + m[1][1]
-    // TODO: Sum the derivative coefficients of the rotation for Frogger?
-
-    @SuppressWarnings("CommentedOutCode")
-    private void makeSmoothingCurveEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
-        // TODO: We'll need a real smoothing curve editor in the future. Refer to Blender's RGB Curve Shader node for an example of what this should probably look like.
-        editor.addBoldLabel("Smoothing Curve (Not Editable Yet):");
-        editor.addCenteredImageView(createImageView());
-
-        // TODO: IDEA
-        for (int i = 0; i < this.smoothC.length; i++) {
-            double[] values = new double[this.smoothC[i].length + 1];
-            for (int j = 0; j < this.smoothC[i].length; j++)
-                values[j] = DataUtils.fixedPointIntToFloatNBits(this.smoothC[i][j], 9);
-            double[] results = values.clone();
-
-            int rootCount = CubicCurve2D.solveCubic(values, results);
-            for (int j = 0; j < values.length; j++)
-                editor.addLabel("Input[" + i + "][" + j + "]", String.valueOf(values[j]));
-            for (int j = 0; j < rootCount; j++)
-                editor.addLabel("Roots[" + j + "]", String.valueOf(results[j]));
-            editor.addSeparator();
-        }
-
-        /*editor.addBoldLabel("Segment Length Percentages:");
-        float[] smoothingT = calculateSmoothingAsPercentages();
-        for (int i = 0; i < this.smoothT.length; i++) {
-            final int index = i;
-            editor.addFloatField("Segment #" + (i + 1) + ":", smoothingT[i], newValue -> {
-                smoothingT[index] = newValue;
-                //loadSmoothT(smoothingT);
-                onUpdate(pathPreview);
-            }, newValue -> newValue >= 0F && newValue <= 1.1F);
-        }
-
-        editor.addBoldLabel("Smooth C:");
-        for (int i = 0; i < this.smoothC.length; i++) {
-            final int index1 = i;
-            for (int j = 0; j < this.smoothC[i].length; j++) {
-                final int index2 = j;
-                editor.addSignedIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
-                    this.smoothC[index1][index2] = newVal;
-                    onUpdate(pathPreview);
-                });
-            }
-        }*/
-    }
-
-
-    /**
-     * Calculates T smoothing percentages.
-     * @return tPercentages
-     */
     @SuppressWarnings("unused")
-    private float[] calculateSmoothingAsPercentages() {
-        float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
-        float[] result = new float[4];
-        for (int i = 0; i < result.length; i++)
-            result[i] = DataUtils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
-        return result;
-    }
-
-    private ImageView createImageView() {
+    private ImageView createSmoothingCurveImageView() {
         BufferedImage image = new BufferedImage(250, 250, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
         graphics.setBackground(Color.WHITE);
@@ -428,19 +316,108 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     @Override
     public void onUpdate(FroggerPathPreview pathPreview) {
         recalculateLength(pathPreview);
-        calculateLinearSmoothing(); // Call after recalculating the length, but before updating the path preview.
+        calculateSmoothingCurve(); // Call after recalculating the length, but before updating the path preview.
         if (pathPreview != null)
             pathPreview.updatePath();
     }
 
     /**
-     * Recalculates smooth T values.
+     * Calculates proper arc-length smoothing coefficients for each of the four spline quarters.
+     * This maps arc length to spline parameter t so entities traverse the spline at uniform world-space speed.
+     *
+     * Each quarter covers t ∈ [i*512, (i+1)*512] and fits the cubic f(e) = a·e³ + b·e² + c·e,
+     * where e is arc-length offset in (world_units × 512) scale, f(0) = 0, f(eEnd) = 512.
+     * The four segments are position-continuous (f(eEnd) = 512 enforced per quarter).
+     *
+     * The Horner evaluation in getSplineParamFromLength computes:
+     *   d = smoothC[i][0]·e³/2⁵⁵ + smoothC[i][1]·e²/2⁴² + smoothC[i][2]·e/2²⁹
+     * so the fixed-point coefficients are: C0 = a·2⁵⁵, C1 = b·2⁴², C2 = c·2²⁹.
      */
-    public void calculateSmoothT() {
-        // TODO: Would it be feasible to use CubicCurve2D.solveCubic()?
-        float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
-        for (int i = 0; i < this.smoothT.length; i++)
-            this.smoothT[i] = DataUtils.floatToFixedPointInt((length * (i + 1) * .25F), 12);
+    public void calculateSmoothingCurve() {
+        final int NUM_SAMPLES = 512; // must be divisible by 4
+        final int SAMPLES_PER_QUARTER = NUM_SAMPLES / 4;
+
+        // Build cumulative arc-length table.
+        // arcLengths[k] = arc length at t = k * SPLINE_PARAM_ONE / NUM_SAMPLES, in world units.
+        // distanceSquared() uses getFloatX() which divides raw short coords by 16, giving world units.
+        double[] arcLengths = new double[NUM_SAMPLES + 1];
+        arcLengths[0] = 0.0;
+        SVector prevPos = this.splineMatrix.evaluatePosition(0);
+        for (int k = 1; k <= NUM_SAMPLES; k++) {
+            int t = k * MRSplineMatrix.SPLINE_PARAM_ONE / NUM_SAMPLES;
+            SVector pos = this.splineMatrix.evaluatePosition(t);
+            arcLengths[k] = arcLengths[k - 1] + Math.sqrt(prevPos.distanceSquared(pos));
+            prevPos = pos;
+        }
+
+        // Normalize arc lengths so the total matches getLength()/16 (world units).
+        // This ensures the last quarter's polynomial eEnd exactly matches the actual maximum input,
+        // so the curve reaches SPLINE_PARAM_ONE = 2048 at distance = getLength().
+        double totalArcLen = arcLengths[NUM_SAMPLES];
+        if (totalArcLen > 0.0) {
+            double scale = DataUtils.fixedPointIntToFloat4Bit(getLength()) / totalArcLen;
+            for (int k = 1; k <= NUM_SAMPLES; k++)
+                arcLengths[k] *= scale;
+        }
+
+        // smoothT[qi] = arc length at t = (qi+1)*SPLINE_FIX_INTERVAL, stored as 12-bit fixed point.
+        // smoothT[3] (never used as a boundary threshold) is set to total arc length.
+        for (int qi = 0; qi < this.smoothT.length; qi++)
+            this.smoothT[qi] = (int) Math.round(arcLengths[(qi + 1) * SAMPLES_PER_QUARTER] * (1 << 12));
+
+
+        // For each quarter, fit t_offset = a*e^3 + b*e^2 + c*e using constrained least squares.
+        // Constraint f(eEnd) = SPLINE_FIX_INTERVAL is enforced by eliminating c:
+        //   c = (SPLINE_FIX_INTERVAL - a*eEnd^3 - b*eEnd^2) / eEnd
+        // Substituting: f(e) = a*(e^3 - eEnd^2*e) + b*(e^2 - eEnd*e) + SPLINE_FIX_INTERVAL*e/eEnd
+        for (int qi = 0; qi < this.smoothC.length; qi++) {
+            int startIdx = qi * SAMPLES_PER_QUARTER;
+            double arcStart = arcLengths[startIdx];
+            double arcEnd = arcLengths[startIdx + SAMPLES_PER_QUARTER];
+            double eEnd = (arcEnd - arcStart) * (double) SPLINE_FIX_INTERVAL; // quarter arc length in (world_units * 512) scale
+
+            if (eEnd < 1.0) { // degenerate quarter (zero or near-zero arc length)
+                Arrays.fill(this.smoothC[qi], 0);
+                continue;
+            }
+
+            double eEnd2 = eEnd * eEnd;
+            double eEnd3 = eEnd2 * eEnd;
+            double baseSlope = (double) SPLINE_FIX_INTERVAL / eEnd; // linear baseline ensuring f(eEnd)=512
+
+            // Accumulate normal equations for 2x2 least-squares system [a, b]
+            double sumUU = 0, sumUV = 0, sumVV = 0, sumUR = 0, sumVR = 0;
+            for (int k = 1; k <= SAMPLES_PER_QUARTER; k++) {
+                double e = (arcLengths[startIdx + k] - arcStart) * (double) SPLINE_FIX_INTERVAL;
+                double tOffset = (double) k * SPLINE_FIX_INTERVAL / SAMPLES_PER_QUARTER;
+
+                // Basis functions (zero at e=0, zero at e=eEnd after subtracting baseline)
+                double u = e * e * e - e * eEnd2; // cubic basis
+                double v = e * e - e * eEnd;       // quadratic basis
+                double r = tOffset - baseSlope * e; // residual from linear baseline
+
+                sumUU += u * u;
+                sumUV += u * v;
+                sumVV += v * v;
+                sumUR += u * r;
+                sumVR += v * r;
+            }
+
+            // Solve 2x2 normal equations via Cramer's rule
+            double a = 0.0, b = 0.0;
+            double det = sumUU * sumVV - sumUV * sumUV;
+            if (det != 0.0) {
+                a = (sumUR * sumVV - sumVR * sumUV) / det;
+                b = (sumUU * sumVR - sumUV * sumUR) / det;
+            }
+            double c = ((double) SPLINE_FIX_INTERVAL - a * eEnd3 - b * eEnd2) / eEnd;
+
+            // Convert polynomial coefficients to fixed-point smoothC values.
+            // Horner eval: d = C0*e^3/2^55 + C1*e^2/2^42 + C2*e/2^29, so C0=a*2^55, C1=b*2^42, C2=c*2^29.
+            this.smoothC[qi][0] = (int) Math.round(a * (double) (1L << 55)); // This has been tested, decimal precision is not an issue.
+            this.smoothC[qi][1] = (int) Math.round(b * (double) (1L << 42));
+            this.smoothC[qi][2] = (int) Math.round(c * (double) (1L << 29));
+        }
     }
 
     /**
