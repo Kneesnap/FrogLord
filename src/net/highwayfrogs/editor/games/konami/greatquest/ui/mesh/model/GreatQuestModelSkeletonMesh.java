@@ -78,6 +78,15 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     }
 
     /**
+     * Programmatically selects a bone, updating the skeleton mesh highlighting.
+     * @param bone the bone to select, or null to deselect
+     */
+    public void setSelectedBone(kcNode bone) {
+        this.selectedBone = bone;
+        updateTexCoords();
+    }
+
+    /**
      * Handles the mesh getting clicked.
      * @param event the click event.
      */

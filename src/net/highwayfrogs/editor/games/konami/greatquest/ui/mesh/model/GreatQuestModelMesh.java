@@ -167,6 +167,25 @@ public class GreatQuestModelMesh extends DynamicMesh {
             double tickDelta = ((double) deltaTimeSeconds * TICKS_PER_SECOND);
             setAnimationTick(this.reverseAnimation ? this.animationTick - tickDelta : this.animationTick + tickDelta);
         }
+
+        // Handle animation end / restart during ticking (not during seeks).
+        // Placed outside the playingAnimation guard so that if the animation was ended by a
+        // seek (e.g. the user scrubbed to the last tick or pressed SPACE at the end), the next
+        // tickAnimation call will still restart it.  This is safe because tickAnimation is only
+        // called when animationTickingPaused is false, so a paused user inspecting the last
+        // keyframe will never trigger this restart.
+        if (!this.playingAnimation && this.activeAnimation != null) {
+            if (this.reverseAnimationOnFinish) {
+                this.reverseAnimation = !this.reverseAnimation;
+                if (this.reverseAnimation)
+                    this.playingAnimation = true;
+            }
+
+            if (this.repeatAnimationOnFinish) {
+                this.playingAnimation = true;
+                setAnimationTick(0);
+            }
+        }
     }
 
     /**
@@ -185,7 +204,12 @@ public class GreatQuestModelMesh extends DynamicMesh {
             updateMeshes();
     }
 
-    private void updateMeshes() {
+    /**
+     * Recalculates bone matrices and updates all mesh vertex positions.
+     * Unlike setAnimationTick, this always runs even when the tick has not changed,
+     * so it should be used when keyframe data itself has been modified.
+     */
+    public void updateMeshes() {
         recalculateBoneMatrices();
         if (this.skeletonMesh != null)
             this.skeletonMesh.updateVertices();
@@ -252,19 +276,6 @@ public class GreatQuestModelMesh extends DynamicMesh {
             tempNode.getModelToBoneMatrix().multiply(globalTransform, finalTransform); // This is the same as multiplying a vector against the two matrices separately.
         }
 
-        // Restart the animation if configured.
-        if (!this.playingAnimation) {
-            if (this.reverseAnimationOnFinish) {
-                this.reverseAnimation = !this.reverseAnimation;
-                if (this.reverseAnimation)
-                    this.playingAnimation = true;
-            }
-
-            if (this.repeatAnimationOnFinish) {
-                this.playingAnimation = true;
-                this.animationTick = 0;
-            }
-        }
     }
 
     /**

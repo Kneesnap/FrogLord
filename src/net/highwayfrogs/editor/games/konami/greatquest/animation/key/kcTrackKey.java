@@ -126,6 +126,15 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
     }
 
     /**
+     * Sets the tick (timestamp) for this keyframe.
+     * NOTE: After calling this, the owning kcTrack's key list should be re-sorted via sortKeys().
+     * @param newTick the new tick value
+     */
+    public void setTick(int newTick) {
+        this.tick = newTick;
+    }
+
+    /**
      * Gets the size of the data.
      */
     public int getExpectedDataByteLength() {

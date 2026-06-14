@@ -1,13 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
-import javafx.geometry.HPos;
 import javafx.scene.DepthTest;
 import javafx.scene.SubScene;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
@@ -15,16 +9,11 @@ import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback.SequenceStatus;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.system.math.Vector3f;
-import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 /**
  * Controls a model mesh for Great Quest.
@@ -35,11 +24,9 @@ import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 public class GreatQuestModelViewController extends MeshViewController<GreatQuestModelMesh> {
     private GreatQuestActionSequencePlayback sequencePlayback;
     private GreatQuestModelMeshViewCollection meshViewCollection;
-    private ComboBox<kcCActionSequence> actionSequenceComboBox;
-    private ComboBox<kcCResourceTrack> animationComboBox;
-    private CheckBox showSkeletonCheckBox;
-    private CheckBox forceRepeatCheckBox;
     private final MeshView skeletonMeshView = new MeshView();
+    private boolean animationTickingPaused = false;
+    private float animationSpeedMultiplier = 1.0f;
 
     public static final double DEFAULT_FAR_CLIP = 1000;
     public static final double DEFAULT_NEAR_CLIP = 0.1;
@@ -62,69 +49,6 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         super.setupBindings(subScene3D, meshView);
 
         this.sequencePlayback = new GreatQuestActionSequencePlayback(getMesh());
-
-        if (getMesh().getSkeleton() == null) {
-            Label animLabel1 = new Label("To view animations, open an entity");
-            Label animLabel2 = new Label(" description instead of a .VTX file.");
-            animLabel1.setUnderline(true);
-            animLabel2.setUnderline(true);
-            addToViewSettingsGrid(animLabel1, HPos.LEFT);
-            addToViewSettingsGrid(animLabel2, HPos.LEFT);
-        }
-
-        // Setup skeleton view toggle.
-        this.showSkeletonCheckBox = new CheckBox("Show Skeleton");
-        this.showSkeletonCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> this.skeletonMeshView.setVisible(newValue));
-        this.forceRepeatCheckBox = new CheckBox("Force Repeat");
-        GridPane.setHalignment(this.forceRepeatCheckBox, HPos.RIGHT);
-        addToViewSettingsGrid(this.showSkeletonCheckBox, this.forceRepeatCheckBox);
-
-        // Setup animation UI.
-        this.animationComboBox = new ComboBox<>(getMesh().getAvailableAnimations());
-        this.animationComboBox.setButtonCell(new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation"));
-        this.animationComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation")
-                .setWithoutIndexStyleHandler(animation -> (animation == null || getMesh().getSourceAnimations().contains(animation)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
-        GridPane.setHgrow(this.animationComboBox, Priority.ALWAYS);
-        if (getMesh().getAvailableAnimations().size() > 0) {
-            this.animationComboBox.getSelectionModel().selectFirst();
-            this.animationComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                if (oldValue != newValue && !this.animationComboBox.isDisable()) {
-                    if (newValue != null) {
-                        this.actionSequenceComboBox.getSelectionModel().clearSelection();
-                        this.actionSequenceComboBox.setValue(null);
-                    }
-
-                    getMesh().setActiveAnimation(newValue, this.forceRepeatCheckBox.isSelected(), false, false);
-                }
-            });
-        } else {
-            this.animationComboBox.setDisable(true);
-        }
-
-        addToViewSettingsGrid(new Label("Animation"), this.animationComboBox);
-
-        // Setup sequence UI.
-        this.actionSequenceComboBox = new ComboBox<>(getMesh().getAvailableSequences());
-        this.actionSequenceComboBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence"));
-        this.actionSequenceComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence")
-                .setWithoutIndexStyleHandler(sequence -> sequence == null || (getMesh().getActionSequenceTable() != null && getMesh().getActionSequenceTable().contains(sequence)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
-        GridPane.setHgrow(this.actionSequenceComboBox, Priority.ALWAYS);
-        if (getMesh().getAvailableSequences().size() > 0) {
-            this.actionSequenceComboBox.getSelectionModel().selectFirst();
-            this.actionSequenceComboBox.setValue(null);
-            this.actionSequenceComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    this.animationComboBox.getSelectionModel().clearSelection();
-
-                if (oldValue != newValue)
-                    this.sequencePlayback.setSequence(newValue);
-            });
-        } else {
-            this.actionSequenceComboBox.setDisable(true);
-        }
-
-        addToViewSettingsGrid(new Label("Action Sequence"), this.actionSequenceComboBox);
-
 
         // Setup camera stuff.
         getCamera().setFarClip(DEFAULT_FAR_CLIP);
@@ -158,36 +82,27 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         getFrameTimer().addPerFrameTask(this::onTick);
     }
 
+    /**
+     * Pauses or resumes animation ticking (used by the animation editor during scrubbing).
+     * @param paused true to pause, false to resume
+     */
+    public void setAnimationTickingPaused(boolean paused) {
+        this.animationTickingPaused = paused;
+    }
+
+    public void setAnimationSpeedMultiplier(float multiplier) {
+        this.animationSpeedMultiplier = multiplier;
+    }
+
     private void onTick(float deltaTime) {
-        if (this.forceRepeatCheckBox.isSelected() && this.sequencePlayback.getStatus() == SequenceStatus.FINISHED && !getMesh().isPlayingAnimation())
-            this.sequencePlayback.restart();
-
-        getMesh().tickAnimation(deltaTime);
+        if (!this.animationTickingPaused)
+            getMesh().tickAnimation(deltaTime * this.animationSpeedMultiplier);
         this.sequencePlayback.tick();
-
-        // Update UI
-        boolean hasAnimations = !getMesh().getAvailableAnimations().isEmpty();
-        boolean hasSequences = !getMesh().getAvailableSequences().isEmpty();
-        boolean isPlayingAnimation = hasAnimations && getMesh().isPlayingAnimation();
-        boolean isPlayingSequence = hasSequences && (this.sequencePlayback.getStatus() != SequenceStatus.FINISHED || (this.actionSequenceComboBox.getValue() != null && isPlayingAnimation));
-
-        // Update disable repeat box.
-        boolean shouldDisableRepeatBox = (!hasAnimations && !hasSequences);
-        if (this.forceRepeatCheckBox.isDisabled() != shouldDisableRepeatBox)
-            this.forceRepeatCheckBox.setDisable(shouldDisableRepeatBox);
-
-        boolean shouldDisableAnimationsBox = isPlayingSequence || !hasAnimations;
-        if (this.animationComboBox.isDisable() != shouldDisableAnimationsBox)
-            this.animationComboBox.setDisable(shouldDisableAnimationsBox);
-
-        boolean shouldDisableSequenceBox = !hasSequences;
-        if (this.actionSequenceComboBox.isDisable() != shouldDisableSequenceBox)
-            this.actionSequenceComboBox.setDisable(shouldDisableSequenceBox);
     }
 
     @Override
     protected void setupManagers() {
-        // No managers.
+        addManager(new GreatQuestAnimationEditor(this));
     }
 
     @Override

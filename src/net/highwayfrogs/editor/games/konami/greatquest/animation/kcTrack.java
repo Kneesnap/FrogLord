@@ -180,6 +180,41 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     }
 
     /**
+     * Adds a key to this track, inserting it at the correct sorted position by tick.
+     * @param key the key to add
+     */
+    public void addKey(kcTrackKey<?> key) {
+        if (key == null)
+            throw new NullPointerException("key");
+
+        int insertIndex = this.keyList.size();
+        for (int i = 0; i < this.keyList.size(); i++) {
+            if (this.keyList.get(i).getTick() > key.getTick()) {
+                insertIndex = i;
+                break;
+            }
+        }
+        this.keyList.add(insertIndex, key);
+    }
+
+    /**
+     * Removes a key from this track.
+     * @param key the key to remove
+     * @return true iff the key was found and removed
+     */
+    public boolean removeKey(kcTrackKey<?> key) {
+        return this.keyList.remove(key);
+    }
+
+    /**
+     * Sorts the key list by tick value (ascending).
+     * Should be called after modifying any key's tick via setTick().
+     */
+    public void sortKeys() {
+        this.keyList.sort(java.util.Comparator.comparingInt(kcTrackKey::getTick));
+    }
+
+    /**
      * Gets the track key which covers the given tick
      * @param tick the tick to find a key for
      * @return indexOfKeyCoveringTick, if there is one

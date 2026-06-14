@@ -680,7 +680,8 @@ public class TranslationGizmo extends DynamicMesh {
         meshView.setMouseTransparent(false);
         meshView.setCursor(Cursor.DEFAULT);
 
-        if (!restoreOriginalPosition && state != null)
+        if (!restoreOriginalPosition && state != null && state.getChangeListener() != null
+                && (oldX != newX || oldY != newY || oldZ != newZ))
             state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, newY, newZ, FLAG_ACCEPTED_POSITION);
     }
 

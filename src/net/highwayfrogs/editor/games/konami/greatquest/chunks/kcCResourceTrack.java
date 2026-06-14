@@ -123,6 +123,55 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     }
 
     /**
+     * Adds a track to this resource, updating the tag lookup cache.
+     * @param track the track to add
+     */
+    public void addTrack(kcTrack track) {
+        if (track == null)
+            throw new NullPointerException("track");
+
+        this.tracks.add(track);
+        rebuildTagLookup();
+    }
+
+    /**
+     * Removes a track from this resource, updating the tag lookup cache.
+     * @param track the track to remove
+     * @return true iff the track was found and removed
+     */
+    public boolean removeTrack(kcTrack track) {
+        if (track == null)
+            throw new NullPointerException("track");
+
+        boolean removed = this.tracks.remove(track);
+        if (removed)
+            rebuildTagLookup();
+
+        return removed;
+    }
+
+    /**
+     * Rebuilds the tracksByTag lookup list from the current track list.
+     * Should be called after structural changes (addTrack / removeTrack).
+     */
+    public void rebuildTagLookup() {
+        this.tracksByTag.clear();
+        for (kcTrack track : this.tracks) {
+            if (track.getTag() < 0)
+                continue;
+
+            while (track.getTag() >= this.tracksByTag.size())
+                this.tracksByTag.add(null);
+
+            List<kcTrack> existingTracks = this.tracksByTag.get(track.getTag());
+            if (existingTracks == null)
+                this.tracksByTag.set(track.getTag(), existingTracks = new ArrayList<>());
+
+            existingTracks.add(track);
+        }
+    }
+
+    /**
      * Gets the animation tracks available for this animation.
      */
     public List<kcTrack> getTracks() {
