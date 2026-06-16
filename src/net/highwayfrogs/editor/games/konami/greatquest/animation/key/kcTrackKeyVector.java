@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -17,9 +18,11 @@ import net.highwayfrogs.editor.system.math.Vector4f;
  */
 @Getter
 public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
-    protected final kcVector4 vector = new kcVector4();
+    protected final kcVector4 vector = new kcVector4(0, 0, 0, 1); // Default value.
     // Rotation: Quaternion. I think I determined this just by looking at the data.
     // Position / Scale - Xyz Scalar
+
+    protected static final kcAnimState TEMP_ANIM_STATE = new kcAnimState();
 
     public kcTrackKeyVector(GreatQuestInstance instance, kcControlType controlType) {
         super(instance, controlType);
@@ -33,6 +36,11 @@ public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
     @Override
     protected void saveKeyData(DataWriter writer, int dataEndIndex) {
         this.vector.save(writer);
+    }
+
+    @Override
+    protected void copyValueFromImpl(kcNode node, kcTrackKeyVector otherKey) {
+        getVector().setXYZW(otherKey.getVector());
     }
 
     @Override
@@ -54,6 +62,14 @@ public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
         protected void applyInterpolateValueImpl(kcNode node, kcTrackKeyVector previousKey, kcAnimState state, float t) {
             Vector4f prevRotation = previousKey != null ? previousKey.getVector() : node.getLocalRotation();
             kcQuat.kcQuatSlerp(prevRotation, getVector(), t, state.getRotation());
+        }
+
+        @Override
+        protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyVector oldNextKey, kcTrackKeyVector newNextKey) {
+            kcAnimState state = TEMP_ANIM_STATE;
+            state.reset(node);
+            state.evaluate(node, newNextKey.getTick(), track, false);
+            newNextKey.getVector().setXYZW(state.getRotation());
         }
     }
 
@@ -81,6 +97,16 @@ public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
             Vector3f currPosition = TEMP_CURR_POSITION.setXYZ(getVector().getX(), getVector().getY(), getVector().getZ());
             Vector3f.lerp(prevPosition, currPosition, t, state.getPosition());
         }
+
+        @Override
+        protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyVector oldNextKey, kcTrackKeyVector newNextKey) {
+            kcAnimState state = TEMP_ANIM_STATE;
+            state.reset(node);
+            state.evaluate(node, newNextKey.getTick(), track, false);
+            newNextKey.getVector().setX(state.getPosition().getX());
+            newNextKey.getVector().setY(state.getPosition().getY());
+            newNextKey.getVector().setZ(state.getPosition().getZ());
+        }
     }
 
     /**
@@ -106,6 +132,16 @@ public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
 
             Vector3f currScale = TEMP_CURR_SCALE.setXYZ(getVector().getX(), getVector().getY(), getVector().getZ());
             Vector3f.lerp(prevScale, currScale, t, state.getScale());
+        }
+
+        @Override
+        protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyVector oldNextKey, kcTrackKeyVector newNextKey) {
+            kcAnimState state = TEMP_ANIM_STATE;
+            state.reset(node);
+            state.evaluate(node, newNextKey.getTick(), track, false);
+            newNextKey.getVector().setX(state.getScale().getX());
+            newNextKey.getVector().setY(state.getScale().getY());
+            newNextKey.getVector().setZ(state.getScale().getZ());
         }
     }
 }

@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -17,7 +19,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Getter
 public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameData<GreatQuestInstance> implements IInfoWriter {
     private final kcControlType controlType; // NOTE: Consider making not final later.
-    private int tick;
+    @Setter private int tick;
 
     public kcTrackKey(GreatQuestInstance instance, kcControlType controlType) {
         super(instance);
@@ -90,7 +92,7 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
 
     /**
      * Interpolates the value between the previous value and the current one, then applies it to the target system.
-     * @param node the bone which is
+     * @param node the bone which is being calculated
      * @param previousKey the previous key to apply the interpolated value to
      * @param state the state to apply the interpolated value to
      * @param t a value between 0.0 and 1.0 representing how much to include from each
@@ -99,7 +101,7 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
 
     /**
      * Interpolates the value between the previous value and the current one, then applies it to the target system.
-     * @param node the bone which is
+     * @param node the bone which is being calculated
      * @param previousKey the previous key to apply the interpolated value to
      * @param state the state to apply the interpolated value to
      * @param t a value between 0.0 and 1.0 representing how much to include from each
@@ -110,6 +112,52 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
             throw new ClassCastException("Cannot use track key " + Utils.getSimpleName(previousKey) + " as if it is a " + getClass().getSimpleName() + ".");
 
         this.applyInterpolateValueImpl(node, (TSelf) previousKey, state, t);
+    }
+
+    /**
+     * Copies the between the previous value and the current one, then applies it to the target system.
+     * @param node the bone which is associated with the key
+     * @param otherKey the key to copy values from
+     */
+    protected abstract void copyValueFromImpl(kcNode node, TSelf otherKey);
+
+    /**
+     * Interpolates the value between the previous value and the current one, then applies it to the target system.
+     * @param node the bone which is associated with the key
+     * @param otherKey the previous key to apply the interpolated value to
+     */
+    @SuppressWarnings("unchecked")
+    public void copyValueFrom(kcNode node, kcTrackKey<?> otherKey) {
+        if (otherKey != null && !getClass().isInstance(otherKey))
+            throw new ClassCastException("Cannot copy from track key " + Utils.getSimpleName(otherKey) + " as if it is a " + getClass().getSimpleName() + ".");
+
+        this.copyValueFromImpl(node, (TSelf) otherKey);
+    }
+
+    /**
+     * When a new key is created, configure it, and change neighbors as necessary to accommodate.
+     * @param track the track which this setup occurs on
+     * @param node the bone which is associated with the key
+     * @param oldNextKey the key which previously was the next key in the track (May = null)
+     * @param newNextKey the key which is now the new next key in the track
+     */
+    protected abstract void setupNewNextKeyImpl(kcTrack track, kcNode node, TSelf oldNextKey, TSelf newNextKey);
+
+    /**
+     * When a new key is created, configure it, and change neighbors as necessary to accommodate.
+     * @param track the track which this setup occurs on
+     * @param node the bone which is associated with the key
+     * @param oldNextKey the key which previously was the next key in the track (May = null)
+     * @param newNextKey the key which is now the new next key in the track
+     */
+    @SuppressWarnings("unchecked")
+    public void setupNewNextKey(kcTrack track, kcNode node, kcTrackKey<?> oldNextKey, kcTrackKey<?> newNextKey) {
+        if (oldNextKey != null && !getClass().isInstance(oldNextKey))
+            throw new ClassCastException("Cannot setup with track key " + Utils.getSimpleName(oldNextKey) + " as if it is a " + getClass().getSimpleName() + ".");
+        if (!getClass().isInstance(newNextKey))
+            throw new ClassCastException("Cannot setup the key " + Utils.getSimpleName(newNextKey) + " as if it is a " + getClass().getSimpleName() + ".");
+
+        this.setupNewNextKeyImpl(track, node, (TSelf) oldNextKey, (TSelf) newNextKey);
     }
 
     @Override
@@ -123,15 +171,6 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
     public void writeInfo(StringBuilder builder) {
         builder.append(Utils.getSimpleName(this)).append("['").append(getControlType())
                 .append("']: Timestamp=").append(this.tick);
-    }
-
-    /**
-     * Sets the tick (timestamp) for this keyframe.
-     * NOTE: After calling this, the owning kcTrack's key list should be re-sorted via sortKeys().
-     * @param newTick the new tick value
-     */
-    public void setTick(int newTick) {
-        this.tick = newTick;
     }
 
     /**

@@ -76,6 +76,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     /** Default zoom: 80 pixels per second of animation. */
     private static final double DEFAULT_PIXELS_PER_SECOND = 80.0;
 
+    private static final int TICKS_PER_SECOND = GreatQuestModelMesh.TICKS_PER_SECOND;
+
     // ---- Colours ----
     private static final Color BG_COLOR = Color.web("#1e1e1e");
     private static final Color LABEL_BG_COLOR = Color.web("#252525");
@@ -97,7 +99,7 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
 
     public GreatQuestAnimationTimelinePanel(GreatQuestAnimationEditor editor) {
         this.editor = editor;
-        this.pixelsPerTick = DEFAULT_PIXELS_PER_SECOND / 4800.0;
+        this.pixelsPerTick = DEFAULT_PIXELS_PER_SECOND / TICKS_PER_SECOND;
 
         // Canvas — sized and positioned via layoutChildren()
         this.canvas = new Canvas();
@@ -108,8 +110,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         this.horizontalScrollBar.setMin(0);
         this.horizontalScrollBar.setMax(0);
         this.horizontalScrollBar.setValue(0);
-        this.horizontalScrollBar.setUnitIncrement(4800.0 / 10.0);  // 0.1 s per arrow click
-        this.horizontalScrollBar.setBlockIncrement(4800.0);          // 1 s per page
+        this.horizontalScrollBar.setUnitIncrement(TICKS_PER_SECOND / 10.0);  // 0.1 s per arrow click
+        this.horizontalScrollBar.setBlockIncrement(TICKS_PER_SECOND);          // 1 s per page
 
         this.horizontalScrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
             this.scrollOffsetTicks = newVal.doubleValue();
@@ -246,13 +248,10 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         if (this.animation == null)
             return;
 
-        List<kcTrack> sorted = new ArrayList<>(this.animation.getTracks());
-        sorted.sort(Comparator.comparingInt(kcTrack::getTag));
-
-        for (kcTrack track : sorted) {
-            this.orderedTracks.add(track);
-            this.trackLabels.add(buildTrackLabel(track));
-        }
+        this.orderedTracks.addAll(this.animation.getTracks());
+        this.orderedTracks.sort(Comparator.comparingInt(kcTrack::getTag));
+        for (int i = 0; i < this.orderedTracks.size(); i++)
+            this.trackLabels.add(buildTrackLabel(this.orderedTracks.get(i)));
     }
 
     private String buildTrackLabel(kcTrack track) {
@@ -263,14 +262,14 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
 
     private static String abbreviateType(kcControlType type) {
         switch (type) {
-            case LINEAR_POSITION: return "LP";
-            case LINEAR_ROTATION: return "LR";
-            case LINEAR_SCALE: return "LS";
-            case TCB_POSITION: return "TP";
-            case TCB_ROTATION: return "TR";
-            case TCB_SCALE: return "TS";
-            case BEZIER_POSITION: return "BP";
-            case BEZIER_SCALE: return "BS";
+            case LINEAR_POSITION: return "LN_POS";
+            case LINEAR_ROTATION: return "LN_ROT";
+            case LINEAR_SCALE: return "LN_SCL";
+            case TCB_POSITION: return "TCB_POS";
+            case TCB_ROTATION: return "TCB_ROT";
+            case TCB_SCALE: return "TCB_SCL";
+            case BEZIER_POSITION: return "BZ_POS";
+            case BEZIER_SCALE: return "BZ_SCL";
             default: return type.name();
         }
     }
@@ -279,7 +278,7 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     private void fitZoom() {
         this.scrollOffsetTicks = 0;
         if (this.animation == null || this.animation.getMaxTick() <= 0) {
-            this.pixelsPerTick = DEFAULT_PIXELS_PER_SECOND / 4800.0;
+            this.pixelsPerTick = DEFAULT_PIXELS_PER_SECOND / TICKS_PER_SECOND;
         } else {
             double timelineWidth = Math.max(1.0, getWidth() - LABEL_WIDTH);
             int maxTick = this.animation.getMaxTick();
@@ -295,7 +294,7 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
             this.horizontalScrollBar.setVisibleAmount(0);
             return;
         }
-        int maxTick = Math.max(this.animation.getMaxTick(), 4800);
+        int maxTick = Math.max(this.animation.getMaxTick(), TICKS_PER_SECOND);
         double timelineWidth = Math.max(1.0, getWidth() - LABEL_WIDTH);
         double visibleTicks = timelineWidth / this.pixelsPerTick;
         double maxScroll = Math.max(0.0, maxTick * 1.1 - visibleTicks / 2.0);
@@ -325,7 +324,9 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
 
     /** Scroll so the scrubber is visible if it has wandered off-screen during playback. */
     private void autoScrollToScrubber() {
-        if (getWidth() <= LABEL_WIDTH) return;
+        if (getWidth() <= LABEL_WIDTH)
+            return;
+
         double timelineWidth = getWidth() - LABEL_WIDTH;
         double visibleTicks = timelineWidth / this.pixelsPerTick;
 
@@ -377,7 +378,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     public void redraw() {
         double w = this.canvas.getWidth();
         double h = this.canvas.getHeight();
-        if (w <= 0 || h <= 0) return;
+        if (w <= 0 || h <= 0)
+            return;
 
         GraphicsContext gc = this.canvas.getGraphicsContext2D();
 
@@ -420,14 +422,20 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         gc.setFill(EMPTY_TEXT_COLOR);
         gc.setFont(LABEL_FONT);
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("Select an animation to edit", w / 2.0, h / 2.0 + 4.0);
+        if (getSkeleton() != null) {
+            gc.fillText("Select an animation to edit", w / 2.0, h / 2.0 + 4.0);
+        } else {
+            gc.fillText("Animations disabled, no skeleton file found", w / 2.0, h / 2.0 + 4.0);
+        }
     }
 
     private void drawTrackRows(GraphicsContext gc, double w, double h) {
         for (int i = 0; i < this.orderedTracks.size(); i++) {
             double rowY = RULER_HEIGHT + i * ROW_HEIGHT - this.scrollOffsetY;
-            if (rowY + ROW_HEIGHT <= RULER_HEIGHT) continue; // row is above the clip boundary
-            if (rowY >= h) break;
+            if (rowY + ROW_HEIGHT <= RULER_HEIGHT)
+                continue; // row is above the clip boundary
+            if (rowY >= h)
+                break;
 
             // Row background
             gc.setFill((i % 2 == 0) ? ROW_COLOR_ODD : ROW_COLOR_EVEN);
@@ -471,8 +479,10 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
 
         for (double t = firstTick; t <= this.scrollOffsetTicks + visibleTicks + niceIntervalTicks; t += niceIntervalTicks) {
             double x = tickToX(t);
-            if (x < LABEL_WIDTH - 1) continue;
-            if (x > w + 1) break;
+            if (x < LABEL_WIDTH - 1)
+                continue;
+            if (x > w + 1)
+                break;
             gc.strokeLine(x, RULER_HEIGHT - 5.0, x, RULER_HEIGHT);
             gc.fillText(formatTick((long) t), x, RULER_HEIGHT - 7.0, 64.0);
         }
@@ -482,8 +492,10 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         double h = this.canvas.getHeight();
         for (int i = 0; i < this.orderedTracks.size(); i++) {
             double rowY = RULER_HEIGHT + i * ROW_HEIGHT - this.scrollOffsetY;
-            if (rowY + ROW_HEIGHT <= RULER_HEIGHT) continue;
-            if (rowY >= h) break;
+            if (rowY + ROW_HEIGHT <= RULER_HEIGHT)
+                continue;
+            if (rowY >= h)
+                break;
             kcTrack track = this.orderedTracks.get(i);
             double centerY = rowY + ROW_HEIGHT / 2.0;
 
@@ -513,7 +525,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
 
     private void drawScrubber(GraphicsContext gc, double w, double h) {
         double sx = tickToX(this.scrubberTick);
-        if (sx < LABEL_WIDTH || sx > w) return;
+        if (sx < LABEL_WIDTH || sx > w)
+            return;
 
         // Vertical line
         gc.setStroke(SCRUBBER_COLOR);
@@ -534,21 +547,23 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     // Time ruler formatting
     // =========================================================================
 
-    private static final double TICKS_PER_SECOND = 4800.0;
+    private static final double[] TIME_RULER_INTERVALS =
+            {0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0};
+
 
     private static double niceTickInterval(double targetTicks) {
         // Nice second-based values, converted to ticks
-        double[] secondIntervals = {0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0};
-        for (double si : secondIntervals) {
-            double ti = si * TICKS_PER_SECOND;
+        for (int i = 0; i < TIME_RULER_INTERVALS.length; i++) {
+            double ti = TIME_RULER_INTERVALS[i] * TICKS_PER_SECOND;
             if (ti >= targetTicks)
                 return ti;
         }
+
         return 60.0 * TICKS_PER_SECOND;
     }
 
     private static String formatTick(long tick) {
-        double seconds = tick / TICKS_PER_SECOND;
+        double seconds = tick / (double) TICKS_PER_SECOND;
         if (seconds < 10.0)
             return String.format("%.2fs", seconds);
         else
@@ -645,6 +660,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     }
 
     private void onScroll(ScrollEvent event) {
+
+        boolean handleVerticalMouseMovement = false;
         if (event.isControlDown()) {
             // Ctrl+Scroll → zoom time axis
             double factor = (event.getDeltaY() > 0) ? 1.2 : (1.0 / 1.2);
@@ -654,9 +671,9 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
             this.scrollOffsetTicks = Math.max(0.0, tickUnderMouse - (event.getX() - LABEL_WIDTH) / this.pixelsPerTick);
             updateScrollBar();
             redraw();
-        } else if (event.isShiftDown() || Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY())) {
+        } else if (event.isShiftDown() || (handleVerticalMouseMovement = Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()))) {
             // Shift+Scroll or horizontal trackpad swipe → pan time axis
-            double delta = Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()) ? event.getDeltaX() : event.getDeltaY();
+            double delta = handleVerticalMouseMovement ? event.getDeltaX() : event.getDeltaY();
             double deltaTicks = -delta / this.pixelsPerTick * 0.5;
             double newScroll = Math.max(0.0, this.scrollOffsetTicks + deltaTicks);
             this.horizontalScrollBar.setValue(Math.min(newScroll, this.horizontalScrollBar.getMax()));
@@ -672,10 +689,9 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         ContextMenu menu = new ContextMenu();
 
         if (hitKey != null) {
-            kcTrackKey<?> keyRef = hitKey;
             kcTrack trackRef = this.contextMenuTrack;
             MenuItem deleteItem = new MenuItem("Delete Keyframe");
-            deleteItem.setOnAction(e -> this.editor.onKeyframeDeleteRequested(trackRef, keyRef));
+            deleteItem.setOnAction(e -> this.editor.onKeyframeDeleteRequested(trackRef, hitKey));
             menu.getItems().add(deleteItem);
         } else {
             int targetTick = (int) this.contextMenuTick;

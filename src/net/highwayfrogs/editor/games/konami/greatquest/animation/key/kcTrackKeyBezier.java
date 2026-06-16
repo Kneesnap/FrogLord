@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -53,6 +54,14 @@ public abstract class kcTrackKeyBezier extends kcTrackKey<kcTrackKeyBezier> {
         this.startPosition.save(writer);
         this.controlPosition.save(writer);
         writer.writeInt(this.flags);
+    }
+
+    @Override
+    protected void copyValueFromImpl(kcNode node, kcTrackKeyBezier otherKey) {
+        this.endPosition.setXYZW(otherKey.endPosition);
+        this.startPosition.setXYZW(otherKey.startPosition);
+        this.controlPosition.setXYZW(otherKey.controlPosition);
+        this.flags = otherKey.flags;
     }
 
     @Override
@@ -107,6 +116,11 @@ public abstract class kcTrackKeyBezier extends kcTrackKey<kcTrackKeyBezier> {
                         invT * (3 * t2 * (c2EndZ + c2StartZ * coefficient) +
                         invT * (3 * t * (c1EndZ + c1ControlZ * coefficient) + invT * c1EndZ)));
             }
+        }
+
+        @Override
+        protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyBezier oldNextKey, kcTrackKeyBezier newNextKey) {
+            // TODO: Implement a Bezier curve splitter.
         }
     }
 }

@@ -14,15 +14,17 @@ import javafx.scene.layout.Priority;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector.kcTrackKeyLinearPosition;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector.kcTrackKeyLinearRotation;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback.SequenceStatus;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -39,6 +41,7 @@ import net.highwayfrogs.editor.system.math.Matrix4x4f;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 /**
@@ -55,7 +58,6 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     private GreatQuestAnimationTimelinePanel timelinePanel;
     private UISidePanel sidePanel;
     private GUIEditorGrid infoGrid;
-    private GUIEditorGrid keyframeEditorGrid;
 
     // Animation playback controls
     private CheckBox showSkeletonCheckBox;
@@ -111,24 +113,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         // event-dispatch boundary that blocks scene-level addEventHandler from firing).
         Stage stage = getController().getOverwrittenStage();
         if (stage != null) {
-            this.spaceKeyFilter = event -> {
-                if (event.getCode() != KeyCode.SPACE)
-                    return;
-                // Don't intercept SPACE while the user is typing in a text field.
-                Node focusOwner = stage.getScene() != null ? stage.getScene().getFocusOwner() : null;
-                if (focusOwner instanceof TextInputControl)
-                    return;
-                boolean currentlyPaused = getController().isAnimationTickingPaused();
-                if (currentlyPaused) {
-                    // Starting playback — record the tick we're playing from
-                    this.playbackStartTick = getMesh().getAnimationTick();
-                } else {
-                    // Pausing — return the scrubber to the tick playback started from
-                    getMesh().setAnimationTick(this.playbackStartTick);
-                }
-                getController().setAnimationTickingPaused(!currentlyPaused);
-                event.consume();
-            };
+            this.spaceKeyFilter = this::handleKeyPress;
             stage.addEventFilter(KeyEvent.KEY_PRESSED, this.spaceKeyFilter);
         }
 
@@ -137,6 +122,28 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
         // Initialise with the mesh's current animation (if any)
         syncTimelineToMesh();
+    }
+
+    private void handleKeyPress(KeyEvent event) {
+        if (event.getCode() != KeyCode.SPACE)
+            return;
+
+        // Don't intercept SPACE while the user is typing in a text field.
+        Stage stage = getController().getOverwrittenStage();
+        Node focusOwner = stage != null && stage.getScene() != null ? stage.getScene().getFocusOwner() : null;
+        if (focusOwner instanceof TextInputControl)
+            return;
+
+        boolean currentlyPaused = getController().isAnimationTickingPaused();
+        if (currentlyPaused) {
+            // Starting playback — record the tick we're playing from
+            this.playbackStartTick = getMesh().getAnimationTick();
+        } else {
+            // Pausing — return the scrubber to the tick playback started from
+            getMesh().setAnimationTick(this.playbackStartTick);
+        }
+        getController().setAnimationTickingPaused(!currentlyPaused);
+        event.consume();
     }
 
     @Override
@@ -181,8 +188,6 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
         // Separator then keyframe editor grid
         this.sidePanel.add(new Separator());
-        this.keyframeEditorGrid = this.sidePanel.makeEditorGrid();
-        // (Starts empty; populated when a keyframe is selected)
     }
 
     private void setupAnimationControls() {
@@ -352,17 +357,17 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     }
 
     /** User released the scrubber → restore the pause state that existed before scrubbing started. */
-    public void onTimelineScrubEnd() {
+    void onTimelineScrubEnd() {
         getController().setAnimationTickingPaused(this.preScrubAnimationTickingPaused);
     }
 
     /** Scrubber moved to a new position → seek animation. */
-    public void onTimelineScrubberMoved(double newTick) {
+    void onTimelineScrubberMoved(double newTick) {
         getMesh().setAnimationTick(newTick);
     }
 
     /** A bone label was clicked in the timeline → show skeleton and select that bone. */
-    public void onBoneLabelClicked(kcTrack track) {
+    void onBoneLabelClicked(kcTrack track) {
         // Ensure the skeleton is visible
         if (this.showSkeletonCheckBox != null && !this.showSkeletonCheckBox.isSelected())
             this.showSkeletonCheckBox.setSelected(true);
@@ -373,14 +378,10 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         // Hide any active gizmos (no keyframe is selected)
         hidePositionGizmo();
         hideRotationGizmo();
-
-        // Clear the keyframe editor panel
-        updateKeyframeEditorPanel(null, null);
     }
 
     /** A keyframe was clicked in the timeline. */
-    public void onKeyframeSelected(kcTrack track, kcTrackKey<?> key) {
-        updateKeyframeEditorPanel(track, key);
+    void onKeyframeSelected(kcTrack track, kcTrackKey<?> key) {
         updateBoneHighlight(track);
         if (key != null && track != null) {
             getMesh().setAnimationTick(key.getTick());
@@ -396,40 +397,32 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
      * The user dragged a keyframe to a new tick in the timeline.
      * We move it only if the target tick is not already taken by another keyframe.
      */
-    public void onKeyframeMoveRequested(kcTrack track, kcTrackKey<?> key, int newTick) {
-        // Check for tick collision
-        for (kcTrackKey<?> other : track.getKeyList()) {
-            if (other != key && other.getTick() == newTick)
-                return;
-        }
+    void onKeyframeMoveRequested(kcTrack track, kcTrackKey<?> key, int newTick) {
+        if (key.getTick() == newTick)
+            return; // Tick will not change.
 
-        key.setTick(newTick);
-        track.sortKeys();
+        // Check for tick collision.
+        kcTrackKey<?> other = track.getKeyForTick(newTick);
+        if (other != key && other.getTick() == newTick)
+            return; // This would collide with another key!
+
+        track.setTrackKeyTick(key, newTick);
 
         // Snap animation to the keyframe's new position and refresh the mesh
         getMesh().setAnimationTick(newTick);
-
-        // Update the tick label in the editor panel
-        if (this.timelinePanel.getSelectedKeyframe() == key)
-            updateKeyframeEditorPanel(track, key);
 
         if (this.timelinePanel != null)
             this.timelinePanel.redraw();
     }
 
     /** Add a new keyframe to a track at the given tick. */
-    public void onKeyframeAddRequested(kcTrack track, int tick) {
-        // Guard: don't add if the tick is already occupied
-        for (kcTrackKey<?> existing : track.getKeyList()) {
-            if (existing.getTick() == tick)
-                return;
-        }
+    void onKeyframeAddRequested(kcTrack track, int tick) {
+        kcCResourceSkeleton skeleton = getMesh().getSkeleton();
+        if (skeleton == null)
+            return;
 
-        kcTrackKey<?> newKey = track.getTrackControlType().createKey(getGameInstance());
-        newKey.setTick(tick);
-        copyNearestValues(track, newKey, tick);
-        track.addKey(newKey);
-
+        kcNode node = skeleton.getNodeByTag(track.getTag());
+        track.createKeyAtTick(node, tick);
         if (this.timelinePanel != null)
             this.timelinePanel.onAnimationModified();
 
@@ -437,7 +430,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     }
 
     /** Delete a keyframe from a track. */
-    public void onKeyframeDeleteRequested(kcTrack track, kcTrackKey<?> key) {
+    void onKeyframeDeleteRequested(kcTrack track, kcTrackKey<?> key) {
         if (this.timelinePanel != null && this.timelinePanel.getSelectedKeyframe() == key) {
             this.timelinePanel.selectKeyframe(null, null);
             onKeyframeSelected(null, null);
@@ -449,99 +442,6 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             this.timelinePanel.onAnimationModified();
 
         getMesh().updateMeshes();
-    }
-
-    // =========================================================================
-    // Keyframe value initialisation for newly added keys
-    // =========================================================================
-
-    /**
-     * Copies the values from the nearest preceding keyframe into {@code newKey}.
-     * For vector keys (position / rotation / scale) this avoids a sudden jump to zero.
-     */
-    private void copyNearestValues(kcTrack track, kcTrackKey<?> newKey, int tick) {
-        if (!(newKey instanceof kcTrackKeyVector))
-            return;
-
-        kcTrackKeyVector dst = (kcTrackKeyVector) newKey;
-        kcTrackKeyVector src = null;
-
-        // Find the nearest key at or before this tick
-        for (kcTrackKey<?> k : track.getKeyList()) {
-            if (!(k instanceof kcTrackKeyVector)) continue;
-            if (k.getTick() <= tick)
-                src = (kcTrackKeyVector) k;
-        }
-
-        // Fall back to the very first key if nothing precedes this tick
-        if (src == null) {
-            for (kcTrackKey<?> k : track.getKeyList()) {
-                if (k instanceof kcTrackKeyVector) {
-                    src = (kcTrackKeyVector) k;
-                    break;
-                }
-            }
-        }
-
-        if (src != null) {
-            kcVector4 sv = src.getVector();
-            dst.getVector().setXYZW(sv.getX(), sv.getY(), sv.getZ(), sv.getW());
-        }
-    }
-
-    // =========================================================================
-    // Keyframe editor side-panel
-    // =========================================================================
-
-    private void updateKeyframeEditorPanel(kcTrack track, kcTrackKey<?> key) { // TODO: DELETE.
-        this.keyframeEditorGrid.clearEditor();
-        if (key == null || track == null)
-            return;
-
-        // Bone identification
-        kcCResourceSkeleton skeleton = getMesh().getSkeleton();
-        kcNode bone = (skeleton != null) ? skeleton.getNodeByTag(track.getTag()) : null;
-        String boneName = (bone != null) ? bone.getName() : "Tag " + track.getTag();
-
-        this.keyframeEditorGrid.addLabel("Bone", boneName);
-        this.keyframeEditorGrid.addLabel("Type", track.getTrackControlType().name());
-        this.keyframeEditorGrid.addLabel("Tick", String.valueOf(key.getTick()));
-
-        // Value editors for the common vector-based key types
-        if (key instanceof kcTrackKeyVector) {
-            kcTrackKeyVector vecKey = (kcTrackKeyVector) key;
-            kcVector4 vec = vecKey.getVector();
-            boolean isRotation = isRotationType(track.getTrackControlType());
-
-            if (isRotation) {
-                // Quaternion XYZW — editable fields kept as a fallback; the 3D rotation gizmo is the primary tool
-                this.keyframeEditorGrid.addFloatField("X (Quat)", vec.getX(),
-                        v -> { vec.setXYZW(v, vec.getY(), vec.getZ(), vec.getW()); onKeyframeValueChanged(); syncRotationGizmoFromKeyframe(vecKey); }, null);
-                this.keyframeEditorGrid.addFloatField("Y (Quat)", vec.getY(),
-                        v -> { vec.setXYZW(vec.getX(), v, vec.getZ(), vec.getW()); onKeyframeValueChanged(); syncRotationGizmoFromKeyframe(vecKey); }, null);
-                this.keyframeEditorGrid.addFloatField("Z (Quat)", vec.getZ(),
-                        v -> { vec.setXYZW(vec.getX(), vec.getY(), v, vec.getW()); onKeyframeValueChanged(); syncRotationGizmoFromKeyframe(vecKey); }, null);
-                this.keyframeEditorGrid.addFloatField("W (Quat)", vec.getW(),
-                        v -> { vec.setXYZW(vec.getX(), vec.getY(), vec.getZ(), v); onKeyframeValueChanged(); syncRotationGizmoFromKeyframe(vecKey); }, null);
-            } else {
-                // Position or scale XYZ
-                this.keyframeEditorGrid.addFloatField("X", vec.getX(),
-                        v -> { vec.setXYZW(v, vec.getY(), vec.getZ(), vec.getW()); onKeyframeValueChanged(); refreshGizmoPosition(); }, null);
-                this.keyframeEditorGrid.addFloatField("Y", vec.getY(),
-                        v -> { vec.setXYZW(vec.getX(), v, vec.getZ(), vec.getW()); onKeyframeValueChanged(); refreshGizmoPosition(); }, null);
-                this.keyframeEditorGrid.addFloatField("Z", vec.getZ(),
-                        v -> { vec.setXYZW(vec.getX(), vec.getY(), v, vec.getW()); onKeyframeValueChanged(); refreshGizmoPosition(); }, null);
-            }
-        }
-
-        // Delete button
-        kcTrackKey<?> keyRef = key;
-        kcTrack trackRef = track;
-        this.keyframeEditorGrid.addButton("Delete Keyframe", () -> onKeyframeDeleteRequested(trackRef, keyRef));
-    }
-
-    private static boolean isRotationType(kcControlType type) {
-        return type == kcControlType.LINEAR_ROTATION || type == kcControlType.TCB_ROTATION;
     }
 
     private void onKeyframeValueChanged() {
@@ -568,7 +468,8 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
     private void updateBoneHighlight(kcTrack track) {
         GreatQuestModelSkeletonMesh skeletonMesh = getMesh().getSkeletonMesh();
-        if (skeletonMesh == null) return;
+        if (skeletonMesh == null)
+            return;
 
         kcCResourceSkeleton skeleton = getMesh().getSkeleton();
         kcNode bone = (skeleton != null && track != null) ? skeleton.getNodeByTag(track.getTag()) : null;
@@ -584,13 +485,12 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
      * For other key types the gizmo is hidden.
      */
     private void showOrUpdatePositionGizmo(kcTrack track, kcTrackKey<?> key) {
-        if (!(key instanceof kcTrackKeyVector)
-                || track.getTrackControlType() != kcControlType.LINEAR_POSITION) {
+        if (!(key instanceof kcTrackKeyLinearPosition)) {
             hidePositionGizmo();
             return;
         }
 
-        kcTrackKeyVector vecKey = (kcTrackKeyVector) key;
+        kcTrackKeyLinearPosition vecKey = (kcTrackKeyLinearPosition) key;
 
         // Lazily create the gizmo and its MeshView
         if (this.positionGizmoView == null) {
@@ -604,15 +504,11 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         }
 
         // Wire the change listener: update keyframe values when the gizmo moves
-        kcTrackKeyVector vecKeyRef = vecKey;
-        kcTrack trackRef = track;
         IPositionChangeListener listener = (mv, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
             // Convert gizmo world-space movement back to bone-local space
-            Vector3f localPos = worldToLocal(trackRef.getTag(), (float) newX, (float) newY, (float) newZ);
-            vecKeyRef.getVector().setXYZW(localPos.getX(), localPos.getY(), localPos.getZ(), vecKeyRef.getVector().getW());
+            Vector3f localPos = worldToLocal(track.getTag(), (float) newX, (float) newY, (float) newZ);
+            vecKey.getVector().setXYZW(localPos.getX(), localPos.getY(), localPos.getZ(), vecKey.getVector().getW());
             onKeyframeValueChanged();
-            // Refresh editor panel fields to show updated numbers
-            updateKeyframeEditorPanel(trackRef, vecKeyRef);
         };
         this.positionGizmo.setChangeListener(this.positionGizmoView, listener);
 
@@ -639,12 +535,12 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
      * For non-rotation key types the gizmo is hidden.
      */
     private void showOrUpdateRotationGizmo(kcTrack track, kcTrackKey<?> key) {
-        if (!(key instanceof kcTrackKeyVector) || !isRotationType(track.getTrackControlType())) {
+        if (!(key instanceof kcTrackKeyLinearRotation)) {
             hideRotationGizmo();
             return;
         }
 
-        kcTrackKeyVector vecKey = (kcTrackKeyVector) key;
+        kcTrackKeyLinearRotation vecKey = (kcTrackKeyLinearRotation) key;
 
         // Lazily create the gizmo and its MeshView
         if (this.rotationGizmoView == null) {
@@ -671,13 +567,9 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         this.rotationGizmo.setRotation(this.rotationGizmoView, vec.getX(), vec.getY(), vec.getZ(), vec.getW(), false);
 
         // Wire the change listener: update keyframe values when the gizmo rotates
-        kcTrackKeyVector vecKeyRef = vecKey;
-        kcTrack trackRef = track;
         IRotationChangeListener listener = (mv, oldX, oldY, oldZ, oldW, newX, newY, newZ, newW, flags) -> {
-            vecKeyRef.getVector().setXYZW(newX, newY, newZ, newW);
+            vecKey.getVector().setXYZW(newX, newY, newZ, newW);
             onKeyframeValueChanged();
-            // Refresh text fields to reflect the new quaternion values
-            updateKeyframeEditorPanel(trackRef, vecKeyRef);
         };
         this.rotationGizmo.setChangeListener(this.rotationGizmoView, listener);
 
@@ -698,7 +590,8 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     /** Repositions gizmos to follow the bone as the animation plays. */
     private void refreshGizmoPosition() {
         kcTrack track = this.timelinePanel != null ? this.timelinePanel.getSelectedTrack() : null;
-        if (track == null) return;
+        if (track == null)
+            return;
         if (this.positionGizmoView != null && this.positionGizmo != null)
             placePositionGizmoAtBone(track.getTag());
         if (this.rotationGizmoView != null && this.rotationGizmo != null)
@@ -706,27 +599,25 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     }
 
     private void placePositionGizmoAtBone(int boneTag) {
-        try {
-            Matrix4x4f boneTransform = getMesh().getBoneTransform(boneTag);
-            float wx = boneTransform.getTranslationX();
-            float wy = boneTransform.getTranslationY();
-            float wz = boneTransform.getTranslationZ();
-            this.positionGizmo.setPosition(this.positionGizmoView, wx, wy, wz, false);
-        } catch (Exception ignored) {
-            // Bone transform unavailable (no animation, or tag out of range)
-        }
+        Matrix4x4f boneTransform = getMesh().getBoneTransform(boneTag);
+        if (boneTransform == null)
+            return;
+
+        float wx = boneTransform.getTranslationX();
+        float wy = boneTransform.getTranslationY();
+        float wz = boneTransform.getTranslationZ();
+        this.positionGizmo.setPosition(this.positionGizmoView, wx, wy, wz, false);
     }
 
     private void placeRotationGizmoAtBone(int boneTag) {
-        try {
-            Matrix4x4f boneTransform = getMesh().getBoneTransform(boneTag);
-            float wx = boneTransform.getTranslationX();
-            float wy = boneTransform.getTranslationY();
-            float wz = boneTransform.getTranslationZ();
-            this.rotationGizmo.setPosition(this.rotationGizmoView, wx, wy, wz);
-        } catch (Exception ignored) {
-            // Bone transform unavailable (no animation, or tag out of range)
-        }
+        Matrix4x4f boneTransform = getMesh().getBoneTransform(boneTag);
+        if (boneTransform == null)
+            return;
+
+        float wx = boneTransform.getTranslationX();
+        float wy = boneTransform.getTranslationY();
+        float wz = boneTransform.getTranslationZ();
+        this.rotationGizmo.setPosition(this.rotationGizmoView, wx, wy, wz);
     }
 
     /**
@@ -751,21 +642,19 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             kcNode node = skeleton.getNodeByTag(boneTag);
             if (node != null && node.getParent() != null) {
                 int parentTag = node.getParent().getTag();
-                try {
-                    Matrix4x4f parentWorld = getMesh().getBoneTransform(parentTag);
-                    float ptx = parentWorld.getTranslationX();
-                    float pty = parentWorld.getTranslationY();
-                    float ptz = parentWorld.getTranslationZ();
-                    // Compute P_upper * (worldPos - P.translation):
-                    //   parentWorld.multiply(offset) = P_upper * offset + P.translation
-                    //   subtract P.translation to isolate P_upper * offset = L.translation
-                    Vector3f offset = new Vector3f(wx - ptx, wy - pty, wz - ptz);
-                    Vector3f result = parentWorld.multiply(offset, new Vector3f());
-                    result.setXYZ(result.getX() - ptx, result.getY() - pty, result.getZ() - ptz);
-                    return result;
-                } catch (Exception ignored) {
-                    // Fall through to direct return if parent transform is unavailable
-                }
+
+                // Consider how to reduce allocations.
+                Matrix4x4f parentWorld = getMesh().getBoneTransform(parentTag);
+                float ptx = parentWorld.getTranslationX();
+                float pty = parentWorld.getTranslationY();
+                float ptz = parentWorld.getTranslationZ();
+                // Compute P_upper * (worldPos - P.translation):
+                //   parentWorld.multiply(offset) = P_upper * offset + P.translation
+                //   subtract P.translation to isolate P_upper * offset = L.translation
+                Vector3f offset = new Vector3f(wx - ptx, wy - pty, wz - ptz);
+                Vector3f result = parentWorld.multiply(offset, new Vector3f());
+                result.setXYZ(result.getX() - ptx, result.getY() - pty, result.getZ() - ptz);
+                return result;
             }
         }
         // Root bone (or unavailable parent): world == local
@@ -783,8 +672,25 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             return;
         }
 
+        kcModelWrapper modelWrapper = getMesh().getModelWrapper();
+        if (modelWrapper == null) {
+            FXUtils.showPopup(AlertType.ERROR, "Cannot create animation", "No modelWrapper is associated with this model.");
+            return;
+        }
+
+        // Generate a default name for the animation file.
+        String defaultName = null;
+        String filePath = modelWrapper.getFilePath();
+        int lastSlash = StringUtils.isNullOrWhiteSpace(filePath) ? -1 : filePath.lastIndexOf('\\');
+        if (lastSlash > 0) {
+            int secondLastSlash = filePath.lastIndexOf('\\', lastSlash - 1);
+            if (secondLastSlash >= 0)
+                defaultName = filePath.substring(secondLastSlash + 1, lastSlash) + ".bae";
+        }
+
+        // Prompt the user to input a file name.
         InputMenu.promptInput(getGameInstance(),
-                "Enter a name for the new animation file:", newName -> {
+                "Enter a name for the new animation file:", defaultName, newName -> {
             if (newName == null || newName.trim().isEmpty())
                 return;
 

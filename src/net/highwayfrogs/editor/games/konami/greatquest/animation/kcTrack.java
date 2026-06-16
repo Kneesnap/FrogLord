@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
@@ -180,21 +181,40 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     }
 
     /**
-     * Adds a key to this track, inserting it at the correct sorted position by tick.
-     * @param key the key to add
+     * Creates a new track key at the given tick, calculating a value for the key based on its neighbors.
+     * @param tick the tick to create the key at
+     * @return newKey
      */
-    public void addKey(kcTrackKey<?> key) {
-        if (key == null)
-            throw new NullPointerException("key");
+    public kcTrackKey<?> createKeyAtTick(kcNode node, int tick) {
+        if (node == null)
+            throw new NullPointerException("node");
+        if (node.getTag() != this.tag)
+            throw new IllegalArgumentException("The provided node does not seem to have the correct tag! (Has: " + node.getTag() + ", Expected: " + this.tag + ")");
 
-        int insertIndex = this.keyList.size();
-        for (int i = 0; i < this.keyList.size(); i++) {
-            if (this.keyList.get(i).getTick() > key.getTick()) {
-                insertIndex = i;
-                break;
-            }
+        int keyIndex = getKeyIndexForTick(tick);
+        kcTrackKey<?> previousKey = null;
+        if (keyIndex >= 0) {
+            // Check the key which already exists.
+            previousKey = this.keyList.get(keyIndex);
+            if (previousKey != null && previousKey.getTick() == tick)
+                return previousKey; // A key already exists here.
         }
-        this.keyList.add(insertIndex, key);
+
+        // Create the new key, and apply that interpolated value.
+        kcTrackKey<?> newKey = getTrackControlType().createKey(getGameInstance());
+        newKey.setTick(tick);
+        kcTrackKey<?> nextKey = this.keyList.size() > keyIndex + 1 ? this.keyList.get(keyIndex + 1) : null;
+        if (previousKey != null) {
+            previousKey.setupNewNextKey(this, node, nextKey, newKey);
+        } else if (nextKey != null) {
+            newKey.copyValueFrom(node, nextKey);
+        } else {
+            newKey.copyValueFrom(node, previousKey);
+        }
+
+        // Register the new key.
+        this.keyList.add(keyIndex + 1, newKey);
+        return newKey;
     }
 
     /**
@@ -207,11 +227,61 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     }
 
     /**
-     * Sorts the key list by tick value (ascending).
-     * Should be called after modifying any key's tick via setTick().
+     * Applies the new tick to the key, reordering the key list accordingly.
+     * @param key the registered key to change
+     * @param newTick the tick to apply
      */
-    public void sortKeys() {
-        this.keyList.sort(java.util.Comparator.comparingInt(kcTrackKey::getTick));
+    public void setTrackKeyTick(kcTrackKey<?> key, int newTick) {
+        if (key.getTick() == newTick)
+            return; // Already set.
+
+        int oldKeyIndex = this.keyList.indexOf(key);
+        if (oldKeyIndex < 0) { // Not registered,
+            key.setTick(newTick);
+            return;
+        }
+
+        int newKeyIndex = getKeyInsertionInsertionIndex(newTick);
+        key.setTick(newTick); // After obtaining the new index, it is safe to change the tick.
+        if (oldKeyIndex == newKeyIndex)
+            return;
+
+        // This is not great, but it is probably more efficient than creating a wrapper to a bunch of .get() and .set() calls.
+        // It's simpler, and due to the speed of System.arraycopy(), is likely more performant despite the worse time complexity.
+        this.keyList.remove(oldKeyIndex);
+        if (newKeyIndex > oldKeyIndex)
+            newKeyIndex--; // Account for the newly removed index.
+
+        this.keyList.add(newKeyIndex, key);
+    }
+
+    /**
+     * Gets the key active at the given tick
+     * @param tick the tick to evaluate
+     * @return key, or null
+     */
+    public kcTrackKey<?> getKeyForTick(int tick) {
+        int keyIndex = getKeyIndexForTick(tick);
+        if (keyIndex < 0 || keyIndex >= this.keyList.size())
+            return null;
+
+        return this.keyList.get(keyIndex);
+    }
+
+    /**
+     * Gets the insertion index for a key at the given tick
+     * @param tick the tick to find the insertion index for
+     * @return insertionIndex
+     */
+    public int getKeyInsertionInsertionIndex(int tick) {
+        int keyIndex = getKeyIndexForTick(tick);
+        if (keyIndex == -1)
+            return 0; // Insertion index for -1 (too early) is always zero.
+
+        if (!this.keyList.isEmpty() && tick == this.keyList.get(keyIndex).getTick())
+            return keyIndex; // An exact match was found, so do not add one.
+
+        return keyIndex + 1;
     }
 
     /**

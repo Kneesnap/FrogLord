@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcQuat;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
@@ -93,6 +94,23 @@ public abstract class kcTrackKeyTcb extends kcTrackKey<kcTrackKeyTcb> {
         writer.writeFloat(this.easeFrom);
         this.vector0E.save(writer);
         this.vector12.save(writer);
+    }
+
+    @Override
+    protected void copyValueFromImpl(kcNode node, kcTrackKeyTcb otherKey) {
+        this.vector01.setXYZW(otherKey.vector01);
+        this.vector05.setXYZW(otherKey.vector05);
+        this.unused.setXYZ(otherKey.unused);
+        this.easeTo = otherKey.easeTo;
+        this.easeFrom = otherKey.easeFrom;
+        this.vector0E.setXYZW(otherKey.vector0E);
+        this.vector12.setXYZW(otherKey.vector12);
+    }
+
+    @Override
+    protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyTcb oldNextKey, kcTrackKeyTcb newNextKey) {
+        // Do nothing, as I don't know how to properly split a TCB animation.
+        // TODO: Implement later.
     }
 
     @Override

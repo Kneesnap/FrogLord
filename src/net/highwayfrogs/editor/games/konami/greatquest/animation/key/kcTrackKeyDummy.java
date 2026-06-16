@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -41,6 +42,16 @@ public class kcTrackKeyDummy extends kcTrackKey<kcTrackKeyDummy> {
     @Override
     protected void applyInterpolateValueImpl(kcNode node, kcTrackKeyDummy previousKey, kcAnimState state, float t) {
         // Do nothing.
+    }
+
+    @Override
+    protected void copyValueFromImpl(kcNode node, kcTrackKeyDummy otherKey) {
+        this.rawBytes = otherKey.rawBytes.clone();
+    }
+
+    @Override
+    protected void setupNewNextKeyImpl(kcTrack track, kcNode node, kcTrackKeyDummy oldNextKey, kcTrackKeyDummy newNextKey) {
+        // Don't do anything.
     }
 
     @Override
