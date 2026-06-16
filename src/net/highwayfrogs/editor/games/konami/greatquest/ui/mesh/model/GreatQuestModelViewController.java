@@ -7,6 +7,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
@@ -25,7 +26,9 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private GreatQuestActionSequencePlayback sequencePlayback;
     private GreatQuestModelMeshViewCollection meshViewCollection;
     private final MeshView skeletonMeshView = new MeshView();
+    @Setter
     private boolean animationTickingPaused = false;
+    @Setter
     private float animationSpeedMultiplier = 1.0f;
 
     public static final double DEFAULT_FAR_CLIP = 1000;
@@ -80,18 +83,6 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
         // Tick animations.
         getFrameTimer().addPerFrameTask(this::onTick);
-    }
-
-    /**
-     * Pauses or resumes animation ticking (used by the animation editor during scrubbing).
-     * @param paused true to pause, false to resume
-     */
-    public void setAnimationTickingPaused(boolean paused) {
-        this.animationTickingPaused = paused;
-    }
-
-    public void setAnimationSpeedMultiplier(float multiplier) {
-        this.animationSpeedMultiplier = multiplier;
     }
 
     private void onTick(float deltaTime) {

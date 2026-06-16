@@ -379,10 +379,7 @@ public class RotationGizmo extends DynamicMesh {
      * @param z        world Z
      */
     public void setPosition(MeshView meshView, double x, double y, double z) {
-        Translate t = Scene3DUtils.get3DTranslation(meshView);
-        t.setX(x);
-        t.setY(y);
-        t.setZ(z);
+        Scene3DUtils.setNodePosition(meshView, x, y, z);
     }
 
     /**
@@ -419,9 +416,12 @@ public class RotationGizmo extends DynamicMesh {
         if (entry == null)
             return null;
         DynamicMeshNode node = entry.getMeshNode();
-        if (node == this.xAxisNode) return this.xAxisNode;
-        if (node == this.yAxisNode) return this.yAxisNode;
-        if (node == this.zAxisNode) return this.zAxisNode;
+        if (node == this.xAxisNode)
+            return this.xAxisNode;
+        if (node == this.yAxisNode)
+            return this.yAxisNode;
+        if (node == this.zAxisNode)
+            return this.zAxisNode;
         return null;
     }
 
@@ -564,8 +564,10 @@ public class RotationGizmo extends DynamicMesh {
         //   2. Correct handling of ±π wraparound without large jumps
         double deltaAngle = currentAngle - this.dragStartAngle;
         // Normalize to [-π, π] so crossing the ±π atan2 boundary doesn't produce a ~2π jump
-        if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
-        if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
+        while (deltaAngle > Math.PI)
+            deltaAngle -= 2 * Math.PI;
+        while (deltaAngle < -Math.PI)
+            deltaAngle += 2 * Math.PI;
 
         this.dragStartAngle = currentAngle; // advance reference for the next frame
 

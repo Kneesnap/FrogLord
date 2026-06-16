@@ -129,7 +129,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             getLogger().warning("Encountered a kcTrack which did not have the IS_PACKED flag set! (This has never been observed before)");
 
         int mode = getTrackMode();
-        if (mode != 0 && mode != 1 && mode != 2) // 17 is seen in the PS2 NTSC prototype.
+        if (mode != 0 && mode != 1 && mode != 2) // 17 is seen in the PS2 NTSC prototype. PC seems to only use 0 and 2.
             getLogger().severe("Encountered unexpected track mode of: %s", mode);
     }
 
@@ -324,8 +324,8 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     }
 
     /**
-     * Gets the track mode, which appears to be used during track preparation, or something.
-     * I believe this makes it some kind of smoothing behavior, but I am not sure as we didn't need to implement this in FrogLord.
+     * Gets the track mode, which appears to be used during track preparation, or something. Seems to be either 0 or 2.
+     * I believe this makes it some kind of smoothing behavior, but I am not sure as we didn't seem to need to implement this in FrogLord.
      */
     public int getTrackMode() {
         return this.packedValue & TRACK_MODE_MASK;

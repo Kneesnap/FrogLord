@@ -35,7 +35,7 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     private final AtlasTexture selectedBoneTexture;
     private PhongMaterial highlightedMaterial;
     private kcNode selectedBone;
-    private final EventHandler<? super MouseEvent> mouseEventHandler = this::handleClick;;
+    private final EventHandler<? super MouseEvent> mouseEventHandler = this::handleClick;
 
     public GreatQuestModelSkeletonMesh(GreatQuestModelMesh fullMesh, String modelName) {
         super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY, modelName);
@@ -106,7 +106,6 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
             return;
 
         getLogger().info("Clicked on bone '%s', tag=%d", bone.getName(), bone.getTag());
-        this.selectedBone = bone;
-        updateTexCoords();
+        setSelectedBone(bone);
     }
 }

@@ -699,7 +699,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             kcCResourceTrack newTrack = new kcCResourceTrack(parentFile);
 
             try {
-                newTrack.setName(trimmedName);
+                newTrack.setName(trimmedName, true);
                 parentFile.addResource(newTrack);
             } catch (Exception ex) {
                 FXUtils.showPopup(AlertType.ERROR, "Failed to create animation", "Could not create '" + trimmedName + "': " + ex.getMessage());

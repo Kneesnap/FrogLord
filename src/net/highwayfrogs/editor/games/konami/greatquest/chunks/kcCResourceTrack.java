@@ -39,18 +39,8 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             kcTrack newTrack = new kcTrack(this);
             newTrack.load(reader, baseByteOffset);
             this.tracks.add(newTrack);
-
-            if (newTrack.getTag() >= 0) {
-                // Ensure the tracks by tag is large enough.
-                while (newTrack.getTag() >= this.tracksByTag.size())
-                    this.tracksByTag.add(null);
-
-                // Remember the new track by its tag.
-                List<kcTrack> existingTracks = this.tracksByTag.get(newTrack.getTag());
-                if (existingTracks == null)
-                    this.tracksByTag.set(newTrack.getTag(), existingTracks = new ArrayList<>());
-                existingTracks.add(newTrack);
-            }
+            if (newTrack.getTag() >= 0)
+                addTrackByTag(newTrack);
         }
 
         // Validate track flags.
@@ -122,6 +112,21 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
         }
     }
 
+    private void addTrackByTag(kcTrack newTrack) {
+        if (newTrack.getTag() < 0)
+            throw new IllegalArgumentException("Invalid track index: " + newTrack.getTag());
+
+        // Ensure the tracks by tag is large enough.
+        while (newTrack.getTag() >= this.tracksByTag.size())
+            this.tracksByTag.add(null);
+
+        // Remember the new track by its tag.
+        List<kcTrack> existingTracks = this.tracksByTag.get(newTrack.getTag());
+        if (existingTracks == null)
+            this.tracksByTag.set(newTrack.getTag(), existingTracks = new ArrayList<>());
+        existingTracks.add(newTrack);
+    }
+
     /**
      * Adds a track to this resource, updating the tag lookup cache.
      * @param track the track to add
@@ -129,9 +134,30 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     public void addTrack(kcTrack track) {
         if (track == null)
             throw new NullPointerException("track");
+        if (track.getParentResource() != null && track.getParentResource() != this)
+            throw new IllegalArgumentException("The provided track reports as belonging to a different kcCResourceTrack!");
+        if (track.getTag() < 0)
+            throw new IllegalArgumentException("The provided track has an invalid tag ID: " + track.getTag());
 
-        this.tracks.add(track);
-        rebuildTagLookup();
+        // In the original data, the tracks are generally sorted in order, but not always. (I think)
+        // Also, there does not seem to be a clear order of tracks of the same tag, so we can do whatever.
+        int insertionIndex = this.tracks.size();
+        for (int i = 0; i < this.tracks.size(); i++) {
+            kcTrack testTrack = this.tracks.get(i);
+            if (testTrack == track)
+                return; // Already present.
+
+            if (testTrack.getTag() == track.getTag()) {
+                if (testTrack.getTrackControlType() == track.getTrackControlType())
+                    throw new IllegalArgumentException("There is already a track for tag " + track.getTag() + " with control type: " + track.getTrackControlType() + ".");
+                insertionIndex = i + 1;
+            } else if (testTrack.getTag() > track.getTag()) {
+                insertionIndex = i;
+            }
+        }
+
+        this.tracks.add(insertionIndex, track);
+        addTrackByTag(track);
     }
 
     /**
@@ -144,31 +170,13 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             throw new NullPointerException("track");
 
         boolean removed = this.tracks.remove(track);
-        if (removed)
-            rebuildTagLookup();
+        if (removed) {
+            List<kcTrack> existingTracks = this.tracksByTag.get(track.getTag());
+            if (existingTracks != null && existingTracks.remove(track) && existingTracks.isEmpty())
+                this.tracksByTag.set(track.getTag(), null);
+        }
 
         return removed;
-    }
-
-    /**
-     * Rebuilds the tracksByTag lookup list from the current track list.
-     * Should be called after structural changes (addTrack / removeTrack).
-     */
-    public void rebuildTagLookup() {
-        this.tracksByTag.clear();
-        for (kcTrack track : this.tracks) {
-            if (track.getTag() < 0)
-                continue;
-
-            while (track.getTag() >= this.tracksByTag.size())
-                this.tracksByTag.add(null);
-
-            List<kcTrack> existingTracks = this.tracksByTag.get(track.getTag());
-            if (existingTracks == null)
-                this.tracksByTag.set(track.getTag(), existingTracks = new ArrayList<>());
-
-            existingTracks.add(track);
-        }
     }
 
     /**
