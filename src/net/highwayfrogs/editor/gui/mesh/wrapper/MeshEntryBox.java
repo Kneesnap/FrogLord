@@ -508,4 +508,36 @@ public class MeshEntryBox {
 
         return null;
     }
+
+    /**
+     * Connects vertices to form a box for the given mesh data entry.
+     * For the purposes of variable names and concepts, is assumed that the hypothetical camera forward vector is parallel to positive Y axis.
+     * @param entry              entry to add the pyramid faces to.
+     * @param bottomUpLeftVtx    the base's top left vertex id of the base from the perspective of the hypothetical camera
+     * @param bottomUpRightVtx   the base's top right vertex id of the base from the perspective of the hypothetical camera
+     * @param bottomDownLeftVtx  the base's bottom left vertex id of the base from the perspective of the hypothetical camera
+     * @param bottomDownRightVtx the base's bottom right vertex id of the base from the perspective of the hypothetical camera
+     * @param topUpLeftVtx       the lid's top left vertex id of the base from the perspective of the hypothetical camera
+     * @param topUpRightVtx      the lid's top right vertex id of the base from the perspective of the hypothetical camera
+     * @param topDownLeftVtx     the lid's bottom left vertex id of the base from the perspective of the hypothetical camera
+     * @param topDownRightVtx    the lid's bottom right vertex id of the base from the perspective of the hypothetical camera
+     * @param uvIndex            the index of the texCoord to apply to all faces.
+     */
+    public static void addBoxFaces(DynamicMeshDataEntry entry, int bottomUpLeftVtx, int bottomUpRightVtx,
+                                   int bottomDownLeftVtx, int bottomDownRightVtx, int topUpLeftVtx, int topUpRightVtx,
+                                   int topDownLeftVtx, int topDownRightVtx, int uvIndex) {
+
+        entry.addFace(topDownLeftVtx, uvIndex, topUpRightVtx, uvIndex, topUpLeftVtx, uvIndex);
+        entry.addFace(topDownLeftVtx, uvIndex, topDownRightVtx, uvIndex, topUpRightVtx, uvIndex);
+        entry.addFace(bottomUpRightVtx, uvIndex, bottomDownLeftVtx, uvIndex, bottomUpLeftVtx, uvIndex);
+        entry.addFace(bottomUpRightVtx, uvIndex, bottomDownRightVtx, uvIndex, bottomDownLeftVtx, uvIndex);
+        entry.addFace(bottomUpLeftVtx, uvIndex, topDownLeftVtx, uvIndex, topUpLeftVtx, uvIndex);
+        entry.addFace(bottomUpLeftVtx, uvIndex, bottomDownLeftVtx, uvIndex, topDownLeftVtx, uvIndex);
+        entry.addFace(bottomDownRightVtx, uvIndex, topUpRightVtx, uvIndex, topDownRightVtx, uvIndex); // Polygon Facing Positive X #1
+        entry.addFace(bottomDownRightVtx, uvIndex, bottomUpRightVtx, uvIndex, topUpRightVtx, uvIndex); // Polygon Facing Positive X #2
+        entry.addFace(bottomDownLeftVtx, uvIndex, topDownRightVtx, uvIndex, topDownLeftVtx, uvIndex); // Polygon Facing Negative Z #1
+        entry.addFace(bottomDownLeftVtx, uvIndex, bottomDownRightVtx, uvIndex, topDownRightVtx, uvIndex); // Polygon Facing Negative Z #2
+        entry.addFace(bottomUpRightVtx, uvIndex, topUpLeftVtx, uvIndex, topUpRightVtx, uvIndex); // Polygon Facing Positive Z #1
+        entry.addFace(bottomUpRightVtx, uvIndex, bottomUpLeftVtx, uvIndex, topUpLeftVtx, uvIndex); // Polygon Facing Positive Z #2
+    }
 }

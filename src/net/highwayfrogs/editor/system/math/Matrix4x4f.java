@@ -1028,13 +1028,26 @@ public class Matrix4x4f {
      * @param eye Eye (camera) position in world space
      * @param target Target position in world space
      * @param up Up vector in world space (should not be parallel to the camera direction, that is target - eye)
-     * @param result The matrix to initialise as a lookAt matrix.
+     * @param result The matrix to initialize as a lookAt matrix.
      * @return A Matrix4 that transforms world space to camera space
      */
-    public static Matrix4x4f initialiseLookAtMatrix(Vector3f eye, Vector3f target, Vector3f up, Matrix4x4f result) {
-        Vector3f z = target.clone().subtract(eye).normalise(); // (eye - target) = right-handed matrix.
-        Vector3f x = up.crossProduct(z).normalise();
-        Vector3f y = z.crossProduct(x).normalise();
+    public static Matrix4x4f initialiseLookAtMatrix(Vector3f eye, Vector3f target, Vector3f up, Vector3f up2, Matrix4x4f result) {
+        Vector3f z;
+        Vector3f x;
+        Vector3f y;
+        if (!target.equals(eye)) {
+            x = target.clone().subtract(eye).normalise(); // (eye - target) = right-handed matrix.
+            //x = up.crossProduct(z).normalise();
+            //y = z.crossProduct(x).normalise();
+
+            Vector3f realUp = Math.abs(Vector3f.dotProduct(x, up)) < .999F ? up : up2;
+            z = x.crossProduct(realUp).normalise();
+            y = z.crossProduct(x).normalise();
+        } else {
+            x = Vector3f.UNIT_X;
+            y = Vector3f.UNIT_Y;
+            z = Vector3f.UNIT_Z;
+        }
 
         if (result == null)
             result = new Matrix4x4f();
@@ -1051,15 +1064,10 @@ public class Matrix4x4f {
         result.internalMatrix[2][1] = y.getZ();
         result.internalMatrix[2][2] = z.getZ();
         result.internalMatrix[2][3] = 0;
-        result.internalMatrix[3][0] = 0;
-        result.internalMatrix[3][1] = 0;
-        result.internalMatrix[3][2] = 0;
+        result.internalMatrix[3][0] = eye.getX();
+        result.internalMatrix[3][1] = eye.getY();
+        result.internalMatrix[3][2] = eye.getZ();
         result.internalMatrix[3][3] = 1;
-
-        // Apply the translation.
-        eye = eye.negate();
-        result = result.multiply(createTranslation(eye));
-        eye.negate();
 
         return result;
     }
@@ -1072,7 +1080,7 @@ public class Matrix4x4f {
      * @return A Matrix4 that transforms world space to camera space
      */
     public static Matrix4x4f createLookAtMatrix(Vector3f eye, Vector3f target, Vector3f up) {
-        return initialiseLookAtMatrix(eye, target, up, new Matrix4x4f());
+        return initialiseLookAtMatrix(eye, target, up, up, new Matrix4x4f());
     }
 
     /**

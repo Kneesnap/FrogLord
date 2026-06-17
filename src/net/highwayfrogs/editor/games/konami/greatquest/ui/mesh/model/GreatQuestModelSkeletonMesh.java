@@ -28,10 +28,13 @@ import java.awt.image.BufferedImage;
 @Getter
 public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     private final GreatQuestModelMesh fullMesh;
-    private final GreatQuestModelSkeletonMeshNode mainNode;
+    private final GreatQuestModelBoneConnectorNode boneConnectorNode;
+    private final GreatQuestModelSkeletonMeshNode boneNode;
     private final AtlasTexture defaultBoneTexture;
     private final AtlasTexture parentBoneTexture;
     private final AtlasTexture childBoneTexture;
+    private final AtlasTexture defaultConnectorTexture;
+    private final AtlasTexture selectedConnectorTexture;
     private final AtlasTexture selectedBoneTexture;
     private PhongMaterial highlightedMaterial;
     private kcNode selectedBone;
@@ -45,10 +48,15 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
         this.selectedBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.YELLOW)));
         this.childBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.LIMEGREEN)));
         this.parentBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.RED)));
+        this.defaultConnectorTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.WHITE)));
+        this.selectedConnectorTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.SALMON)));
         getTextureAtlas().endBulkOperations();
 
-        this.mainNode = new GreatQuestModelSkeletonMeshNode(this);
-        addNode(this.mainNode);
+        this.boneConnectorNode = new GreatQuestModelBoneConnectorNode(this);
+        addNode(this.boneConnectorNode);
+
+        this.boneNode = new GreatQuestModelSkeletonMeshNode(this);
+        addNode(this.boneNode);
     }
 
     @Override

@@ -17,7 +17,7 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
     private final Vector2f tempUv = new Vector2f();
     private final Vector3f tempVertex = new Vector3f();
 
-    private static final float SIZE = .025f;
+    private static final float SIZE = .0125f;
     private static final Vector3f[] BASE_VERTICES = {
             new Vector3f(0, -SIZE, SIZE), // Base Top Left
             new Vector3f(0, -SIZE, -SIZE), // Base Top Right
@@ -34,6 +34,7 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
     public GreatQuestModelSkeletonMesh getMesh() {
         return (GreatQuestModelSkeletonMesh) super.getMesh();
     }
+
     @Override
     protected void onAddedToMesh() {
         super.onAddedToMesh();
