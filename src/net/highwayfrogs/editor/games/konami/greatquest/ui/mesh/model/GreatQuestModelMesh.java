@@ -272,10 +272,10 @@ public class GreatQuestModelMesh extends DynamicMesh {
                 globalTransform = localTransform.multiply(parentTransform, globalTransform);
 
             // When multiplying a vertex, the vertex will be in model space, but globalTransform is in local space.
+            // The matrix we multiply the vertex against is equivalent to transforming the vertex into local bone space, and then transforming it back into model space for a new bone position. (Thus moving from a T-pose to a new pose)
             Matrix4x4f finalTransform = this.cachedFinalBoneMatrices.get(tempNode.getTag());
             tempNode.getModelToBoneMatrix().multiply(globalTransform, finalTransform); // This is the same as multiplying a vector against the two matrices separately.
         }
-
     }
 
     /**

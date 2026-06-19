@@ -33,9 +33,9 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     private final AtlasTexture defaultBoneTexture;
     private final AtlasTexture parentBoneTexture;
     private final AtlasTexture childBoneTexture;
-    private final AtlasTexture defaultConnectorTexture;
-    private final AtlasTexture selectedConnectorTexture;
     private final AtlasTexture selectedBoneTexture;
+    private final AtlasTexture outlineBoneTexture;
+    private final AtlasTexture defaultConnectorTexture;
     private PhongMaterial highlightedMaterial;
     private kcNode selectedBone;
     private final EventHandler<? super MouseEvent> mouseEventHandler = this::handleClick;
@@ -44,12 +44,12 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
         super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY, modelName);
         this.fullMesh = fullMesh;
         getTextureAtlas().startBulkOperations();
-        this.defaultBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.TEAL)));
+        this.defaultBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.WHITE)));
         this.selectedBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.YELLOW)));
-        this.childBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.LIMEGREEN)));
-        this.parentBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.RED)));
-        this.defaultConnectorTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.WHITE)));
-        this.selectedConnectorTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.SALMON)));
+        this.childBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.LIGHTGREEN)));
+        this.parentBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.PINK)));
+        this.outlineBoneTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.BLACK)));
+        this.defaultConnectorTexture = getTextureAtlas().addTexture(new BufferedImageWrapper(ColorUtils.makeColorImage(Color.DARKGRAY)));
         getTextureAtlas().endBulkOperations();
 
         this.boneConnectorNode = new GreatQuestModelBoneConnectorNode(this);
@@ -112,6 +112,10 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
         kcNode bone = ((DynamicMeshAdapterNode<kcNode>.DynamicMeshTypedDataEntry) entry).getDataSource();
         if (bone == null)
             return;
+
+        // Prevent selecting the wrong one.
+        if (entry.getMeshNode() instanceof GreatQuestModelBoneConnectorNode)
+            bone = bone.getParent();
 
         getLogger().info("Clicked on bone '%s', tag=%d", bone.getName(), bone.getTag());
         setSelectedBone(bone);

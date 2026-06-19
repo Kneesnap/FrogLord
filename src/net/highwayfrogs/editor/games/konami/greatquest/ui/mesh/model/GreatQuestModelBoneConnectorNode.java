@@ -24,7 +24,6 @@ public class GreatQuestModelBoneConnectorNode extends DynamicMeshAdapterNode<kcN
 
     private static final float SIZE = .003125f;
     private static final int VERTEX_COUNT = 8;
-    private static final Vector3f VIEW_UP_DIRECTION = Vector3f.UNIT_Y;
 
     public GreatQuestModelBoneConnectorNode(GreatQuestModelSkeletonMesh mesh) {
         super(mesh);
@@ -132,8 +131,11 @@ public class GreatQuestModelBoneConnectorNode extends DynamicMeshAdapterNode<kcN
         kcNode selectedBone = getMesh().getSelectedBone();
 
         AtlasTexture texture = getMesh().getDefaultConnectorTexture();
-        if (selectedBone != null && selectedBone == bone)
-            texture = getMesh().getSelectedBoneTexture();
+        if (selectedBone != null && selectedBone == bone) {
+            texture = getMesh().getParentBoneTexture();
+        } else if (selectedBone != null && selectedBone.getChildren().contains(bone)) {
+            texture = getMesh().getChildBoneTexture();
+        }
 
         return getMesh().getTextureAtlas().getUV(texture, this.tempUv.setXY(.5F, .5F), this.tempUv);
     }

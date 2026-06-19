@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 import javafx.scene.DepthTest;
 import javafx.scene.SubScene;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
@@ -14,7 +13,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.system.math.Vector3f;
-import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
  * Controls a model mesh for Great Quest.
@@ -38,10 +36,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     public static final float DEFAULT_CAMERA_YAW = 0;
     public static final double DEFAULT_ZOOM_FACTOR = 0.05;
 
-    private static final double DEFAULT_MOVEMENT_SPEED = 3;
-
-    private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+    private static final double DEFAULT_MOVEMENT_SPEED = 0.75;
 
     public GreatQuestModelViewController(GreatQuestInstance instance) {
         super(instance);
