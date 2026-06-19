@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
@@ -36,7 +37,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
     @Getter private final boolean skeletonAxisRotationApplied;
     @Getter private final boolean environmentalMesh;
     @Getter private kcCResourceTrack activeAnimation;
-    @Getter private boolean repeatAnimationOnFinish; // Whether the animation should repeat upon finish.
+    @Setter @Getter private boolean repeatAnimationOnFinish; // Whether the animation should repeat upon finish.
     @Getter private boolean reverseAnimationOnFinish; // Whether the animation should reverse upon completion.
     @Getter private boolean reverseAnimation; // Whether the animation is currently reversed.
     @Getter private boolean playingAnimation; // Returns true while playing an animation.

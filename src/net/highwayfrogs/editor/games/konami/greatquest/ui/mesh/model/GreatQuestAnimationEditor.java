@@ -198,6 +198,8 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         this.forceRepeatCheckBox = new CheckBox("Force Repeat");
         this.forceRepeatCheckBox.setSelected(true);
         GridPane.setHalignment(this.forceRepeatCheckBox, HPos.RIGHT);
+        this.forceRepeatCheckBox.selectedProperty().addListener(
+                (observable, oldValue, newValue)-> getMesh().setRepeatAnimationOnFinish(newValue));
         this.infoGrid.setupNode(this.showSkeletonCheckBox);
         this.infoGrid.setupSecondNode(this.forceRepeatCheckBox, false);
         this.infoGrid.addRow(25);
