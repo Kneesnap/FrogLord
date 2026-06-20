@@ -88,8 +88,10 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     private boolean preScrubAnimationTickingPaused;
     private double playbackStartTick; // Tick at which the most recent playback started (for SPACE-to-pause restore)
     private EventHandler<KeyEvent> spaceKeyFilter;
-    private kcControlType dragMode = kcControlType.LINEAR_POSITION;
+    private kcControlType dragMode = kcControlType.LINEAR_ROTATION;
     private final DragGizmo dragGizmo = new BoneDragGizmo(this);
+
+    private static final String DRAG_MODE_OVERLAY_ID = "greatQuestAnimationDragMode";
 
     /** Height of the timeline panel in pixels. */
     public static final double TIMELINE_HEIGHT = 200.0;
@@ -139,6 +141,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
         // Initialize with the mesh's current animation (if any)
         syncTimelineToMesh();
+        updateDragModeOverlay();
     }
 
     private void handleKeyPress(KeyEvent event) {
@@ -153,7 +156,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             if (typingInTextField)
                 return;
 
-            this.dragMode = requestedDragMode;
+            setDragMode(requestedDragMode, true);
             event.consume();
             return;
         }
@@ -190,6 +193,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     public void onRemove() {
         this.dragGizmo.stopDrag(true);
         this.dragGizmo.removeDragHandlers(getController().getSkeletonMeshView());
+        getController().getOverlay().setStatusText(DRAG_MODE_OVERLAY_ID, null);
 
         if (this.spaceKeyFilter != null) {
             Stage stage = getController().getOverwrittenStage();
@@ -352,6 +356,33 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
                 return kcControlType.LINEAR_SCALE;
             default:
                 return null;
+        }
+    }
+
+    private void setDragMode(kcControlType dragMode, boolean showMessage) {
+        if (dragMode == null || this.dragMode == dragMode)
+            return;
+
+        this.dragMode = dragMode;
+        updateDragModeOverlay();
+        if (showMessage)
+            getController().getOverlay().showTimedMessage("Changed edit mode to '" + getDragModeDisplayName(dragMode) + "'.");
+    }
+
+    private void updateDragModeOverlay() {
+        getController().getOverlay().setStatusText(DRAG_MODE_OVERLAY_ID, "Edit Mode: " + getDragModeDisplayName(this.dragMode)
+                + "\nPress '1', '2', or '3' to change.");
+    }
+
+    private static String getDragModeDisplayName(kcControlType dragMode) {
+        if (dragMode == kcControlType.LINEAR_POSITION) {
+            return "Position";
+        } else if (dragMode == kcControlType.LINEAR_ROTATION) {
+            return "Rotation";
+        } else if (dragMode == kcControlType.LINEAR_SCALE) {
+            return "Scale";
+        } else {
+            return dragMode != null ? dragMode.name() : "None";
         }
     }
 

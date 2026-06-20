@@ -115,6 +115,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final MeshViewFrameTimer frameTimer = new MeshViewFrameTimer(this);
     private final InputManager inputManager;
     private final FirstPersonCamera firstPersonCamera;
+    private final MeshViewOverlay overlay = new MeshViewOverlay();
 
     // Instance Data:
     private final MeshTracker meshTracker = new MeshTracker();
@@ -268,7 +269,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Using a BorderPane attempts to size it properly.
         BorderPane borderPane3D = new BorderPane();
-        borderPane3D.setCenter(subScene3D);
+        StackPane meshViewPane = new StackPane();
+        meshViewPane.getChildren().addAll(subScene3D, this.overlay.getRoot());
+        borderPane3D.setCenter(meshViewPane);
 
         // Initialise the UI layout.
         SplitPane splitPane = new SplitPane();
@@ -288,8 +291,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.originalScene = FXUtils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.
-        subScene3D.widthProperty().bind(borderPane3D.widthProperty());
-        subScene3D.heightProperty().bind(borderPane3D.heightProperty());
+        subScene3D.widthProperty().bind(meshViewPane.widthProperty());
+        subScene3D.heightProperty().bind(meshViewPane.heightProperty());
 
         // Associate camera controls with the scene.
         this.inputManager.assignSceneControls(this.meshScene);
