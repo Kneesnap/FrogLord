@@ -50,6 +50,7 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     @Getter private kcTrackKey<?> selectedKeyframe;
     @Getter private double scrubberTick;
     @Getter private boolean draggingScrubber;
+    @Getter private boolean interactionDisabled;
     private boolean draggingKeyframe;
     private double keyframeDragStartCanvasX;
     private int keyframeDragOriginalTick;
@@ -93,6 +94,8 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     private static final Color SCRUBBER_COLOR = Color.WHITE;
     private static final Color SCRUBBER_HEAD_COLOR = Color.web("#dddddd");
     private static final Color EMPTY_TEXT_COLOR = Color.web("#555555");
+    private static final Color DISABLED_OVERLAY_COLOR = Color.rgb(120, 120, 120, 0.48);
+    private static final Color DISABLED_TEXT_COLOR = Color.rgb(230, 230, 230, 0.78);
     private static final Font LABEL_FONT = Font.font("System", FontWeight.NORMAL, 11);
     private static final Font LABEL_FONT_BOLD = Font.font("System", FontWeight.BOLD, 11);
     private static final Font RULER_FONT = Font.font("System", 9);
@@ -235,6 +238,29 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         rebuildTrackList();
         updateScrollBar();
         updateVerticalScrollBar();
+        redraw();
+    }
+
+    /**
+     * Controls whether the timeline accepts user interaction.
+     * @param interactionDisabled true to show and behave as disabled
+     */
+    public void setInteractionDisabled(boolean interactionDisabled) {
+        if (this.interactionDisabled == interactionDisabled)
+            return;
+
+        this.interactionDisabled = interactionDisabled;
+        if (interactionDisabled) {
+            if (this.draggingScrubber) {
+                this.draggingScrubber = false;
+                this.editor.onTimelineScrubEnd();
+            }
+
+            this.draggingKeyframe = false;
+        }
+
+        this.horizontalScrollBar.setDisable(interactionDisabled);
+        this.verticalScrollBar.setDisable(interactionDisabled);
         redraw();
     }
 
@@ -416,6 +442,9 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         gc.setStroke(DIVIDER_COLOR.darker());
         gc.setLineWidth(1.0);
         gc.strokeLine(LABEL_WIDTH, 0, LABEL_WIDTH, h);
+
+        if (this.interactionDisabled)
+            drawDisabledOverlay(gc, w, h);
     }
 
     private void drawEmptyMessage(GraphicsContext gc, double w, double h) {
@@ -543,6 +572,15 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
         gc.strokePolygon(hx, hy, 3);
     }
 
+    private void drawDisabledOverlay(GraphicsContext gc, double w, double h) {
+        gc.setFill(DISABLED_OVERLAY_COLOR);
+        gc.fillRect(0, 0, w, h);
+        gc.setFill(DISABLED_TEXT_COLOR);
+        gc.setFont(LABEL_FONT_BOLD);
+        gc.setTextAlign(TextAlignment.RIGHT);
+        gc.fillText("Playing", w - 8.0, RULER_HEIGHT - 6.0);
+    }
+
     // =========================================================================
     // Time ruler formatting
     // =========================================================================
@@ -575,6 +613,11 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     // =========================================================================
 
     private void onMousePressed(MouseEvent event) {
+        if (this.interactionDisabled) {
+            event.consume();
+            return;
+        }
+
         double x = event.getX();
         double y = event.getY();
 
@@ -634,6 +677,11 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     }
 
     private void onMouseDragged(MouseEvent event) {
+        if (this.interactionDisabled) {
+            event.consume();
+            return;
+        }
+
         double x = event.getX();
 
         if (this.draggingScrubber) {
@@ -650,6 +698,13 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     }
 
     private void onMouseReleased(MouseEvent event) {
+        if (this.interactionDisabled) {
+            this.draggingScrubber = false;
+            this.draggingKeyframe = false;
+            event.consume();
+            return;
+        }
+
         if (this.draggingScrubber) {
             this.draggingScrubber = false;
             this.editor.onTimelineScrubEnd();
@@ -660,6 +715,10 @@ public class GreatQuestAnimationTimelinePanel extends Pane {
     }
 
     private void onScroll(ScrollEvent event) {
+        if (this.interactionDisabled) {
+            event.consume();
+            return;
+        }
 
         boolean handleVerticalMouseMovement = false;
         if (event.isControlDown()) {

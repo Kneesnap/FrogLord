@@ -186,6 +186,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             getMesh().setAnimationTick(this.playbackStartTick);
         }
         getController().setAnimationTickingPaused(!currentlyPaused);
+        updateTimelineInteractionState();
         event.consume();
     }
 
@@ -316,7 +317,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         speedSlider.valueProperty().addListener((obs, oldVal, newVal) ->
                 getController().setAnimationSpeedMultiplier(newVal.floatValue()));
         GridPane.setHgrow(speedSlider, Priority.ALWAYS);
-        this.infoGrid.setupNode(new Label("Speed"));
+        this.infoGrid.setupNode(new Label("Playback Speed"));
         this.infoGrid.setupSecondNode(speedSlider, false);
         this.infoGrid.addRow(35);
     }
@@ -418,6 +419,8 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
                 this.actionSequenceComboBox.setDisable(shouldDisableSeqs);
         }
 
+        updateTimelineInteractionState();
+
         // Detect animation changes (e.g. the user selected a different animation)
         kcCResourceTrack current = getMesh().getActiveAnimation();
         if (current != this.lastKnownAnimation) {
@@ -436,6 +439,12 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     private void syncTimelineToMesh() {
         if (this.timelinePanel != null)
             this.timelinePanel.setAnimation(getMesh().getActiveAnimation(), getMesh().getSkeleton());
+        updateTimelineInteractionState();
+    }
+
+    private void updateTimelineInteractionState() {
+        if (this.timelinePanel != null)
+            this.timelinePanel.setInteractionDisabled(!getController().isAnimationTickingPaused() && getMesh().isPlayingAnimation());
     }
 
     // =========================================================================
