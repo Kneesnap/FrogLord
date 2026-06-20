@@ -2,18 +2,23 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
+import javafx.geometry.Point3D;
 import javafx.scene.DepthTest;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector;
@@ -33,12 +38,17 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.mesh.fxobject.DragGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.RotationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.RotationGizmo.IRotationChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
+import net.highwayfrogs.editor.system.math.Quaternion;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.system.math.Vector4f;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -78,11 +88,17 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
     private boolean preScrubAnimationTickingPaused;
     private double playbackStartTick; // Tick at which the most recent playback started (for SPACE-to-pause restore)
     private EventHandler<KeyEvent> spaceKeyFilter;
+    private kcControlType dragMode = kcControlType.LINEAR_POSITION;
+    private final DragGizmo dragGizmo = new BoneDragGizmo(this);
 
     /** Height of the timeline panel in pixels. */
     public static final double TIMELINE_HEIGHT = 200.0;
     /** Scale applied to the translation gizmo so it matches the scene scale. */
     private static final double GIZMO_SCALE = 0.025;
+    /** Pixels of screen-space mouse travel needed to double or halve a scale drag. */
+    private static final double SCALE_DRAG_PIXELS_PER_DOUBLE = 160.0;
+    private static final double MIN_SCALE_DRAG_RATIO = 0.01;
+    private static final double MAX_SCALE_DRAG_RATIO = 100.0;
 
     public GreatQuestAnimationEditor(GreatQuestModelViewController controller) {
         super(controller);
@@ -107,6 +123,7 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         setupSidePanel();
         setupTimeline();
         setupGizmoDisplayList();
+        this.dragGizmo.addDragHandlers(getController().getSkeletonMeshView());
 
         // Register SPACE as a Stage-level capture filter so it fires regardless of
         // whether the 2D side-panel or the 3D SubScene has focus (the SubScene is an
@@ -120,18 +137,41 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         // Per-frame task to keep the timeline scrubber in sync
         getController().getFrameTimer().addPerFrameTask(this::onTick);
 
-        // Initialise with the mesh's current animation (if any)
+        // Initialize with the mesh's current animation (if any)
         syncTimelineToMesh();
     }
 
     private void handleKeyPress(KeyEvent event) {
+        Stage stage = getController().getOverwrittenStage();
+        Node focusOwner = stage != null && stage.getScene() != null ? stage.getScene().getFocusOwner() : null;
+        boolean typingInTextField = focusOwner instanceof TextInputControl;
+
+        kcControlType requestedDragMode = getDragModeForKey(event.getCode());
+        if (requestedDragMode != null) {
+            if (this.dragGizmo.isDragActive())
+                this.dragGizmo.stopDrag(true);
+            if (typingInTextField)
+                return;
+
+            this.dragMode = requestedDragMode;
+            event.consume();
+            return;
+        }
+
+        // Prevent processing stuff like movement keys while this is active.
+        if (this.dragGizmo.isDragActive()) {
+            if (event.getCode() == KeyCode.ESCAPE)
+                this.dragGizmo.stopDrag(true); // Intentional cancellation.
+
+            event.consume();
+            return;
+        }
+
         if (event.getCode() != KeyCode.SPACE)
             return;
 
         // Don't intercept SPACE while the user is typing in a text field.
-        Stage stage = getController().getOverwrittenStage();
-        Node focusOwner = stage != null && stage.getScene() != null ? stage.getScene().getFocusOwner() : null;
-        if (focusOwner instanceof TextInputControl)
+        if (typingInTextField)
             return;
 
         boolean currentlyPaused = getController().isAnimationTickingPaused();
@@ -148,6 +188,9 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
     @Override
     public void onRemove() {
+        this.dragGizmo.stopDrag(true);
+        this.dragGizmo.removeDragHandlers(getController().getSkeletonMeshView());
+
         if (this.spaceKeyFilter != null) {
             Stage stage = getController().getOverwrittenStage();
             if (stage != null)
@@ -294,6 +337,22 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
     private void setupGizmoDisplayList() {
         this.gizmoDisplayList = getController().getTransparentRenderManager().createDisplayList();
+    }
+
+    private static kcControlType getDragModeForKey(KeyCode keyCode) {
+        switch (keyCode) {
+            case DIGIT1:
+            case NUMPAD1:
+                return kcControlType.LINEAR_POSITION;
+            case DIGIT2:
+            case NUMPAD2:
+                return kcControlType.LINEAR_ROTATION;
+            case DIGIT3:
+            case NUMPAD3:
+                return kcControlType.LINEAR_SCALE;
+            default:
+                return null;
+        }
     }
 
     // =========================================================================
@@ -450,18 +509,6 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         // Keyframe data changed in-place at the current tick — bypass the tick-equality
         // early-exit in setAnimationTick and force a full mesh refresh.
         getMesh().updateMeshes();
-    }
-
-    /**
-     * Keeps the rotation gizmo's stored quaternion in sync with the keyframe's vector.
-     * Called from text field change handlers so that subsequent gizmo drags start from the
-     * up-to-date value.
-     */
-    private void syncRotationGizmoFromKeyframe(kcTrackKeyVector vecKey) {
-        if (this.rotationGizmoView != null && this.rotationGizmo != null) {
-            kcVector4 vec = vecKey.getVector();
-            this.rotationGizmo.setRotation(this.rotationGizmoView, vec.getX(), vec.getY(), vec.getZ(), vec.getW(), false);
-        }
     }
 
     // =========================================================================
@@ -661,6 +708,174 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         }
         // Root bone (or unavailable parent): world == local
         return new Vector3f(wx, wy, wz);
+    }
+
+    // =========================================================================
+    // Bone dragging
+    // =========================================================================
+
+    @RequiredArgsConstructor
+    public static class BoneDragGizmo extends DragGizmo {
+        private final GreatQuestAnimationEditor editor;
+        private kcNode bone;
+        private kcTrack track;
+        private kcTrackKeyVector key;
+        private final kcVector4 originalValue = new kcVector4();
+        private boolean createdKey;
+        private boolean createdTrack;
+
+        @Override
+        protected boolean startMouseDrag(MouseEvent event) {
+            kcNode bone = this.editor.getBoneFromSkeletonPick(event.getPickResult());
+            if (bone == null)
+                return false;
+
+            this.editor.getMesh().getSkeletonMesh().setSelectedBone(bone);
+            if (this.editor.getMesh().getActiveAnimation() == null) // TODO: Temporary, add support for default bone adjustments.
+                return false;
+
+            this.bone = bone;
+            return true;
+        }
+
+        @Override
+        protected Point3D getPlaneStartPosition(Node node, MouseEvent event) {
+            GreatQuestModelMesh mesh = this.editor.getMesh();
+            Matrix4x4f boneTransform = mesh.getBoneTransform(this.bone.getTag());
+            return node.localToScene(boneTransform.getTranslationX(), boneTransform.getTranslationY(), boneTransform.getTranslationZ());
+        }
+
+        @Override
+        protected boolean onDragStart(Node node) {
+            GreatQuestModelMesh mesh = this.editor.getMesh();
+
+            kcCResourceTrack animation = mesh.getActiveAnimation();
+            this.track = animation.getTrackByTagAndType(this.bone.getTag(), this.editor.dragMode);
+            if (this.track == null) {
+                this.createdTrack = true;
+                this.track = new kcTrack(animation, this.bone.getTag(), this.editor.dragMode);
+                animation.addTrack(this.track);
+            } else {
+                this.createdTrack = false;
+            }
+
+            int tick = (int) Math.round(mesh.getAnimationTick());
+            kcTrackKey<?> existingKey = this.track.getKeyForTick(tick);
+            this.createdKey = existingKey == null || existingKey.getTick() != tick;
+            if (this.createdKey) {
+                kcTrackKey<?> key = this.track.createKeyAtTick(this.bone, tick);
+                // Not currently supported.
+                if (!(key instanceof kcTrackKeyVector)) {
+                    if (this.createdKey)
+                        this.track.removeKey(key);
+                    if (this.createdTrack)
+                        mesh.getActiveAnimation().removeTrack(this.track);
+                    return false;
+                }
+
+                this.key = (kcTrackKeyVector) key;
+            } else {
+                if (!(existingKey instanceof kcTrackKeyVector))
+                    return false; // Not currently supported.
+
+                this.key = (kcTrackKeyVector) existingKey;
+            }
+
+            this.originalValue.setXYZW(this.key.getVector());
+            this.editor.getController().setAnimationTickingPaused(true);
+
+            mesh.getSkeletonMesh().setSelectedBone(this.bone);
+            if (this.editor.timelinePanel != null) {
+                this.editor.timelinePanel.selectKeyframe(this.track, key);
+                this.editor.timelinePanel.onAnimationModified();
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onDragStop(Node node, boolean cancel) {
+            if (cancel && this.key != null)
+                this.key.getVector().setXYZW(this.originalValue);
+
+            if (this.editor.timelinePanel != null)
+                this.editor.timelinePanel.onAnimationModified();
+
+            this.editor.getMesh().updateMeshes();
+            this.editor.refreshGizmoPosition();
+        }
+
+        @Override
+        protected void onDragClean(Node node, boolean cancel) {
+            if (cancel && this.createdKey && this.key != null) {
+                this.track.removeKey(this.key);
+            }
+
+            if (cancel && this.createdTrack && this.track != null) {
+                this.editor.getMesh().getActiveAnimation().removeTrack(this.track);
+            }
+
+            this.bone = null;
+            this.track = null;
+            this.key = null;
+            this.createdKey = false;
+            this.createdTrack = false;
+        }
+
+        @Override
+        protected void onDragUpdate(DragGizmo.DragUpdate dragUpdate) {
+            kcVector4 vector = this.key.getVector();
+            if (this.track.getTrackControlType() == kcControlType.LINEAR_POSITION) {
+                Point3D scenePoint = dragUpdate.getScenePoint();
+                Point3D modelPoint = this.editor.getController().getSkeletonMeshView().sceneToLocal(scenePoint);
+                Vector3f localPos = this.editor.worldToLocal(this.bone.getTag(), (float) modelPoint.getX(), (float) modelPoint.getY(), (float) modelPoint.getZ());
+                vector.setXYZW(localPos.getX(), localPos.getY(), localPos.getZ(), vector.getW());
+            } else if (this.track.getTrackControlType() == kcControlType.LINEAR_ROTATION) {
+                double deltaAngle = normalizeAngle(dragUpdate.getAngle() - getStartAngle());
+                Vector4f deltaRotation = Quaternion.fromAxisAngle(getRotationAxis(), (float) deltaAngle);
+                Vector4f newRotation = Quaternion.multiply(this.originalValue, deltaRotation);
+                newRotation.normalise();
+                vector.setXYZW(newRotation);
+            } else if (this.track.getTrackControlType() == kcControlType.LINEAR_SCALE) {
+                double screenDelta = dragUpdate.getMouseSceneOffsetX() - dragUpdate.getMouseSceneOffsetY();
+                double ratio = Math.pow(2, screenDelta / SCALE_DRAG_PIXELS_PER_DOUBLE);
+                ratio = Math.max(MIN_SCALE_DRAG_RATIO, Math.min(MAX_SCALE_DRAG_RATIO, ratio));
+                vector.setXYZW((float) (this.originalValue.getX() * ratio),
+                        (float) (this.originalValue.getY() * ratio),
+                        (float) (this.originalValue.getZ() * ratio),
+                        this.originalValue.getW());
+            }
+
+            this.editor.onKeyframeValueChanged();
+        }
+    }
+
+    private kcNode getBoneFromSkeletonPick(PickResult result) {
+        GreatQuestModelSkeletonMesh skeletonMesh = getMesh().getSkeletonMesh();
+        if (skeletonMesh == null || result == null || result.getIntersectedFace() < 0)
+            return null;
+
+        DynamicMeshDataEntry entry = skeletonMesh.getDataEntryByFaceIndex(result.getIntersectedFace());
+        if (!(entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry))
+            return null;
+
+        @SuppressWarnings("unchecked")
+        kcNode bone = ((DynamicMeshAdapterNode<kcNode>.DynamicMeshTypedDataEntry) entry).getDataSource();
+        if (bone == null)
+            return null;
+
+        if (entry.getMeshNode() instanceof GreatQuestModelBoneConnectorNode)
+            bone = bone.getParent();
+
+        return bone;
+    }
+
+    private static double normalizeAngle(double angle) {
+        while (angle > Math.PI)
+            angle -= Math.PI * 2;
+        while (angle < -Math.PI)
+            angle += Math.PI * 2;
+        return angle;
     }
 
     // =========================================================================

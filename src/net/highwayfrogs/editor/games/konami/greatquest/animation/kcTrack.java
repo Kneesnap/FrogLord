@@ -63,6 +63,13 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         this.parentResource = parentResource;
     }
 
+    public kcTrack(kcCResourceTrack parentResource, int tag, kcControlType controlType) {
+        this(parentResource);
+        this.tag = tag;
+        this.packedValue = (controlType.ordinal() << TRACK_CONTROL_SHIFT);
+        setFlags(FLAG_IS_PACKED);
+    }
+
     @Override
     public ILogger getLogger() {
         return this.parentResource != null ? this.parentResource.getLogger() : super.getLogger();
@@ -191,29 +198,26 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         if (node.getTag() != this.tag)
             throw new IllegalArgumentException("The provided node does not seem to have the correct tag! (Has: " + node.getTag() + ", Expected: " + this.tag + ")");
 
-        int keyIndex = getKeyIndexForTick(tick);
-        kcTrackKey<?> previousKey = null;
-        if (keyIndex >= 0) {
-            // Check the key which already exists.
-            previousKey = this.keyList.get(keyIndex);
-            if (previousKey != null && previousKey.getTick() == tick)
-                return previousKey; // A key already exists here.
+        int keyIndex = getKeyInsertionInsertionIndex(tick);
+        if (keyIndex < this.keyList.size()) {
+            kcTrackKey<?> existingKey = this.keyList.get(keyIndex);
+            if (existingKey.getTick() == tick)
+                return existingKey; // A key already exists here.
         }
 
         // Create the new key, and apply that interpolated value.
         kcTrackKey<?> newKey = getTrackControlType().createKey(getGameInstance());
         newKey.setTick(tick);
-        kcTrackKey<?> nextKey = this.keyList.size() > keyIndex + 1 ? this.keyList.get(keyIndex + 1) : null;
+        kcTrackKey<?> previousKey = keyIndex > 0 ? this.keyList.get(keyIndex - 1) : null;
+        kcTrackKey<?> nextKey = keyIndex < this.keyList.size() ? this.keyList.get(keyIndex) : null;
         if (previousKey != null) {
             previousKey.setupNewNextKey(this, node, nextKey, newKey);
         } else if (nextKey != null) {
             newKey.copyValueFrom(node, nextKey);
-        } else {
-            newKey.copyValueFrom(node, previousKey);
         }
 
         // Register the new key.
-        this.keyList.add(keyIndex + 1, newKey);
+        this.keyList.add(keyIndex, newKey);
         return newKey;
     }
 
@@ -241,17 +245,9 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             return;
         }
 
-        int newKeyIndex = getKeyInsertionInsertionIndex(newTick);
-        key.setTick(newTick); // After obtaining the new index, it is safe to change the tick.
-        if (oldKeyIndex == newKeyIndex)
-            return;
-
-        // This is not great, but it is probably more efficient than creating a wrapper to a bunch of .get() and .set() calls.
-        // It's simpler, and due to the speed of System.arraycopy(), is likely more performant despite the worse time complexity.
         this.keyList.remove(oldKeyIndex);
-        if (newKeyIndex > oldKeyIndex)
-            newKeyIndex--; // Account for the newly removed index.
-
+        int newKeyIndex = getKeyInsertionInsertionIndex(newTick);
+        key.setTick(newTick);
         this.keyList.add(newKeyIndex, key);
     }
 
@@ -274,14 +270,18 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
      * @return insertionIndex
      */
     public int getKeyInsertionInsertionIndex(int tick) {
-        int keyIndex = getKeyIndexForTick(tick);
-        if (keyIndex == -1)
-            return 0; // Insertion index for -1 (too early) is always zero.
+        int left = 0;
+        int right = this.keyList.size();
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (this.keyList.get(mid).getTick() < tick) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
 
-        if (!this.keyList.isEmpty() && tick == this.keyList.get(keyIndex).getTick())
-            return keyIndex; // An exact match was found, so do not add one.
-
-        return keyIndex + 1;
+        return left;
     }
 
     /**

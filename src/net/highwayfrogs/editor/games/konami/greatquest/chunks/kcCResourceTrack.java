@@ -194,6 +194,29 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     }
 
     /**
+     * Gets a track by its tag and type, if one exists
+     * @param tag the tag to find the track by
+     * @param controlType the track's control type
+     * @return track, if exists
+     */
+    public kcTrack getTrackByTagAndType(int tag, kcControlType controlType) {
+        if (controlType == null)
+            throw new NullPointerException("controlType");
+
+        List<kcTrack> tracks = getTracksByTag(tag);
+        if (tracks == null)
+            return null;
+
+        for (int i = 0; i < tracks.size(); i++) {
+            kcTrack track = tracks.get(i);
+            if (track != null && track.getTrackControlType() == controlType)
+                return track;
+        }
+
+        return null;
+    }
+
+    /**
      * Determines the maxTick used in this animation.
      */
     public int getMaxTick() {

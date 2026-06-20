@@ -1,16 +1,16 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcQuat;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.system.math.Vector4f;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a linear track key.
@@ -118,6 +118,7 @@ public abstract class kcTrackKeyVector extends kcTrackKey<kcTrackKeyVector> {
 
         public kcTrackKeyLinearScale(GreatQuestInstance instance) {
             super(instance, kcControlType.LINEAR_SCALE);
+            this.vector.setXYZW(1, 1, 1, 1);
         }
 
         @Override
