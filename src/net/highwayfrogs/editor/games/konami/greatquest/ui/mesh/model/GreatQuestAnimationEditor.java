@@ -847,12 +847,23 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
 
         @Override
         protected void onDragClean(Node node, boolean cancel) {
+            boolean removedAnimationData = false;
             if (cancel && this.createdKey && this.key != null) {
                 this.track.removeKey(this.key);
+                removedAnimationData = true;
             }
 
             if (cancel && this.createdTrack && this.track != null) {
                 this.editor.getMesh().getActiveAnimation().removeTrack(this.track);
+                removedAnimationData = true;
+            }
+
+            if (removedAnimationData) {
+                if (this.editor.timelinePanel != null)
+                    this.editor.timelinePanel.onAnimationModified();
+
+                this.editor.getMesh().updateMeshes();
+                this.editor.refreshGizmoPosition();
             }
 
             this.bone = null;
