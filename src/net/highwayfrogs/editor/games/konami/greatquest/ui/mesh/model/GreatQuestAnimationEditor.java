@@ -537,12 +537,21 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
             onKeyframeSelected(null, null);
         }
 
-        track.removeKey(key);
+        if (track.removeKey(key))
+            removeTrackIfEmpty(track);
 
         if (this.timelinePanel != null)
             this.timelinePanel.onAnimationModified();
 
         getMesh().updateMeshes();
+    }
+
+    private boolean removeTrackIfEmpty(kcTrack track) {
+        if (track == null || !track.getKeyList().isEmpty())
+            return false;
+
+        kcCResourceTrack animation = track.getParentResource();
+        return animation != null && animation.removeTrack(track);
     }
 
     private void onKeyframeValueChanged() {
@@ -849,13 +858,11 @@ public class GreatQuestAnimationEditor extends MeshUIManager<GreatQuestModelMesh
         protected void onDragClean(Node node, boolean cancel) {
             boolean removedAnimationData = false;
             if (cancel && this.createdKey && this.key != null) {
-                this.track.removeKey(this.key);
-                removedAnimationData = true;
+                removedAnimationData = this.track.removeKey(this.key);
             }
 
-            if (cancel && this.createdTrack && this.track != null) {
-                this.editor.getMesh().getActiveAnimation().removeTrack(this.track);
-                removedAnimationData = true;
+            if (cancel && this.track != null && (this.createdTrack || this.track.getKeyList().isEmpty())) {
+                removedAnimationData |= this.editor.removeTrackIfEmpty(this.track);
             }
 
             if (removedAnimationData) {
