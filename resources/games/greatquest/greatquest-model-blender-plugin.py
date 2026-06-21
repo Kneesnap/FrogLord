@@ -54,6 +54,7 @@ COLOR_ATTR_NAME = "GreatQuest Diffuse"
 UNTEXTURED_MATERIAL_NAME = "No Texture"
 BONE_GROUP_PREFIX = "GQ_Bone_"
 GREATQUEST_TICKS_PER_SECOND = 4800
+GREATQUEST_ANIMATION_FPS = 60
 
 FVF_FLAG_COMPRESSED = 0x4000
 COMPRESSED_POSITION_UNIT = 16 * 150
@@ -1296,15 +1297,17 @@ def pose_channels_to_game_vector(transform_kind, node, values, old):
 
 
 def ticks_to_frame(context, tick):
-    fps = context.scene.render.fps / context.scene.render.fps_base
-    return (float(tick) / GREATQUEST_TICKS_PER_SECOND) * fps
+    return (float(tick) / GREATQUEST_TICKS_PER_SECOND) * GREATQUEST_ANIMATION_FPS
 
 
 def frame_to_ticks(context, frame):
-    fps = context.scene.render.fps / context.scene.render.fps_base
-    if fps <= 0:
-        fps = 24.0
-    return int(round((float(frame) / fps) * GREATQUEST_TICKS_PER_SECOND))
+    return int(round((float(frame) / GREATQUEST_ANIMATION_FPS) * GREATQUEST_TICKS_PER_SECOND))
+
+
+def set_greatquest_scene_fps(context):
+    scene = context.scene
+    scene.render.fps = GREATQUEST_ANIMATION_FPS
+    scene.render.fps_base = 1.0
 
 
 def build_armature_tag_to_bone_map(armature):
@@ -1558,6 +1561,7 @@ def write_bae(animation):
 
 
 def import_bae(context, filepath, armature=None, use_context_armature=True):
+    set_greatquest_scene_fps(context)
     animation = parse_bae(read_file(filepath))
     action = bpy.data.actions.new(os.path.splitext(os.path.basename(filepath))[0])
     action.use_fake_user = True
@@ -1784,6 +1788,7 @@ def register_armature_action(armature, action):
 def set_active_greatquest_action(context, armature, action):
     if not armature or not action:
         return
+    set_greatquest_scene_fps(context)
     armature.animation_data_create()
     start, end = register_armature_action(armature, action)
     armature.animation_data.action = action
