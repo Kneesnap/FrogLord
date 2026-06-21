@@ -613,6 +613,15 @@ def get_or_load_image(image_path):
     return bpy.data.images.load(image_path, check_existing=True)
 
 
+def set_principled_input(bsdf, names, value):
+    if not bsdf:
+        return
+    for name in names:
+        if name in bsdf.inputs:
+            bsdf.inputs[name].default_value = value
+            return
+
+
 def create_material(folder, material_info, material_cache=None):
     if material_cache is not None:
         cache_key = json.dumps(material_info, sort_keys=True, separators=(",", ":"))
@@ -637,6 +646,9 @@ def create_material(folder, material_info, material_cache=None):
 
     bsdf = mat.node_tree.nodes.get("Principled BSDF") if mat.node_tree else None
     if bsdf:
+        set_principled_input(bsdf, ("Metallic",), 0.0)
+        set_principled_input(bsdf, ("Roughness",), 1.0)
+        set_principled_input(bsdf, ("Specular IOR Level", "Specular"), 0.0)
         if "Alpha" in bsdf.inputs:
             bsdf.inputs["Alpha"].default_value = 1.0
         if "Base Color" in bsdf.inputs:
@@ -652,13 +664,19 @@ def create_material(folder, material_info, material_cache=None):
             bsdf = nodes.get("Principled BSDF")
             tex = nodes.new(type="ShaderNodeTexImage")
             tex.image = get_or_load_image(image_path)
-            tex.interpolation = "Closest"
+            tex.interpolation = "Linear"
             if bsdf and "Base Color" in bsdf.inputs:
                 mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
     set_blob(mat, PROP_PREFIX + "material", material_info)
     if material_cache is not None:
         material_cache[cache_key] = mat
     return mat
+
+
+def smooth_mesh_shading(mesh):
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    mesh.update()
 
 
 def import_vtx(context, filepath):
@@ -693,6 +711,7 @@ def import_vtx(context, filepath):
     flat_vertices = []
     for prim in model["primitives"]:
         flat_vertices.extend(prim["vertices"])
+    smooth_mesh_shading(mesh)
     for poly in mesh.polygons:
         for loop_index in poly.loop_indices:
             vertex_index = mesh.loops[loop_index].vertex_index
