@@ -31,7 +31,6 @@ from bpy.app.handlers import persistent
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from mathutils import Matrix, Quaternion, Vector
 
-GAME_DISPLAY_NAME = "Frogger: The Great Quest"
 GAME_IDENTIFIER = "greatquest"
 
 MODEL_SIGNATURE = b"6YTV"
@@ -49,7 +48,6 @@ ACTION_PROP = PROP_PREFIX + "animation"
 ARMATURE_ACTIONS_PROP = PROP_PREFIX + "actions"
 LAST_ACTIVE_ACTION_PROP = PROP_PREFIX + "last_active_action"
 IMPORTING_PROP = PROP_PREFIX + "importing"
-IMAGE_CACHE = {}
 
 UV_LAYER_NAME = "GreatQuest UV0"
 COLOR_ATTR_NAME = "GreatQuest Diffuse"
@@ -219,9 +217,6 @@ class BinaryWriter:
 
     def patch_i32(self, offset, value):
         self.data[offset:offset + 4] = struct.pack("<i", int(value))
-
-    def patch_u32(self, offset, value):
-        self.data[offset:offset + 4] = struct.pack("<I", int(value) & 0xFFFFFFFF)
 
     def null_pointer(self):
         offset = self.tell()
@@ -595,23 +590,6 @@ def write_vtx(model):
     return writer.bytes()
 
 
-def is_live_datablock(datablock, collection):
-    if datablock is None:
-        return False
-    try:
-        name = datablock.name
-    except ReferenceError:
-        return False
-    except Exception:
-        return False
-    try:
-        return collection.get(name) is datablock
-    except ReferenceError:
-        return False
-    except Exception:
-        return False
-
-
 def prim_faces(primitive_type, start, count):
     kind = PRIMITIVE_TYPES[primitive_type]
     faces = []
@@ -631,20 +609,14 @@ def prim_faces(primitive_type, start, count):
 
 
 def get_or_load_image(image_path):
-    cache_key = os.path.normcase(os.path.abspath(image_path))
-    image = IMAGE_CACHE.get(cache_key)
-    if is_live_datablock(image, bpy.data.images):
-        return image
-    image = bpy.data.images.load(image_path, check_existing=True)
-    IMAGE_CACHE[cache_key] = image
-    return image
+    return bpy.data.images.load(image_path, check_existing=True)
 
 
 def create_material(folder, material_info, material_cache=None):
     if material_cache is not None:
         cache_key = json.dumps(material_info, sort_keys=True, separators=(",", ":"))
         cached_material = material_cache.get(cache_key)
-        if is_live_datablock(cached_material, bpy.data.materials):
+        if cached_material:
             return cached_material
 
     mat_name = material_info.get("material_name") or UNTEXTURED_MATERIAL_NAME
@@ -1222,6 +1194,22 @@ def safe_matrix_inverse(matrix):
         return Matrix.Identity(4)
 
 
+def matrix_has_inverse(matrix, epsilon=1.0e-8):
+    try:
+        return abs(matrix.determinant()) > epsilon
+    except Exception:
+        try:
+            matrix.inverted()
+            return True
+        except Exception:
+            return False
+
+
+def clear_action_fcurves(action):
+    for fcurve in list(action.fcurves):
+        action.fcurves.remove(fcurve)
+
+
 # Blender local X = -Great Quest Y, local Y = Great Quest X, local Z = Great Quest Z.
 # This matrix maps Blender bone-local vectors into Great Quest bone-local vectors.
 BLENDER_TO_GQ_BONE_BASIS = Matrix((
@@ -1425,6 +1413,9 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
         bone_name = tag_to_bone.get(node.get("tag"))
         pose_bone = armature.pose.bones.get(bone_name) if bone_name else None
         pose_bones_by_node.append(pose_bone)
+        if pose_bone and not matrix_has_inverse(pose_bone.bone.matrix_local):
+            clear_action_fcurves(action)
+            return 0
         rest_inverse_by_node.append(safe_matrix_inverse(pose_bone.bone.matrix_local) if pose_bone else None)
         parent_index = node.get("parent", -1)
         parent_pose_bone = pose_bones_by_node[parent_index] if parent_index >= 0 and parent_index < len(pose_bones_by_node) else None
@@ -1435,7 +1426,6 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
         for tag in [node.get("tag")]
         if tag in animated_tags and pose_bones_by_node[index]
     }
-    created_keys = 0
     for tick in ticks:
         frame = ticks_to_frame(context, tick)
         matrices = calculate_froglord_animation_matrices(skeleton, tracks_by_tag, tick)
@@ -1449,7 +1439,7 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
         pose_matrices = []
         for node_index, node in enumerate(skeleton["nodes"]):
             pose_matrices.append(gq_global_matrix_to_blender_pose_matrix(matrices[node_index]))
-        pose_inverse_matrices = [safe_matrix_inverse(matrix) for matrix in pose_matrices]
+        pose_inverse_matrices = [None] * len(pose_matrices)
 
         for node_index, node in enumerate(skeleton["nodes"]):
             pose_bone = pose_bones_by_node[node_index]
@@ -1462,6 +1452,12 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
             rest_inverse = rest_inverse_by_node[node_index]
             parent_rest = parent_rest_by_node[node_index]
             if parent_index >= 0 and parent_rest is not None:
+                if pose_inverse_matrices[parent_index] is None:
+                    parent_pose_matrix = pose_matrices[parent_index]
+                    if not matrix_has_inverse(parent_pose_matrix):
+                        clear_action_fcurves(action)
+                        return 0
+                    pose_inverse_matrices[parent_index] = safe_matrix_inverse(parent_pose_matrix)
                 pose_bone.matrix_basis = rest_inverse @ parent_rest @ pose_inverse_matrices[parent_index] @ pose_matrix
             else:
                 pose_bone.matrix_basis = rest_inverse @ pose_matrix
@@ -1476,11 +1472,15 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
             pose_bone.keyframe_insert(data_path="location", frame=frame)
             pose_bone.keyframe_insert(data_path="rotation_quaternion", frame=frame)
             pose_bone.keyframe_insert(data_path="scale", frame=frame)
-            created_keys += 10
 
     for track in animation["tracks"]:
         for key in track["keys"]:
             key["frame"] = ticks_to_frame(context, key["tick"])
+
+    created_curve_count = len(action.fcurves)
+    if created_curve_count <= 0:
+        clear_action_fcurves(action)
+        return 0
 
     for fcurve in action.fcurves:
         for point in fcurve.keyframe_points:
@@ -1489,7 +1489,7 @@ def bake_greatquest_action(context, armature, action, animation, tag_to_bone):
         fcurve.update()
 
     action[PROP_PREFIX + "matrix_bake"] = True
-    return created_keys
+    return created_curve_count
 
 
 def parse_bae(data):
@@ -1772,48 +1772,23 @@ def set_scene_playback_range(context, start, end, reset_frame=True):
         scene.frame_set(start)
 
 
-def add_action_to_nla(armature, action, muted=True):
+def register_armature_action(armature, action):
     if not armature or not action:
-        return
-    armature.animation_data_create()
+        return 0, 1
     start, end = get_action_frame_range(action)
     set_action_display_range(action, start, end)
     remember_armature_action(armature, action)
-    return
-
-
-def remove_action_nla_strips(armature, action):
-    if not armature or not action or not armature.animation_data:
-        return
-    for track in armature.animation_data.nla_tracks:
-        for strip in list(track.strips):
-            if strip.action == action:
-                track.strips.remove(strip)
+    return start, end
 
 
 def set_active_greatquest_action(context, armature, action):
     if not armature or not action:
         return
     armature.animation_data_create()
-    add_action_to_nla(armature, action)
-    remove_action_nla_strips(armature, action)
+    start, end = register_armature_action(armature, action)
     armature.animation_data.action = action
-    for track in armature.animation_data.nla_tracks:
-        track.mute = True
-        for strip in track.strips:
-            strip.mute = True
-    remember_armature_action(armature, action)
-    start, end = get_action_frame_range(action)
-    set_action_display_range(action, start, end)
     set_scene_playback_range(context, start, end)
     context.scene[LAST_ACTIVE_ACTION_PROP] = "%s|%s|%d|%d" % (armature.name, action.name, start, end)
-
-
-def get_active_greatquest_armature(context):
-    armature = get_selected_greatquest_armature(context)
-    if armature and armature.animation_data and armature.animation_data.action and ACTION_PROP in armature.animation_data.action:
-        return armature
-    return None
 
 
 @persistent
@@ -1923,7 +1898,7 @@ def import_directory(context, directory, recursive=False):
         action = import_bae(context, file_path, armature=armature, use_context_armature=False)
         actions.append(action)
         if armature:
-            add_action_to_nla(armature, action)
+            register_armature_action(armature, action)
 
     for armature in armatures_by_stem.values():
         action_names = [name for name in armature.get(ARMATURE_ACTIONS_PROP, []) if name in bpy.data.actions]
@@ -1968,7 +1943,7 @@ def import_related_files(context, filepath):
         action = import_bae(context, filepath, armature=armature, use_context_armature=True)
         imported.append(action)
         if armature:
-            add_action_to_nla(armature, action)
+            register_armature_action(armature, action)
             set_active_greatquest_action(context, armature, action)
     else:
         raise ValueError("Unsupported Great Quest model file extension: %s" % ext)
@@ -2106,8 +2081,6 @@ def export_related_files_to_directory(context, directory):
 
     mesh_obj = get_selected_greatquest_mesh(context)
     armature_obj = get_selected_greatquest_armature(context)
-    if mesh_obj and not armature_obj:
-        armature_obj = get_selected_greatquest_armature(context)
     if armature_obj and not mesh_obj:
         mesh_obj = find_mesh_for_armature(context, armature_obj)
 
@@ -2300,7 +2273,6 @@ def register():
 
 
 def unregister():
-    IMAGE_CACHE.clear()
     if greatquest_active_action_range_handler in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(greatquest_active_action_range_handler)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
