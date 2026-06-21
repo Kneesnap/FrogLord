@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.commandparser.CommandListParser;
@@ -17,7 +16,6 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Date;
@@ -77,32 +75,6 @@ public class SCMapFileSyncUtils {
             map.getLogger().info("Exported %s as %s.", map.getFileDisplayName(), outputDir.getName() + File.separator + outputFileName);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to save " + outputFileName, ex);
-        }
-    }
-
-
-    /**
-     * Writes the python blender addon file to the output directory
-     * @param instance the instance to write from
-     * @param outputDir the output directory
-     * @param blenderAddonFileName the name of the python script to write (copied from internal game resource folder)
-     */
-    public static void writeBlenderAddon(SCGameInstance instance, File outputDir, String blenderAddonFileName) {
-        if (instance == null)
-            throw new NullPointerException("instance");
-        if (outputDir == null)
-            throw new NullPointerException("outputDir");
-        if (StringUtils.isNullOrWhiteSpace(blenderAddonFileName))
-            throw new NullPointerException("blenderAddonFileName");
-
-        InputStream blenderScriptStream = instance.getGameType().getEmbeddedResourceStream(blenderAddonFileName);
-        if (blenderScriptStream == null)
-            throw new IllegalArgumentException("Unable to resolve the file '" + blenderAddonFileName + "' for extraction.");
-
-        try {
-            Files.write(new File(outputDir, blenderAddonFileName).toPath(), FileUtils.readBytesFromStream(blenderScriptStream));
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to save " + blenderAddonFileName, ex);
         }
     }
 

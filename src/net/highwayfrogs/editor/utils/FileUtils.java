@@ -24,8 +24,8 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -1123,5 +1123,30 @@ public class FileUtils {
             logger.severe("Could not open '%s' as an image file.", imageFile.getName());
 
         return image;
+    }
+
+    /**
+     * Writes the python blender addon file to the output directory
+     * @param instance the instance to write from
+     * @param outputDir the output directory
+     * @param blenderAddonFileName the name of the python script to write (copied from internal game resource folder)
+     */
+    public static void writeBlenderAddon(GameInstance instance, File outputDir, String blenderAddonFileName) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+        if (outputDir == null)
+            throw new NullPointerException("outputDir");
+        if (StringUtils.isNullOrWhiteSpace(blenderAddonFileName))
+            throw new NullPointerException("blenderAddonFileName");
+
+        InputStream blenderScriptStream = instance.getGameType().getEmbeddedResourceStream(blenderAddonFileName);
+        if (blenderScriptStream == null)
+            throw new IllegalArgumentException("Unable to resolve the file '" + blenderAddonFileName + "' for extraction.");
+
+        try {
+            Files.write(new File(outputDir, blenderAddonFileName).toPath(), FileUtils.readBytesFromStream(blenderScriptStream));
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to save " + blenderAddonFileName, ex);
+        }
     }
 }

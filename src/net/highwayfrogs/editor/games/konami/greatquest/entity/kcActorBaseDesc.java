@@ -11,10 +11,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericTypeGroup;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
@@ -27,15 +29,22 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the 'kcActorBaseDesc' struct.
@@ -55,6 +64,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
     private static final String NAME_SUFFIX = "ActorDesc";
 
     private static final int DEFAULT_ANIMATION_CHANNEL_COUNT = 2;
+    private static final SavedFilePath MODEL_EXPORT_PATH = new SavedFilePath("gqBlenderModelExportPath", "Select a folder to export the model data to.");
+    private static final String BLENDER_ADDON_FILE_NAME = "greatquest-model-blender-plugin.py";
 
     public kcActorBaseDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType descType) {
         super(resource, descType);
@@ -305,6 +316,49 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
             String configText = config.toString();
             FXUtils.setClipboardText(configText);
             FXUtils.showPopup(AlertType.INFORMATION, "Applied GQS to clipboard.", configText);
+        });
+
+        MenuItem exportModelItem = new MenuItem("Export Model (Blender)");
+        contextMenu.getItems().add(exportModelItem);
+        exportModelItem.setOnAction(event -> {
+            File exportFolder = FileUtils.askUserToSelectFolder(getGameInstance(), MODEL_EXPORT_PATH);
+            if (exportFolder == null)
+                return;
+
+            // Write .VTX file.
+            kcModelDesc modelDesc = getModelDescription();
+            kcModelWrapper model = modelDesc != null ? modelDesc.getModelWrapper() : null;
+            if (model != null) {
+                model.saveToFile(new File(exportFolder, model.getFileName()));
+
+                // Write textures.
+                Set<GreatQuestImageFile> images = new HashSet<>();
+                for (kcMaterial material : model.getModel().getMaterials()) {
+                    GreatQuestImageFile image = material.getTexture();
+                    if (image != null && images.add(image)) {
+                        try {
+                            image.exportToFolder(exportFolder);
+                        } catch (IOException ex) {
+                            Utils.handleError(getLogger(), ex, true, "Failed to save image file '%s'.", image.getExportName());
+                        }
+                    }
+                }
+            }
+
+            // Write skeleton
+            kcCResourceSkeleton skeleton = getSkeleton();
+            if (skeleton != null)
+                skeleton.writeDataToFile(getLogger(), new File(exportFolder, skeleton.getResourceName()), true);
+
+            // Write animations
+            for (kcCResourceTrack animation : GreatQuestModelMesh.getAnimations(this))
+                animation.writeDataToFile(getLogger(), new File(exportFolder, animation.getName()), true);
+
+            // Write Blender add-on
+            FileUtils.writeBlenderAddon(getGameInstance(), exportFolder, BLENDER_ADDON_FILE_NAME);
+
+            // Done.
+            FXUtils.showPopup(AlertType.INFORMATION, "Finished exporting model data.", "Use the included Blender plugin to import/export the files from Blender.");
         });
     }
 

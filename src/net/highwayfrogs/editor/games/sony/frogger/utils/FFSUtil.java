@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.filesync.LazyPostInitializa
 import net.highwayfrogs.editor.games.sony.shared.map.filesync.MapFileSyncLoadContext;
 import net.highwayfrogs.editor.games.sony.shared.map.filesync.SCMapFileSyncUtils;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.Utils;
@@ -178,7 +179,7 @@ public class FFSUtil {
 
         // Write the files.
         SCMapFileSyncUtils.writeMapFile(map, outputDir, FILE_EXTENSION, builder);
-        SCMapFileSyncUtils.writeBlenderAddon(map.getGameInstance(), outputDir, BLENDER_ADDON_FILE_NAME);
+        FileUtils.writeBlenderAddon(map.getGameInstance(), outputDir, BLENDER_ADDON_FILE_NAME);
     }
 
     /**
