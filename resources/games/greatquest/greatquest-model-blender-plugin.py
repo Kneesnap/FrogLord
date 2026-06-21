@@ -744,7 +744,6 @@ def import_vtx(context, filepath):
     meta = dict(model)
     meta["source_file"] = os.path.basename(filepath)
     meta["vertex_count"] = len(flat_vertices)
-    meta["face_indices"] = [list(face) for face in faces]
     set_blob(obj, MESH_PROP, meta)
     return obj
 
@@ -757,10 +756,6 @@ def collect_mesh_edits(obj):
     expected_count = model.get("vertex_count")
     if len(mesh.vertices) != expected_count:
         raise ValueError("Topology-changing edits are not currently exportable: vertex count changed from %d to %d." % (expected_count, len(mesh.vertices)))
-    expected_faces = model.get("face_indices", [])
-    current_faces = [[vertex for vertex in poly.vertices] for poly in mesh.polygons]
-    if current_faces != expected_faces:
-        raise ValueError("Topology-changing edits are not currently exportable: Great Quest primitive layout no longer matches the imported mesh faces.")
     flat_vertices = []
     for prim in model["primitives"]:
         flat_vertices.extend(prim["vertices"])
@@ -1086,6 +1081,22 @@ def gq_global_matrix_to_blender_pose_matrix(gq_matrix):
     ))
 
 
+def blender_pose_matrix_to_gq_global_matrix(matrix):
+    blender_x = Vector((matrix[0][0], matrix[1][0], matrix[2][0]))
+    blender_y = Vector((matrix[0][1], matrix[1][1], matrix[2][1]))
+    blender_z = Vector((matrix[0][2], matrix[1][2], matrix[2][2]))
+    origin = Vector((matrix[0][3], matrix[1][3], matrix[2][3]))
+    gq_x = blender_y
+    gq_y = -blender_x
+    gq_z = blender_z
+    return [
+        [gq_x.x, gq_x.y, gq_x.z, 0.0],
+        [gq_y.x, gq_y.y, gq_y.z, 0.0],
+        [gq_z.x, gq_z.y, gq_z.z, 0.0],
+        [origin.x, origin.y, origin.z, 1.0],
+    ]
+
+
 def import_bhe(context, filepath):
     skeleton = parse_bhe(read_file(filepath))
     arm_data = bpy.data.armatures.new(os.path.splitext(os.path.basename(filepath))[0] + "_Armature")
@@ -1202,6 +1213,10 @@ def blender_quat_to_game(quat):
     return [quat.x, quat.y, quat.z, quat.w]
 
 
+def quaternion_norm(quat):
+    return math.sqrt(quat.w * quat.w + quat.x * quat.x + quat.y * quat.y + quat.z * quat.z)
+
+
 def safe_matrix_inverse(matrix):
     if hasattr(matrix, "inverted_safe"):
         try:
@@ -1313,6 +1328,44 @@ def pose_channels_to_game_vector(transform_kind, node, values, old):
 
     pose_quat = Quaternion((values[0], values[1], values[2], values[3]))
     return blender_pose_quat_to_gq(node, pose_quat)
+
+
+def fcurve_values_at_frame(action, data_path, frame, defaults):
+    curves = {fc.array_index: fc for fc in action.fcurves if fc.data_path == data_path}
+    values = list(defaults)
+    for index, curve in curves.items():
+        if 0 <= index < len(values):
+            values[index] = curve.evaluate(frame)
+    return values
+
+
+def matrix_basis_from_action(action, bone_name, frame):
+    location = fcurve_values_at_frame(action, 'pose.bones["%s"].location' % bone_name, frame, (0.0, 0.0, 0.0))
+    rotation = fcurve_values_at_frame(action, 'pose.bones["%s"].rotation_quaternion' % bone_name, frame, (1.0, 0.0, 0.0, 0.0))
+    scale = fcurve_values_at_frame(action, 'pose.bones["%s"].scale' % bone_name, frame, (1.0, 1.0, 1.0))
+    quat = Quaternion((rotation[0], rotation[1], rotation[2], rotation[3]))
+    if quaternion_norm(quat) > 0.0:
+        quat.normalize()
+    else:
+        quat = Quaternion((1.0, 0.0, 0.0, 0.0))
+    scale_matrix = Matrix.Diagonal((scale[0], scale[1], scale[2], 1.0))
+    return Matrix.Translation(Vector(location)) @ quat.to_matrix().to_4x4() @ scale_matrix
+
+
+def matrix_to_game_rotation(matrix):
+    quat = gq_rotation_matrix_to_blender(matrix).to_quaternion()
+    if quaternion_norm(quat) > 0.0:
+        quat.normalize()
+    return blender_quat_to_game(quat)
+
+
+def matrix_to_game_scale(matrix):
+    return [
+        Vector((matrix[0][0], matrix[0][1], matrix[0][2])).length,
+        Vector((matrix[1][0], matrix[1][1], matrix[1][2])).length,
+        Vector((matrix[2][0], matrix[2][1], matrix[2][2])).length,
+        1.0,
+    ]
 
 
 def ticks_to_frame(context, tick):
@@ -1658,12 +1711,62 @@ def import_bae(context, filepath, armature=None, use_context_armature=True):
     return action
 
 
+def calculate_action_pose_matrices(action, armature, skeleton, tag_to_bone, frame):
+    pose_matrices = []
+    for node_index, node in enumerate(skeleton["nodes"]):
+        bone_name = tag_to_bone.get(node.get("tag"))
+        pose_bone = armature.pose.bones.get(bone_name) if bone_name else None
+        if not pose_bone:
+            pose_matrices.append(None)
+            continue
+
+        basis = matrix_basis_from_action(action, bone_name, frame)
+        rest = pose_bone.bone.matrix_local
+        parent_index = node.get("parent", -1)
+        if parent_index >= 0 and parent_index < len(pose_matrices) and pose_matrices[parent_index] is not None:
+            parent_pose = pose_matrices[parent_index]
+            parent_pose_bone = armature.pose.bones.get(tag_to_bone.get(skeleton["nodes"][parent_index].get("tag")))
+            parent_rest = parent_pose_bone.bone.matrix_local if parent_pose_bone else None
+            if parent_rest is not None and matrix_has_inverse(parent_rest):
+                pose_matrices.append(parent_pose @ safe_matrix_inverse(parent_rest) @ rest @ basis)
+            else:
+                pose_matrices.append(rest @ basis)
+        else:
+            pose_matrices.append(rest @ basis)
+    return pose_matrices
+
+
+def matrix_baked_track_vector(skeleton, pose_matrices, track, transform_kind, old):
+    node_index = next((i for i, node in enumerate(skeleton["nodes"]) if node.get("tag") == track["tag"]), None)
+    if node_index is None or node_index >= len(pose_matrices) or pose_matrices[node_index] is None:
+        return old
+
+    gq_global = blender_pose_matrix_to_gq_global_matrix(pose_matrices[node_index])
+    parent_index = skeleton["nodes"][node_index].get("parent", -1)
+    if parent_index >= 0 and parent_index < len(pose_matrices) and pose_matrices[parent_index] is not None:
+        parent_gq_global = blender_pose_matrix_to_gq_global_matrix(pose_matrices[parent_index])
+        if matrix_has_inverse(Matrix(parent_gq_global)):
+            local_matrix = Matrix(gq_global) @ safe_matrix_inverse(Matrix(parent_gq_global))
+        else:
+            local_matrix = Matrix(gq_global)
+    else:
+        local_matrix = Matrix(gq_global)
+
+    rows = [[local_matrix[row][col] for col in range(4)] for row in range(4)]
+    if transform_kind == "position":
+        return [rows[3][0], rows[3][1], rows[3][2], old[3] if len(old) > 3 else 1.0]
+    if transform_kind == "scale":
+        return matrix_to_game_scale(rows)
+    return matrix_to_game_rotation(rows)
+
+
 def apply_action_edits(animation, action, armature):
     if not action or not armature:
         return animation
-    if action.get(PROP_PREFIX + "matrix_bake"):
-        return animation
     tag_to_bone = build_armature_tag_to_bone_map(armature)
+    skeleton = get_blob(armature, ARMATURE_PROP)
+    matrix_bake = bool(action.get(PROP_PREFIX + "matrix_bake") and skeleton)
+    pose_matrix_cache = {}
     for track in animation["tracks"]:
         control_name = CONTROL_TYPES[track["control_type"]][0] if track["control_type"] < len(CONTROL_TYPES) else "INVALID"
         bone_name = tag_to_bone.get(track["tag"])
@@ -1671,6 +1774,17 @@ def apply_action_edits(animation, action, armature):
         transform_kind = get_transform_kind(control_name)
         if not bone_name or transform_kind is None:
             continue
+
+        if matrix_bake:
+            for key in track["keys"]:
+                frame = key.get("frame", ticks_to_frame(bpy.context, key["tick"]))
+                key["tick"] = frame_to_ticks(bpy.context, frame)
+                old = key.get("vector", [0.0, 0.0, 0.0, 1.0])
+                if frame not in pose_matrix_cache:
+                    pose_matrix_cache[frame] = calculate_action_pose_matrices(action, armature, skeleton, tag_to_bone, frame)
+                key["vector"] = matrix_baked_track_vector(skeleton, pose_matrix_cache[frame], track, transform_kind, old)
+            continue
+
         if transform_kind == "position":
             data_path = 'pose.bones["%s"].location' % bone_name
         elif transform_kind == "scale":
@@ -1680,7 +1794,6 @@ def apply_action_edits(animation, action, armature):
         curves = {fc.array_index: fc for fc in action.fcurves if fc.data_path == data_path}
         if not curves:
             continue
-        timing_curve = curves.get(0) or next(iter(curves.values()))
         for key_index, key in enumerate(track["keys"]):
             frame = key.get("frame", ticks_to_frame(bpy.context, key["tick"]))
             key["tick"] = frame_to_ticks(bpy.context, frame)
@@ -1704,7 +1817,7 @@ def apply_action_edits(animation, action, armature):
 
 def export_bae(context, filepath):
     action = None
-    armature = context.object if context.object and context.object.type == "ARMATURE" else None
+    armature = get_selected_greatquest_armature(context)
     if armature and armature.animation_data:
         action = armature.animation_data.action
     if action is None:
@@ -1719,6 +1832,7 @@ def export_bae_action(action, armature, filepath):
     if not animation:
         raise ValueError("Selected action does not contain Great Quest animation metadata.")
     animation = apply_action_edits(animation, action, armature)
+    animation["name"] = resource_name_from_text(action.name)
     write_file(filepath, write_bae(animation))
 
 
@@ -2041,6 +2155,27 @@ def enumerate_greatquest_actions_for_armature(armature):
     return names
 
 
+def action_fcurve_bone_name(fcurve):
+    prefix = 'pose.bones["'
+    if not fcurve.data_path.startswith(prefix):
+        return None
+    end = fcurve.data_path.find('"]', len(prefix))
+    if end < 0:
+        return None
+    return fcurve.data_path[len(prefix):end]
+
+
+def action_targets_armature(action, armature):
+    if not action or not armature or not get_blob(action, ACTION_PROP):
+        return False
+    bone_names = {bone.name for bone in armature.pose.bones}
+    for fcurve in action.fcurves:
+        bone_name = action_fcurve_bone_name(fcurve)
+        if bone_name in bone_names:
+            return True
+    return False
+
+
 def enumerate_export_actions_for_armature(armature):
     names = []
     if not armature:
@@ -2052,6 +2187,9 @@ def enumerate_export_actions_for_armature(armature):
     if armature.animation_data and armature.animation_data.action:
         action = armature.animation_data.action
         if get_blob(action, ACTION_PROP) and action.name not in names:
+            names.append(action.name)
+    for action in bpy.data.actions:
+        if action.name not in names and action_targets_armature(action, armature):
             names.append(action.name)
     return names
 
@@ -2084,6 +2222,15 @@ def safe_export_name(name, extension):
     if not base:
         base = "GreatQuest"
     return base + extension
+
+
+def resource_name_from_text(value):
+    name = value or "GreatQuest"
+    raw = name.encode("cp1252", errors="replace")
+    if len(raw) >= 32:
+        raw = raw[:31]
+        name = raw.decode("cp1252", errors="ignore")
+    return name
 
 
 def uniquify_export_path(path, used_paths):
