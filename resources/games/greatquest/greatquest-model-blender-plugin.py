@@ -20,6 +20,7 @@ bl_info = {
 }
 
 import base64
+import copy
 import json
 import math
 import os
@@ -717,14 +718,11 @@ def import_vtx(context, filepath):
             vertex_index = mesh.loops[loop_index].vertex_index
             uv = flat_vertices[vertex_index].get("uv0", [0.0, 0.0])
             uv_layer.data[loop_index].uv = (uv[0], uv[1])
-    try:
-        color_attr = mesh.color_attributes.new(name=COLOR_ATTR_NAME, type="BYTE_COLOR", domain="CORNER")
-        for poly in mesh.polygons:
-            for loop_index in poly.loop_indices:
-                vertex_index = mesh.loops[loop_index].vertex_index
-                color_attr.data[loop_index].color = int_to_color(flat_vertices[vertex_index].get("diffuse", 0xFFFFFFFF))
-    except Exception:
-        pass
+    color_attr = mesh.color_attributes.new(name=COLOR_ATTR_NAME, type="BYTE_COLOR", domain="CORNER")
+    for poly in mesh.polygons:
+        for loop_index in poly.loop_indices:
+            vertex_index = mesh.loops[loop_index].vertex_index
+            color_attr.data[loop_index].color = int_to_color(flat_vertices[vertex_index].get("diffuse", 0xFFFFFFFF))
     vertex_start = 0
     for prim in model["primitives"]:
         parent_node_id = prim.get("parent_node_id", 0)
@@ -1183,6 +1181,22 @@ def get_transform_kind(control_name):
     return None
 
 
+LINEAR_CONTROL_TYPE_BY_TRANSFORM_KIND = {
+    "rotation": next(i for i, (name, _size) in enumerate(CONTROL_TYPES) if name == "LINEAR_ROTATION"),
+    "position": next(i for i, (name, _size) in enumerate(CONTROL_TYPES) if name == "LINEAR_POSITION"),
+    "scale": next(i for i, (name, _size) in enumerate(CONTROL_TYPES) if name == "LINEAR_SCALE"),
+}
+
+
+def convert_track_to_linear_transform(track, transform_kind):
+    control_type = LINEAR_CONTROL_TYPE_BY_TRANSFORM_KIND.get(transform_kind)
+    if control_type is None:
+        return
+    track["control_type"] = control_type
+    flags = track.get("packed", 0) & (0x7F << 17)
+    track["packed"] = flags | (control_type << 24)
+
+
 def get_skeleton_node_by_tag(armature, tag):
     skeleton = get_blob(armature, ARMATURE_PROP) if armature else None
     if not skeleton:
@@ -1229,6 +1243,29 @@ def safe_matrix_inverse(matrix):
         return Matrix.Identity(4)
 
 
+def safe_gq_matrix_inverse(matrix):
+    try:
+        basis = Matrix((
+            (matrix[0][0], matrix[0][1], matrix[0][2]),
+            (matrix[1][0], matrix[1][1], matrix[1][2]),
+            (matrix[2][0], matrix[2][1], matrix[2][2]),
+        )).inverted()
+        tx, ty, tz = matrix[3][0], matrix[3][1], matrix[3][2]
+        return [
+            [basis[0][0], basis[0][1], basis[0][2], 0.0],
+            [basis[1][0], basis[1][1], basis[1][2], 0.0],
+            [basis[2][0], basis[2][1], basis[2][2], 0.0],
+            [
+                -((tx * basis[0][0]) + (ty * basis[1][0]) + (tz * basis[2][0])),
+                -((tx * basis[0][1]) + (ty * basis[1][1]) + (tz * basis[2][1])),
+                -((tx * basis[0][2]) + (ty * basis[1][2]) + (tz * basis[2][2])),
+                1.0,
+            ],
+        ]
+    except Exception:
+        return [[1.0 if row == col else 0.0 for col in range(4)] for row in range(4)]
+
+
 def matrix_has_inverse(matrix, epsilon=1.0e-8):
     try:
         return abs(matrix.determinant()) > epsilon
@@ -1264,6 +1301,19 @@ def gq_rotation_matrix_to_blender(matrix):
         (matrix[0][0], matrix[1][0], matrix[2][0], 0.0),
         (matrix[0][1], matrix[1][1], matrix[2][1], 0.0),
         (matrix[0][2], matrix[1][2], matrix[2][2], 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ))
+
+
+def gq_rotation_matrix_to_export_quaternion_matrix(matrix):
+    # This is intentionally not transposed. The import path above converts a
+    # Great Quest matrix into Blender's column-vector convention. During export,
+    # matrix rows already contain the Great Quest rotation basis we need to
+    # convert back to the stored game quaternion.
+    return Matrix((
+        (matrix[0][0], matrix[0][1], matrix[0][2], 0.0),
+        (matrix[1][0], matrix[1][1], matrix[1][2], 0.0),
+        (matrix[2][0], matrix[2][1], matrix[2][2], 0.0),
         (0.0, 0.0, 0.0, 1.0),
     ))
 
@@ -1352,20 +1402,93 @@ def matrix_basis_from_action(action, bone_name, frame):
     return Matrix.Translation(Vector(location)) @ quat.to_matrix().to_4x4() @ scale_matrix
 
 
+def transform_data_path(bone_name, transform_kind):
+    if transform_kind == "position":
+        return 'pose.bones["%s"].location' % bone_name
+    if transform_kind == "scale":
+        return 'pose.bones["%s"].scale' % bone_name
+    return 'pose.bones["%s"].rotation_quaternion' % bone_name
+
+
+def action_key_frames(action, bone_name, transform_kind, fallback_keys):
+    data_path = transform_data_path(bone_name, transform_kind)
+    frames = sorted({
+        point.co.x
+        for fcurve in action.fcurves
+        if fcurve.data_path == data_path
+        for point in fcurve.keyframe_points
+    })
+    if frames:
+        return frames
+    return [key.get("frame", ticks_to_frame(bpy.context, key["tick"])) for key in fallback_keys]
+
+
+def make_track_key(template, frame):
+    key = copy.deepcopy(template)
+    key["frame"] = frame
+    key["tick"] = frame_to_ticks(bpy.context, frame)
+    return key
+
+
+def make_track_keys(template, frames):
+    keys = []
+    used_ticks = set()
+    for frame in frames:
+        key = make_track_key(template, frame)
+        if key["tick"] in used_ticks:
+            continue
+        used_ticks.add(key["tick"])
+        keys.append(key)
+    return keys
+
+
+def decompose_gq_local_matrix(matrix):
+    scale = []
+    for col in range(3):
+        length = math.sqrt(matrix[0][col] * matrix[0][col] + matrix[1][col] * matrix[1][col] + matrix[2][col] * matrix[2][col])
+        if length <= 0.000001:
+            length = 1.0
+        scale.append(length)
+
+    rotation_matrix = [[matrix[row][col] for col in range(4)] for row in range(4)]
+    for row in range(3):
+        for col in range(3):
+            rotation_matrix[row][col] = matrix[row][col] / scale[col]
+    rotation_matrix[3][0] = 0.0
+    rotation_matrix[3][1] = 0.0
+    rotation_matrix[3][2] = 0.0
+    rotation_matrix[3][3] = 1.0
+
+    position = [
+        matrix[3][0] / scale[0],
+        matrix[3][1] / scale[1],
+        matrix[3][2] / scale[2],
+        1.0,
+    ]
+    scale.append(1.0)
+    return position, rotation_matrix, scale
+
+
 def matrix_to_game_rotation(matrix):
-    quat = gq_rotation_matrix_to_blender(matrix).to_quaternion()
+    _position, rotation_matrix, _scale = decompose_gq_local_matrix(matrix)
+    quat = gq_rotation_matrix_to_export_quaternion_matrix(rotation_matrix).to_quaternion()
     if quaternion_norm(quat) > 0.0:
         quat.normalize()
     return blender_quat_to_game(quat)
 
 
+def align_quaternion_sign(vector, old):
+    if len(old) < 4:
+        return vector
+    dot = vector[0] * old[0] + vector[1] * old[1] + vector[2] * old[2] + vector[3] * old[3]
+    if dot < 0.0:
+        return [-vector[0], -vector[1], -vector[2], -vector[3]]
+    return vector
+
+
 def matrix_to_game_scale(matrix):
-    return [
-        Vector((matrix[0][0], matrix[0][1], matrix[0][2])).length,
-        Vector((matrix[1][0], matrix[1][1], matrix[1][2])).length,
-        Vector((matrix[2][0], matrix[2][1], matrix[2][2])).length,
-        1.0,
-    ]
+    _position, _rotation_matrix, scale = decompose_gq_local_matrix(matrix)
+    return scale
 
 
 def ticks_to_frame(context, tick):
@@ -1374,6 +1497,11 @@ def ticks_to_frame(context, tick):
 
 def frame_to_ticks(context, frame):
     return int(round((float(frame) / GREATQUEST_ANIMATION_FPS) * GREATQUEST_TICKS_PER_SECOND))
+
+
+def set_scene_frame_float(scene, frame):
+    whole_frame = math.floor(frame)
+    scene.frame_set(whole_frame, subframe=frame - whole_frame)
 
 
 def set_greatquest_scene_fps(context):
@@ -1736,6 +1864,15 @@ def calculate_action_pose_matrices(action, armature, skeleton, tag_to_bone, fram
     return pose_matrices
 
 
+def capture_armature_pose_matrices(armature, skeleton, tag_to_bone):
+    pose_matrices = []
+    for node_index, node in enumerate(skeleton["nodes"]):
+        bone_name = tag_to_bone.get(node.get("tag"))
+        pose_bone = armature.pose.bones.get(bone_name) if bone_name else None
+        pose_matrices.append(pose_bone.matrix.copy() if pose_bone else None)
+    return pose_matrices
+
+
 def matrix_baked_track_vector(skeleton, pose_matrices, track, transform_kind, old):
     node_index = next((i for i, node in enumerate(skeleton["nodes"]) if node.get("tag") == track["tag"]), None)
     if node_index is None or node_index >= len(pose_matrices) or pose_matrices[node_index] is None:
@@ -1746,18 +1883,19 @@ def matrix_baked_track_vector(skeleton, pose_matrices, track, transform_kind, ol
     if parent_index >= 0 and parent_index < len(pose_matrices) and pose_matrices[parent_index] is not None:
         parent_gq_global = blender_pose_matrix_to_gq_global_matrix(pose_matrices[parent_index])
         if matrix_has_inverse(Matrix(parent_gq_global)):
-            local_matrix = Matrix(gq_global) @ safe_matrix_inverse(Matrix(parent_gq_global))
+            local_matrix = kc_matrix_multiply(gq_global, safe_gq_matrix_inverse(parent_gq_global))
         else:
-            local_matrix = Matrix(gq_global)
+            local_matrix = gq_global
     else:
-        local_matrix = Matrix(gq_global)
+        local_matrix = gq_global
 
     rows = [[local_matrix[row][col] for col in range(4)] for row in range(4)]
+    position, _rotation_matrix, _scale = decompose_gq_local_matrix(rows)
     if transform_kind == "position":
-        return [rows[3][0], rows[3][1], rows[3][2], old[3] if len(old) > 3 else 1.0]
+        return [position[0], position[1], position[2], old[3] if len(old) > 3 else 1.0]
     if transform_kind == "scale":
         return matrix_to_game_scale(rows)
-    return matrix_to_game_rotation(rows)
+    return align_quaternion_sign(matrix_to_game_rotation(rows), old)
 
 
 def apply_action_edits(animation, action, armature):
@@ -1767,51 +1905,68 @@ def apply_action_edits(animation, action, armature):
     skeleton = get_blob(armature, ARMATURE_PROP)
     matrix_bake = bool(action.get(PROP_PREFIX + "matrix_bake") and skeleton)
     pose_matrix_cache = {}
-    for track in animation["tracks"]:
-        control_name = CONTROL_TYPES[track["control_type"]][0] if track["control_type"] < len(CONTROL_TYPES) else "INVALID"
-        bone_name = tag_to_bone.get(track["tag"])
-        node = get_skeleton_node_by_tag(armature, track["tag"])
-        transform_kind = get_transform_kind(control_name)
-        if not bone_name or transform_kind is None:
-            continue
+    old_frame = bpy.context.scene.frame_current + getattr(bpy.context.scene, "frame_subframe", 0.0)
+    old_action = armature.animation_data.action if armature.animation_data else None
+    old_importing = bool(bpy.context.scene.get(IMPORTING_PROP))
+    if matrix_bake:
+        armature.animation_data_create()
+        armature.animation_data.action = action
+        bpy.context.scene[IMPORTING_PROP] = True
+    try:
+        for track in animation["tracks"]:
+            control_name = CONTROL_TYPES[track["control_type"]][0] if track["control_type"] < len(CONTROL_TYPES) else "INVALID"
+            bone_name = tag_to_bone.get(track["tag"])
+            node = get_skeleton_node_by_tag(armature, track["tag"])
+            transform_kind = get_transform_kind(control_name)
+            if not bone_name or transform_kind is None:
+                continue
 
-        if matrix_bake:
+            frames = action_key_frames(action, bone_name, transform_kind, track["keys"])
+            template_key = track["keys"][0] if track["keys"] else {"payload": [], "vector": [0.0, 0.0, 0.0, 1.0]}
+            track["keys"] = make_track_keys(template_key, frames)
+            convert_track_to_linear_transform(track, transform_kind)
+
+            if matrix_bake:
+                previous_vector = template_key.get("vector", [0.0, 0.0, 0.0, 1.0])
+                for key in track["keys"]:
+                    frame = key["frame"]
+                    if frame not in pose_matrix_cache:
+                        set_scene_frame_float(bpy.context.scene, frame)
+                        bpy.context.view_layer.update()
+                        evaluated_armature = armature.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                        pose_matrix_cache[frame] = capture_armature_pose_matrices(evaluated_armature, skeleton, tag_to_bone)
+                    key["vector"] = matrix_baked_track_vector(skeleton, pose_matrix_cache[frame], track, transform_kind, previous_vector)
+                    previous_vector = key["vector"]
+                continue
+
+            data_path = transform_data_path(bone_name, transform_kind)
+            curves = {fc.array_index: fc for fc in action.fcurves if fc.data_path == data_path}
+            if not curves:
+                continue
+            previous_vector = template_key.get("vector", [0.0, 0.0, 0.0, 1.0])
             for key in track["keys"]:
-                frame = key.get("frame", ticks_to_frame(bpy.context, key["tick"]))
-                key["tick"] = frame_to_ticks(bpy.context, frame)
-                old = key.get("vector", [0.0, 0.0, 0.0, 1.0])
-                if frame not in pose_matrix_cache:
-                    pose_matrix_cache[frame] = calculate_action_pose_matrices(action, armature, skeleton, tag_to_bone, frame)
-                key["vector"] = matrix_baked_track_vector(skeleton, pose_matrix_cache[frame], track, transform_kind, old)
-            continue
-
-        if transform_kind == "position":
-            data_path = 'pose.bones["%s"].location' % bone_name
-        elif transform_kind == "scale":
-            data_path = 'pose.bones["%s"].scale' % bone_name
-        else:
-            data_path = 'pose.bones["%s"].rotation_quaternion' % bone_name
-        curves = {fc.array_index: fc for fc in action.fcurves if fc.data_path == data_path}
-        if not curves:
-            continue
-        for key_index, key in enumerate(track["keys"]):
-            frame = key.get("frame", ticks_to_frame(bpy.context, key["tick"]))
-            key["tick"] = frame_to_ticks(bpy.context, frame)
-            old = key.get("vector", [0.0, 0.0, 0.0, 1.0])
-            if transform_kind == "rotation":
-                values = [
-                    curves.get(0).evaluate(frame) if 0 in curves else old[3],
-                    curves.get(1).evaluate(frame) if 1 in curves else old[0],
-                    curves.get(2).evaluate(frame) if 2 in curves else old[1],
-                    curves.get(3).evaluate(frame) if 3 in curves else old[2],
-                ]
-            else:
-                values = [
-                    curves.get(0).evaluate(frame) if 0 in curves else old[0],
-                    curves.get(1).evaluate(frame) if 1 in curves else old[1],
-                    curves.get(2).evaluate(frame) if 2 in curves else old[2],
-                ]
-            key["vector"] = pose_channels_to_game_vector(transform_kind, node, values, old)
+                frame = key["frame"]
+                if transform_kind == "rotation":
+                    values = [
+                        curves.get(0).evaluate(frame) if 0 in curves else previous_vector[3],
+                        curves.get(1).evaluate(frame) if 1 in curves else previous_vector[0],
+                        curves.get(2).evaluate(frame) if 2 in curves else previous_vector[1],
+                        curves.get(3).evaluate(frame) if 3 in curves else previous_vector[2],
+                    ]
+                    key["vector"] = align_quaternion_sign(pose_channels_to_game_vector(transform_kind, node, values, previous_vector), previous_vector)
+                else:
+                    values = [
+                        curves.get(0).evaluate(frame) if 0 in curves else previous_vector[0],
+                        curves.get(1).evaluate(frame) if 1 in curves else previous_vector[1],
+                        curves.get(2).evaluate(frame) if 2 in curves else previous_vector[2],
+                    ]
+                    key["vector"] = pose_channels_to_game_vector(transform_kind, node, values, previous_vector)
+                previous_vector = key["vector"]
+    finally:
+        if matrix_bake:
+            armature.animation_data.action = old_action
+            set_scene_frame_float(bpy.context.scene, old_frame)
+            bpy.context.scene[IMPORTING_PROP] = old_importing
     return animation
 
 
