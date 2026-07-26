@@ -242,7 +242,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IConfi
      * @param grid the grid to create the UI inside
      */
     protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
-        GreatQuestChunkedFile.writeAssetLine(grid, manager.getMap(), "Entity Description", this.descriptionRef);
+        GreatQuestChunkedFile.writeAssetLine(grid, "Entity Description", this.descriptionRef);
     }
 
     @Override

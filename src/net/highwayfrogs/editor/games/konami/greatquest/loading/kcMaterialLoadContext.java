@@ -64,7 +64,7 @@ public class kcMaterialLoadContext {
         List<GreatQuestChunkedFile> chunkedFiles = getChunkedFiles();
         for (int i = 0; i < chunkedFiles.size(); i++) {
             GreatQuestChunkedFile chunkedFile = chunkedFiles.get(i);
-            kcCResource triMesh = chunkedFile.getResourceByName(collisionFileName, kcCResourceTriMesh.class);
+            kcCResource triMesh = chunkedFile.getResourceByName(collisionFileName, kcCResourceTriMesh.class, false);
             if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
                 triMesh.getSelfHash().setOriginalString(collisionFileName);
         }

@@ -360,9 +360,21 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param <TResource> The type of resource to return.
      * @return The resource found with the hash, or null.
      */
-    @SuppressWarnings("unchecked")
     public <TResource extends kcCResource> TResource getResourceByName(String name, Class<TResource> resourceClass) {
-        int hash = NumberUtils.isPrefixedHexInteger(name) ? NumberUtils.parseIntegerAllowHex(name) : GreatQuestUtils.hash(name);
+        return getResourceByName(name, resourceClass, true);
+    }
+
+    /**
+     * Gets a resource by its name.
+     * @param name        The name of the resource to lookup.
+     * @param <TResource> The type of resource to return.
+     * @param throwErrorOnCollision when a resource is found with the same hash as the name, but not the same name, should an exception be thrown?
+     * @return The resource found with the hash, or null.
+     */
+    @SuppressWarnings("unchecked")
+    public <TResource extends kcCResource> TResource getResourceByName(String name, Class<TResource> resourceClass, boolean throwErrorOnCollision) {
+        boolean nameIsHex = NumberUtils.isPrefixedHexInteger(name);
+        int hash = nameIsHex ? NumberUtils.parseIntegerAllowHex(name) : GreatQuestUtils.hash(name);
         if (hash == 0 || hash == -1)
             return null; // TOC chunks conflict since they don't have a hash / aren't loaded.
 
@@ -376,6 +388,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 if (resourceClass != null && !resourceClass.isInstance(resource))
                     throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
 
+                // Name collision checks are skipped for action sequences since their hashes are not based on the resource name.
+
                 return (TResource) resource;
             }
         }
@@ -387,6 +401,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             if (resourceClass != null && !resourceClass.isInstance(resource))
                 throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
+
+            if (throwErrorOnCollision && !nameIsHex && !name.equalsIgnoreCase(resource.getName()) && !name.equalsIgnoreCase(resource.getSelfHash().getOriginalString())
+                    && !kcCResource.DEFAULT_RESOURCE_NAME.equals(resource.getName()) && !StringUtils.isNullOrEmpty(resource.getSelfHash().getOriginalString()))
+                throw new RuntimeException("Tried to get a resource named '" + name + "'" + (resourceClass != null ? " of type " + resourceClass.getSimpleName() : "") + ", but a different resource named '" + resource.getName() + "' was found to have the same hash! (A different name/hash must be used!)");
 
             return (TResource) resource;
         }
@@ -1050,11 +1068,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     /**
      * Write the asset name to the UI.
-     * @param file The chunked file to search for assets from.
      * @param label The label to write.
      * @param hashObj The hash to lookup.
      */
-    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<? extends kcCResource> hashObj) {
+    public static Label writeAssetLine(GUIEditorGrid grid, String label, GreatQuestHash<? extends kcCResource> hashObj) {
         String resourceName = null;
         kcCResource resource = hashObj != null ? hashObj.getResource() : null;
         int resourceHash = hashObj != null ? hashObj.getHashNumber() : 0;
