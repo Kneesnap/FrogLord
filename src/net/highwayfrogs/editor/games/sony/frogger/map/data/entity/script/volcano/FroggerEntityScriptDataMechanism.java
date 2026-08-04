@@ -45,16 +45,19 @@ public class FroggerEntityScriptDataMechanism extends FroggerEntityScriptData {
         writer.writeInt(this.destination);
         writer.writeInt(this.initialDelay);
     }
-
+//  Refer generically as platforms, since I can't distinguish form library entries right now
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addFixedInt("Return Delay (secs)", this.returnTripDelay, newReturnTripDelay -> this.returnTripDelay = newReturnTripDelay, getGameInstance().getFPS());
-        editor.addFixedInt("Delta (???)", this.delta, newDelta -> this.delta = newDelta, 2184.5);
-        editor.addFixedInt("Direction Change Delay (secs)", this.directionChangeDelay, newDirectionChangeDelay -> this.directionChangeDelay = newDirectionChangeDelay, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("Controls how long to wait when reversing direction."));
-        editor.addFixedInt("Return Target (???)", this.returnTripDestination, newReturnTripDestination -> this.returnTripDestination = newReturnTripDestination, 2184.5);
+        editor.addFixedInt("Return Delay (secs)", this.returnTripDelay, newReturnTripDelay -> this.returnTripDelay = newReturnTripDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long the platform will wait at its destination before rising back up."));
+        editor.addFixedInt("Fall Speed (grid tiles/sec)", this.delta, newDelta -> this.delta = newDelta, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast the platform will move while it descends to its destination."));
+        editor.addFixedInt("Fall Delay (secs)", this.directionChangeDelay, newDirectionChangeDelay -> this.directionChangeDelay = newDirectionChangeDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long the platform will wait at its highest point before falling again."));
+        editor.addFixedInt("Return Speed (grid tiles/sec)", this.returnTripDestination, newReturnTripDestination -> this.returnTripDestination = newReturnTripDestination, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast the platform will move while rising to its starting position."));
         editor.addFixedInt("Destination (grid)", this.destination, newDestination -> this.destination = newDestination, 256)
-                .setTooltip(FXUtils.createTooltip("Controls how far the mechanism will move down before reversing direction. Measured in grid squares."));
+                .setTooltip(FXUtils.createTooltip("How far the platform will travel below its starting position."));
         editor.addFixedInt("Initial Delay (secs)", this.initialDelay, newInitialDelay -> this.initialDelay = newInitialDelay, getGameInstance().getFPS())
                 .setTooltip(FXUtils.createTooltip("Controls how long to wait after the map loads to start moving."));
     }

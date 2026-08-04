@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -38,7 +39,7 @@ public class FroggerEntityDataRaceSnail extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Forward Distance", this.forwardDistance, newForwardDistance -> this.forwardDistance = newForwardDistance, 256);
-        editor.addUnsignedFixedShort("Backward Distance", this.backwardDistance, newBackwardDistance -> this.backwardDistance = newBackwardDistance, 256);
+        editor.addUnsignedFixedShort("Forward Distance", this.forwardDistance, newForwardDistance -> this.forwardDistance = newForwardDistance, 256).setTooltip(FXUtils.createTooltip("Controls the maximum speed of the snail. Also factors into the midpoint."));
+        editor.addUnsignedFixedShort("Backward Distance", this.backwardDistance, newBackwardDistance -> this.backwardDistance = newBackwardDistance, 256).setTooltip(FXUtils.createTooltip("Used only for adjusting the midpoint."));
     }
 }

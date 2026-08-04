@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -42,9 +43,9 @@ public class FroggerEntityDataSwayingBranch extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Sway Angle (degrees)", this.swayAngle, newSwayAngle -> this.swayAngle = newSwayAngle, 1, 0, 360);
-        editor.addUnsignedFixedShort("Sway (percent/frame)", this.swayDuration, newSwayDuration -> this.swayDuration = newSwayDuration, 1024, 0, 1024);
+        editor.addUnsignedFixedShort("Sway Angle (degrees)", this.swayAngle, newSwayAngle -> this.swayAngle = newSwayAngle, 1, 0, 360).setTooltip(FXUtils.createTooltip("Controls how far the branch will swing.\nIt will swing half of this distance in either direction from its initial position. Branches always swing clockwise first."));
+        editor.addUnsignedFixedShort("Sway Duration (secs)", this.swayDuration, newSwayDuration -> this.swayDuration = newSwayDuration, getGameInstance().getFPS()).setTooltip(FXUtils.createTooltip("Controls how long the branch will take to swing from one side to the other."));
         if (!getConfig().isAtOrBeforeBuild11() && !getConfig().isWindowsBeta())
-            editor.addUnsignedFixedShort("Once Off Delay", this.onceOffDelay, newOnceOffDelay -> this.onceOffDelay = newOnceOffDelay, 30);
+            editor.addUnsignedFixedShort("Delay (secs)", this.onceOffDelay, newOnceOffDelay -> this.onceOffDelay = newOnceOffDelay, 30).setTooltip(FXUtils.createTooltip("Controls how long to wait after the level loads to start swaying."));
     }
 }

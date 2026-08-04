@@ -45,10 +45,11 @@ public class FroggerEntityDataCrusher extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Speed (World Units/sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
-                .setTooltip(FXUtils.createTooltip("Controls how fast the crusher moves.\nMost likely these are in world units."));
+        editor.addFixedShort("Speed (grid tiles/sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast the crusher moves, both extending and retracting."));
         editor.addFixedShort("Distance (grid)", this.distance, newDistance -> this.distance = newDistance, 256)
-                .setTooltip(FXUtils.createTooltip("Controls many grid squares does the crusher has moved when it is fully extended."));
+                .setTooltip(FXUtils.createTooltip("How far the crusher will extend outwards before retracting.\n\"Controls many grid squares does the crusher has moved when it is fully extended.\" \n" +
+                        "\t\\ Kneesnap, May 6, 2025"));
         editor.addEnumSelector("Movement Direction", this.direction, FroggerEntityDataCrusherDirection.values(), false, newDirection -> this.direction = newDirection)
                 .setTooltip(FXUtils.createTooltip("Controls which direction the crusher moves, from its starting position."));
         editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, getGameInstance().getFPS())

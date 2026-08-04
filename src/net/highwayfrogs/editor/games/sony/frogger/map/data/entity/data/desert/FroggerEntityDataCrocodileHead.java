@@ -60,11 +60,11 @@ public class FroggerEntityDataCrocodileHead extends FroggerEntityDataMatrix {
         editor.addUnsignedFixedShort("Rise Speed (per frame)", this.riseSpeed, newRiseSpeed -> this.riseSpeed = newRiseSpeed, 256)
                 .setTooltip(FXUtils.createTooltip("How much distance should be risen each frame, while the crocodile head is rising."));
         editor.addUnsignedFixedShort("Snap Delay (secs)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("Controls how long (in seconds), the crocodile head will stay in the snapping phase. (Kills the player)"));
+                .setTooltip(FXUtils.createTooltip("How long the croc will idle above water before snapping.\nIf this croc cannot snap, idle time equals (Snap Delay + Pause Delay)."));
         editor.addCheckBox("Should Snap", this.shouldSnap, newSnapOrNot -> this.shouldSnap = newSnapOrNot)
                 .setTooltip(FXUtils.createTooltip("Enables occasional snapping while in the pause state."));
         editor.addUnsignedFixedShort("Pause Delay (secs)", this.pauseDelay, newPauseDelay -> this.pauseDelay = newPauseDelay, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("Controls how long the crocodile head sits above the water in a state the player can safely jump on."));
+                .setTooltip(FXUtils.createTooltip("How long the croc will idle above water after snapping, before submerging.\nIf this croc cannot snap, idle time equals (Snap Delay + Pause Delay)."));
         editor.addUnsignedFixedShort("Submerged Delay (secs)", this.submergedDelay, newSubmergedDelay -> this.submergedDelay = newSubmergedDelay, getGameInstance().getFPS())
                 .setTooltip(FXUtils.createTooltip("How the crocodile head will stay submerged before rising."));
     }

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.retro;
 
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -53,8 +54,10 @@ public class FroggerEntityDataBabyFrog extends FroggerEntityDataMatrix {
 
             return true;
         }, newLogId -> this.logId = newLogId).setTooltip(FXUtils.createTooltip("The unique ID of the entity which the baby frog should ride."));
-        editor.addSignedShortField("Points (Unused?)", this.awardedPoints, newAwardedPoints -> this.awardedPoints = newAwardedPoints)
-                .setDisable(true);
+        TextField textField = editor.addSignedShortField("Points (Unused)", this.awardedPoints, newAwardedPoints -> this.awardedPoints = newAwardedPoints);
+        textField.setTooltip(FXUtils.createTooltip("This value is never used in the code. Pink baby frogs are hardcoded to give 500 points when brought to a checkpoint.\nGold baby frogs give their usual 1000 on first contact."));
+            //textField.setTooltip(FXUtils.createTooltip("This value is never used in the code.\nThis will give 1000 points like a normal gold frog.")); Couldn't figure out how to distinguish gold and pink baby frogs here, lumping both tooltips into 1 for now
+        textField.setDisable(true);
     }
 
     private String getErrorMessageForEntityId(int logEntityId) {

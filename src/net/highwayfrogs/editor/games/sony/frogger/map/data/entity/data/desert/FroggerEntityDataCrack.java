@@ -44,7 +44,7 @@ public class FroggerEntityDataCrack extends FroggerEntityDataMatrix {
             textField.setTooltip(FXUtils.createTooltip("How long to wait before beginning to fall, in seconds."));
         } else {
             TextField textField = editor.addUnsignedFixedShort("Unused Fall Delay (secs)", this.fallDelay, newFallDelay -> this.fallDelay = newFallDelay, getGameInstance().getFPS());
-            textField.setTooltip(FXUtils.createTooltip("How long to wait before beginning to fall, in seconds.\nThis value seems to be unused."));
+            textField.setTooltip(FXUtils.createTooltip("The final game ties the fall delay to the animation, leaving this unused.\nCracks fall 20 frames (.67 seconds) after they are hit."));
             textField.setDisable(true); // Unused value.
         }
 

@@ -51,6 +51,42 @@ public class FroggerEntityDataBonusFly extends FroggerEntityDataMatrix implement
                 if (manager != null)
                     manager.updateEntityMesh(getParentEntity());
             });
+            editor.addBoldLabel("SCORE_X:");
+            editor.addNormalLabel("Adds X amount to the player's score.");
+            editor.addBoldLabel("LIGHT_BOOST:");
+            editor.addNormalLabel("Provides a small boost to the player's light.");
+            editor.addNormalLabel("Only useful in Cave levels.");
+            editor.addBoldLabel("SUPER_LIGHT:");
+            editor.addNormalLabel("Provides a huge boost to the player's light");
+            editor.addNormalLabel("Only useful in Cave levels.");
+            editor.addNormalLabel("For unique flying pattern and sound effects,");
+            editor.addNormalLabel("use CAV_FAT_FIRE_FLY instead.");
+            editor.addBoldLabel("TIME_MIN/MED/MAX:");
+            editor.addNormalLabel("Adds 2/5/10 seconds to the timer.");
+            editor.addNormalLabel("Caps at 75 seconds on PSX, and 99 on PC.");
+            editor.addNormalLabel("Hardcoded to respawn every new life.");
+            editor.addBoldLabel("REDUCE_SCORE_100:");
+            editor.addNormalLabel("Subtracts *500* points from the player's score.");
+            editor.addNormalLabel("Attempting to go below 0 will briefly glitch");
+            editor.addNormalLabel("the score, awarding the next 10,000 point 1UP.");
+            editor.addBoldLabel("FAST_TIMER_SPEED:");
+            editor.addNormalLabel("Causes the level timer to decrease much");
+            editor.addNormalLabel("faster for a short duration.");
+            editor.addNormalLabel("Loses roughly 8 seconds of time.");
+            editor.addBoldLabel("ADD_EXTRA_LIFE:");
+            editor.addNormalLabel("Adds 1 life to the player's total.");
+            editor.addNormalLabel("Cannot exceed 10 lives.");
+            editor.addBoldLabel("FROG_SUPER_TONGUE:");
+            editor.addNormalLabel("Doubles the range of the player's tongue.");
+            editor.addNormalLabel("Lasts for 15 seconds.");
+            editor.addBoldLabel("FROG_QUICK_JUMP:");
+            editor.addNormalLabel("Doubles the player's normal jump speed.");
+            editor.addNormalLabel("Lasts for 8 seconds.");
+            editor.addBoldLabel("FROG_AUTO_HOP:");
+            editor.addNormalLabel("Allows directions to be held down for");
+            editor.addNormalLabel("continuous movement. Lasts for 10 seconds.");
+            editor.addNormalLabel("Points will not be gained for normal");
+            editor.addNormalLabel("hops while active.");
         } else {
             editor.addSignedIntegerField("Fly Score Type ID", this.flyTypeId, newTypeId -> {
                 this.flyTypeId = newTypeId;
