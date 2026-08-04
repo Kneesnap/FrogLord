@@ -71,6 +71,7 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         this.pathInfo.setupEditor(manager, this, editor);
         super.setupEditor(editor, manager); // Path ID comes before the rest.
+        this.pathInfo.setupEditorTools(manager, editor); // We want this after any entity specific data fields
     }
 
     /**

@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Button;
+import javafx.scene.control.Tooltip;
 import javafx.util.converter.NumberStringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,6 +36,8 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -140,10 +144,19 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
     /**
      * Updates the distance this is along the path. Note this uses total path distance not segment distance.
-     * @param totalDistance The total path distance.
-     * @param applyPathRunnerLogic If true, repeat/reset behavior will apply .
+     * @see #setTotalPathDistance(int, boolean, boolean) for param explanations.
      */
     public void setTotalPathDistance(int totalDistance, boolean applyPathRunnerLogic) {
+        setTotalPathDistance(totalDistance, applyPathRunnerLogic, false);
+    }
+
+    /**
+     * Updates the distance this is along the path. Note this uses total path distance not segment distance.
+     * @param totalDistance The total path distance.
+     * @param applyPathRunnerLogic If true, repeat/reset behavior will apply.
+     * @param treatOneShotAsRepeat Used for Distribute Evenly button to treat the stop flag as repeat for calculations.
+     */
+    public void setTotalPathDistance(int totalDistance, boolean applyPathRunnerLogic, boolean treatOneShotAsRepeat) {
         if (totalDistance < 0 && !applyPathRunnerLogic)
             throw new IllegalArgumentException("Cannot apply totalPathDistance of " + totalDistance + " to FroggerPathInfo. (Negative values are only allowed when using pathing logic.)");
 
@@ -173,13 +186,13 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
         boolean backwards = testFlag(FroggerPathMotionType.BACKWARDS); // If this is false, we've reached the start of the path.
         int distanceAfterEnd = remainingDistance % fullPathDistance;
 
-        if (testFlag(FroggerPathMotionType.ONE_SHOT)) {
+        if (testFlag(FroggerPathMotionType.REPEAT) || (treatOneShotAsRepeat && testFlag(FroggerPathMotionType.ONE_SHOT))) {
+            // Reset to the start of the path.
+            setTotalPathDistance(backwards ? fullPathDistance + distanceAfterEnd : distanceAfterEnd, false);
+        } else if (testFlag(FroggerPathMotionType.ONE_SHOT)) {
             this.segmentId = backwards ? 0 : path.getSegments().size() - 1;
             this.segmentDistance = backwards ? 0 : path.getSegments().get(this.segmentId).getLength();
             setFlag(FroggerPathMotionType.FINISHED, true);
-        } else if (testFlag(FroggerPathMotionType.REPEAT)) {
-            // Reset to the start of the path.
-            setTotalPathDistance(backwards ? fullPathDistance + distanceAfterEnd : distanceAfterEnd, false);
         } else { // Bounce.
             setFlag(FroggerPathMotionType.BACKWARDS, !backwards);
             setTotalPathDistance(backwards ? -distanceAfterEnd : fullPathDistance - distanceAfterEnd, false);
@@ -381,6 +394,131 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
         endOfPathSelector.setConverter(new AbstractStringConverter<>(FroggerEndOfPathBehavior::getDisplayName));
         endOfPathSelector.setCellFactory(listView -> new LazyFXListCell<>(FroggerEndOfPathBehavior::getDisplayName, "Error")
                 .setWithoutIndexTooltipHandler(behavior -> behavior != null ? FXUtils.createTooltip(behavior.getTooltipText()) : null));
+    }
+
+    /**
+     * Creates the tools section of path info editor.
+     * In the future this may be moved out of this class, but right now the only tool is related to paths
+     * This is separate from setupEditor because we want this section after all entity data fields
+     * @param manager The manager managing the display of entities.
+     * @param editorGrid The editor grid to build the UI with.
+     */
+    public void setupEditorTools(FroggerUIMapEntityManager manager, GUIEditorGrid editorGrid) {
+        FroggerPath path = getPath();
+        if (path != null) {
+            // There's only one tool currently, but the button makes more sense to be in its own section
+            editorGrid.addSeparator(15);
+            editorGrid.addBoldLabel("Tools:",20);
+            String distributeText = "Distribute Evenly";
+            Button distributeButton = editorGrid.addButton(distributeText, null);
+            distributeButton.setTooltip(new Tooltip("Readjust every entity on this path to an even distribution, using this entity as the base."));
+            // Reset the confirmation if clicked elsewhere
+            distributeButton.focusedProperty().addListener((evt, oldValue, newValue) -> {
+                if (!newValue) {
+                    distributeButton.setText(distributeText);
+                    distributeButton.setStyle("");
+                }
+            });
+            // Create an even distribution of all entities on the current path
+            // This button is in the entity section because the currently selected entity will be used as the base
+            distributeButton.setOnAction(evt -> {
+                if (path.getPathEntities() == null)
+                    return;
+
+                // Ask for a double click so users don't accidentally apply this
+                if (distributeButton.getText().equals(distributeText)) {
+                    distributeButton.setText("Click to Confirm");
+                    distributeButton.setStyle("-fx-body-color: #FF7F7F; -fx-text-fill: #4C0707;");
+                    return;
+                }
+
+                boolean selectedIsBackwards = testFlag(FroggerPathMotionType.BACKWARDS);
+                int originalLength = path.calculateTotalLength();
+                int totalLength;
+                // If the entities reverse direction, that's essentially double the path length since it's out and back
+                boolean selectedIsReversed = !(testFlag(FroggerPathMotionType.REPEAT) || testFlag(FroggerPathMotionType.ONE_SHOT));
+                if (selectedIsReversed) {
+                    totalLength = originalLength * 2;
+                } else {
+                    totalLength = originalLength;
+                }
+                int entityCountOnPath = path.getPathEntities().size();
+
+                // The distance value of the currently selected entity
+                // (Start the chain where the selected entity is)
+                int selectedDistance;
+                // Treat backwards and reverse as a double length path, and backward repeat as if it is forwards
+                if (selectedIsBackwards && selectedIsReversed) {
+                    selectedDistance = (originalLength - getTotalPathDistance()) + originalLength;
+                } else {
+                    selectedDistance = getTotalPathDistance();
+                }
+
+                // Create a copy of the list so entity removal binary search works correctly
+                List<FroggerMapEntity> tempEntityList = new ArrayList<>(path.getPathEntities());
+
+                // Order the list so distribute produces a predictable result
+                tempEntityList.sort(Comparator.comparingInt(orderEntity -> {
+                    FroggerPathInfo orderPathInfo = orderEntity.getPathInfo();
+                    int distance = orderPathInfo.getTotalPathDistance();
+                    // Treat backwards and reverse as a double length path, and backward repeat as if it is forwards
+                    if (orderPathInfo.testFlag(FroggerPathMotionType.BACKWARDS) && !(orderPathInfo.testFlag(FroggerPathMotionType.REPEAT) || orderPathInfo.testFlag(FroggerPathMotionType.ONE_SHOT))) {
+                        distance = (originalLength - distance) + originalLength;
+                    }
+                    // Ensure that the selected entity is always first in the list, so it doesn't move
+                    while (distance < selectedDistance) {
+                        distance += originalLength * 2;
+                    }
+                    return distance;
+                }));
+
+                // Rearrange every entity on this path in order
+                for (int i = 0; i < entityCountOnPath; i++) {
+                    FroggerMapEntity sortEntity = tempEntityList.get(i);
+                    if (sortEntity != null) {
+                        FroggerPathInfo pathData = sortEntity.getPathInfo();
+                        // If selected is reversed, apply reverse to everything
+                        if (selectedIsReversed) {
+                            boolean isEntityBackwards = false;
+                            int newSpot = selectedDistance + ((totalLength / entityCountOnPath) * i);
+                            // Subtract the path length until the entity is within the maximum length
+                            while (newSpot > originalLength) {
+                                newSpot -= originalLength;
+                                // Keep track of whether we need to make this entity backwards
+                                isEntityBackwards = !isEntityBackwards;
+                            }
+                            // The flags must be correct before we set the distance
+                            pathData.setFlag(FroggerPathMotionType.BACKWARDS, isEntityBackwards);
+                            pathData.setFlag(FroggerPathMotionType.REPEAT, false);
+                            pathData.setFlag(FroggerPathMotionType.ONE_SHOT, false);
+                            if (isEntityBackwards) {
+                                pathData.setTotalPathDistance(-originalLength + newSpot, true);
+                            } else {
+                                pathData.setTotalPathDistance(newSpot, true);
+                            }
+                            // For whatever reason this needs to be set again
+                            pathData.setFlag(FroggerPathMotionType.BACKWARDS, isEntityBackwards);
+                        } else {
+                            // The flags must be correct before we set the distance
+                            // Set all backwards as forwards when applying, and then
+                            // set all to backwards at the end if selected is also backward
+                            pathData.setFlag(FroggerPathMotionType.BACKWARDS, false);
+                            pathData.setFlag(FroggerPathMotionType.REPEAT, FroggerEndOfPathBehavior.getBehavior(this).repeatFlagSet);
+                            pathData.setFlag(FroggerPathMotionType.ONE_SHOT, FroggerEndOfPathBehavior.getBehavior(this).oneShotFlagSet);
+                            int newSpot = selectedDistance + ((totalLength / entityCountOnPath) * i);
+                            pathData.setTotalPathDistance(newSpot, true, true);
+                            pathData.setFlag(FroggerPathMotionType.BACKWARDS, selectedIsBackwards);
+                        }
+                        manager.updateEntityPositionRotation(sortEntity);
+                    }
+                }
+                manager.updateEditor();
+            });
+            // Disable button if only one entity is on the path
+            if (path.getPathEntities() != null && path.getPathEntities().size() <= 1) {
+                distributeButton.setDisable(true);
+            }
+        }
     }
 
     @Getter
