@@ -141,7 +141,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     public String getEndOfLineComment() {
         GreatQuestChunkedFile chunkedFile = getChunkedFile();
         if (getTargetEntity(false) == null && !(chunkedFile.getResourceByHash(this.targetEntityRef.getHashNumber()) instanceof kcCResourceEntityInst))
-            return "The target entity was not found.";
+            return "The target entity does not exist.";
 
         return null;
     }
