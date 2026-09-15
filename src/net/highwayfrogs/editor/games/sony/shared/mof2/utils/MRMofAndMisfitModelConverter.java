@@ -335,9 +335,9 @@ public class MRMofAndMisfitModelConverter {
     }
 
     private static void vecToFloat(SVector vec, float[] output) {
-        output[0] = -vec.getFloatX();
-        output[1] = -vec.getFloatY();
-        output[2] = vec.getFloatZ();
+        output[0] = vec.getFloatX();
+        output[1] = vec.getFloatY();
+        output[2] = -vec.getFloatZ();
     }
 
     private static String getAnimationName(MRModel model, int animationId) {
