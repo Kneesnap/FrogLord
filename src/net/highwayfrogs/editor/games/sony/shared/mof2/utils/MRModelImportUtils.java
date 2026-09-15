@@ -222,4 +222,50 @@ public class MRModelImportUtils {
 
         return null;
     }
+
+    /**
+     * mm3d files will create NaN normal values for misconfigured vertices.
+     * Since you cannot check normals within the software, zero out any NaN so the import can still succeed
+     * @param x The X value of the new SVector
+     * @param y The Y value of the new SVector
+     * @param z The Z value of the new SVector
+     * @param errorMessage The error message if any NaN are found. Used instead of a direct logger to limit # of messages
+     * @param identifier string appended to any error message to help identify the vector
+     * @return A new SVector with no NaN
+     */
+    public static SVector newSVectorZeroOutNaN(float x, float y, float z, StringBuilder errorMessage, String identifier) {
+        float[] og = {x, y, z};
+        boolean foundNaN = false;
+        if (Float.isNaN(x)) {
+            x = 0;
+            foundNaN = true;
+        }
+        if (Float.isNaN(y)) {
+            y = 0;
+            foundNaN = true;
+        }
+        if (Float.isNaN(z)) {
+            z = 0;
+            foundNaN = true;
+        }
+
+        if (foundNaN && errorMessage != null) {
+           errorMessage.append(String.format("%s Values: (%s, %s, %s) ", identifier, og[0], og[1], og[2]));
+        }
+
+        return new SVector(x, y, z);
+    }
+
+    /**
+     * Normalizes the vector by finding the current magnitude and then multiplying to the desired magnitude
+     * Frogger uses normals of magnitude 256 for the models, but they are often not imported as such
+     * @param vector The SVector to normalize
+     * @param magnitude The desired magnitude of the vector
+     * @return normalized SVector
+     */
+    public static SVector normalizeVectorToMagnitude(SVector vector, double magnitude) {
+        double currentLength = Math.sqrt(vector.getFloatX() * vector.getFloatX() + vector.getFloatY() * vector.getFloatY() + vector.getFloatZ() * vector.getFloatZ());
+        double targetMultiplier = magnitude / currentLength;
+        return vector.multiply(targetMultiplier);
+    }
 }
