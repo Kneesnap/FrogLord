@@ -526,8 +526,11 @@ public abstract class SCGameInstance extends GameInstance {
      * @param reader The reader it was read from.
      */
     protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
-        for (int i = 0; i < remap.getTextureIds().size(); i++)
-            this.texturesFoundInRemap.setBit(remap.getRemappedTextureId(i), true);
+        for (int i = 0; i < remap.getTextureIds().size(); i++) {
+            Short remappedTextureId = remap.getRemappedTextureId(i);
+            if (remappedTextureId != null && remappedTextureId >= 0) // Modded executables may use invalid texture IDs.
+                this.texturesFoundInRemap.setBit(remappedTextureId, true);
+        }
     }
 
     /**
