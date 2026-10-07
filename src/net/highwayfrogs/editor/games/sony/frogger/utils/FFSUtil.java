@@ -16,10 +16,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketVertex;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.games.sony.shared.map.filesync.CommandFormatVersion;
-import net.highwayfrogs.editor.games.sony.shared.map.filesync.LazyPostInitializationCommand;
-import net.highwayfrogs.editor.games.sony.shared.map.filesync.MapFileSyncLoadContext;
-import net.highwayfrogs.editor.games.sony.shared.map.filesync.SCMapFileSyncUtils;
+import net.highwayfrogs.editor.games.sony.shared.map.filesync.*;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
@@ -28,7 +25,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.commandparser.CommandListException;
 import net.highwayfrogs.editor.utils.commandparser.CommandListException.CommandListSyntaxError;
-import net.highwayfrogs.editor.utils.commandparser.CommandListExecutionContext;
 import net.highwayfrogs.editor.utils.commandparser.CommandListParser;
 import net.highwayfrogs.editor.utils.commandparser.TextCommand;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -80,8 +76,7 @@ public class FFSUtil {
             registerCommand(new LazyPostInitializationCommand<>(COMMAND_POLYGON_NAME, 6, FFSUtil::commandPolygon));
 
             // Compatibility:
-            registerCommand(new LazyPostInitializationCommand<>(COMMAND_VERSION_FFS_NAME, CommandFormatVersion.INSTANCE.getMinimumArguments(),
-                    (context, args) -> ((TextCommand<CommandListExecutionContext>) CommandFormatVersion.INSTANCE).execute(context, args)));
+            registerCommand((TextCommand<FroggerMapLoadContext>) new LazyCommandWrapper<>(COMMAND_VERSION_FFS_NAME, CommandFormatVersion.INSTANCE));
         }
     };
 
