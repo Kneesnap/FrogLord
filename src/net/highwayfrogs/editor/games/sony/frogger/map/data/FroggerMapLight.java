@@ -109,7 +109,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
             getLogger().warning("Expected a priority value of %d or %d for %s, but we read a priority of %d.", expectedPriorityEnabled, expectedPriorityDisabled, this.lightType,  priority);
         }
 
-        if (this.lightType == MRLightType.POINT)
+        if (this.lightType == MRLightType.POINT && !getMapFile().isIslandOrIslandPlaceholder()) // dev island has one of these for some reason, and it is known to not work/be ignored by the game.
             getLogger().warning("Found a point light! These have not been observed to exist in Frogger!");
     }
 
