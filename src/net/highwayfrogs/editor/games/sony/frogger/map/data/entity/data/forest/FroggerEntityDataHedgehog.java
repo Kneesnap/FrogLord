@@ -49,9 +49,9 @@ public class FroggerEntityDataHedgehog extends FroggerEntityDataPathInfo {
                 .setTooltip(FXUtils.createTooltip("How long the hedgehog runs before entering into a roll.\nIMPORTANT: Hedgehogs are set to running when they restart at the beginning of a path."));
         editor.addUnsignedFixedShort("Roll Time (sec)", this.rollTime, newRollTime -> this.rollTime = newRollTime, getGameInstance().getFPS())
                 .setTooltip(FXUtils.createTooltip("How long the hedgehog rolls before it enters into a run.\nIMPORTANT: Hedgehogs are set to running when they restart at the beginning of a path."));
-        editor.addUnsignedFixedShort("Run Speed (grid sq/sec)", this.runSpeed, newRunSpeed -> this.runSpeed = newRunSpeed, 16)
+        editor.addUnsignedFixedShort("Run Speed (distance/frame)", this.runSpeed, newRunSpeed -> this.runSpeed = newRunSpeed, 16)
                 .setTooltip(FXUtils.createTooltip("This is the path speed used while the hedgehog is running."));
-        editor.addUnsignedFixedShort("Roll Speed (grid sq/sec)", this.rollSpeed, newRollSpeed -> this.rollSpeed = newRollSpeed, 16)
+        editor.addUnsignedFixedShort("Roll Speed (distance/frame)", this.rollSpeed, newRollSpeed -> this.rollSpeed = newRollSpeed, 16)
                 .setTooltip(FXUtils.createTooltip("This is the path speed used while the hedgehog is rolling."));
     }
 }

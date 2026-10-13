@@ -85,7 +85,10 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
             this.bounceCount = newBounceCount;
             manager.updateEditor();
         }).setTooltip(FXUtils.createTooltip("Controls how many bounces the boulder will make before it breaks/resets."));
-
+        //editor.addSeparator(25);
+        editor.addBoldLabel("Note:");
+        editor.addNormalLabel("Bounce targets are projected downwards");
+        editor.addNormalLabel("to the nearest solid ground in-game.");
         // Setup the editor for the enabled bounce targets.
         for (int i = 0; i < this.bounceCount; i++)
             this.targets[i].setupEditor(editor, manager.getController());
@@ -127,7 +130,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
             grid.addFloatVector("Bounce Target #" + (this.index + 1), this.target, null, controller,
                     (targetPos, bits) -> this.parentData.selectNewPosition(controller, targetPos, bits));
             grid.addUnsignedFixedShort("Time to Target (secs)", this.time, newTime -> this.time = newTime, getGameInstance().getFPS())
-                    .setTooltip(FXUtils.createTooltip("Controls how long it will take to reach the next boulder target from the moment Target #" + (this.index + 1) + " is reached."));
+                    .setTooltip(FXUtils.createTooltip("Controls how long it will take to reach the next boulder target from the moment Target #" + (this.index + 1) + " is reached.\nA bigger number will result in a higher bounce arc."));
         }
     }
 }

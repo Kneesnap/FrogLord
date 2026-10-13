@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -35,7 +36,7 @@ public class FroggerEntityScriptDataHelicopter extends FroggerEntityScriptData {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addFixedInt("Fly Height (grid)", this.destination, newDestination -> this.destination = newDestination, 256);
-        editor.addFixedInt("Delta (???)", this.delta, newDelta -> this.delta = newDelta, 2184.5);
+        editor.addFixedInt("Fly Height (grid)", this.destination, newDestination -> this.destination = newDestination, 256).setTooltip(FXUtils.createTooltip("How far the helicopter will travel downwards from its starting position."));
+        editor.addFixedInt("Delta (grid tiles/sec)", this.delta, newDelta -> this.delta = newDelta, 2184.5).setTooltip(FXUtils.createTooltip("How fast the helicopter will both rise and fall."));
     }
 }

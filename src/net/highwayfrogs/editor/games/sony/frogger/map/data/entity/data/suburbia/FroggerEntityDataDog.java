@@ -36,6 +36,6 @@ public class FroggerEntityDataDog extends FroggerEntityDataPathInfo {
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
         editor.addFixedInt("Wait Delay (sec)", this.waitDelay, newWaitDelay -> this.waitDelay = newWaitDelay, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("How long to wait in the dog kennel before running out."));
+                .setTooltip(FXUtils.createTooltip("How long to wait in the dog kennel (end of path) before running out.\nDogs only stop if \"Reverse\" path behavior is used."));
     }
 }

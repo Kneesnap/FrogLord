@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -32,6 +33,6 @@ public class FroggerEntityDataThermal extends FroggerEntityDataPathInfo {
 
     @Override
     public void setupEditor(GUIEditorGrid editor) {
-        editor.addUnsignedFixedShort("Rotation% (per frame)", 4096 - this.rotateTime, newRotateTime -> this.rotateTime = 4096 - newRotateTime, 4096, 0, 4096);
+        editor.addUnsignedFixedShort("Rotation% (per frame)", 4096 - this.rotateTime, newRotateTime -> this.rotateTime = 4096 - newRotateTime, 4096, 0, 4096).setTooltip(FXUtils.createTooltip("Controls how fast the thermal will spin while it travels."));
     }
 }

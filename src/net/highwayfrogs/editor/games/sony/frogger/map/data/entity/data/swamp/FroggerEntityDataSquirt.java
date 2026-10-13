@@ -46,12 +46,15 @@ public class FroggerEntityDataSquirt extends FroggerEntityDataMatrix {
         editor.addFixedShort("Load Delay (secs)", this.timeDelay, newTimeDelay -> this.timeDelay = newTimeDelay, getGameInstance().getFPS())
                 .setTooltip(FXUtils.createTooltip("Controls how long to wait from when the level is loaded to start falling."));
         editor.addFixedShort("Drop Time (secs)", this.dropTime, newDropTime -> this.dropTime = newDropTime, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("Controls how long the squirt falls before it resets to its initial height."));
+                .setTooltip(FXUtils.createTooltip("Controls how long the squirt will take to reach the Target position."));
     }
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         super.setupEditor(editor, manager);
+        editor.addSeparator(25);
+        editor.addNormalLabel("The position the squirt will travel to.");
+        editor.addNormalLabel("It will reset once it reaches this spot.");
         editor.addFloatVector("Target", this.target, null, manager.getController(),
                 (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
     }
