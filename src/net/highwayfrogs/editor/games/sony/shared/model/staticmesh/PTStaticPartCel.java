@@ -7,10 +7,7 @@ import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.collprim.PTCollprim;
-import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveBlock;
-import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveControl;
-import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveType;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -165,6 +162,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         }
 
         // Read vectors.
+        // TODO: The same vector list may be used in multiple partCels, which can cause this warning to fire. Perhaps this should be fixed someday.
         this.vectors.clear();
         requireReaderIndex(reader, this.vectorStartAddress, "Expected vector list");
         while (endIndex > reader.getIndex())
@@ -274,33 +272,5 @@ public class PTStaticPartCel extends SCSharedGameData {
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), PTStaticPartCel::getLoggerInfo, this);
-    }
-
-    /**
-     * Gets the vertex position for the vertex ID.
-     * @param vertexId the vertex ID to resolve.
-     * @return vertex
-     */
-    public SVector getVertex(PTModel model, int vertexId) {
-        for (int i = 0; i < this.primitiveBlocks.size(); i++) {
-            PTPrimitiveBlock primitiveBlock = this.primitiveBlocks.get(i);
-            if (primitiveBlock.getPrimitiveType() != PTPrimitiveType.CONTROL)
-                continue;
-
-            for (int j = 0; j < primitiveBlock.getPrimitives().size(); j++) {
-                PTPrimitiveControl control = (PTPrimitiveControl) primitiveBlock.getPrimitives().get(j);
-                if (!control.getControlType().isPosition())
-                    continue;
-
-                if (vertexId >= control.getTargetTransformIndex() && vertexId < control.getTargetTransformIndex() + control.getVertexCount()) {
-                    int localVertexId = vertexId - control.getTargetTransformIndex();
-                    SVector vector = control.getVector(model, this, localVertexId);
-                    if (vector != null)
-                        return vector;
-                }
-            }
-        }
-
-        return SVector.EMPTY;
     }
 }

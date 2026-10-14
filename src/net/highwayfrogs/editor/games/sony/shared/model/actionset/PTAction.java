@@ -17,9 +17,11 @@ public class PTAction extends SCSharedGameData {
     @Getter private final PTActionSet actionSet;
     @Getter private int rootTransformIndex; // Root transformation index.
     @Getter private int[] virtualFrames; // This is signed fixed point 1.19.12. A value of 1.5 means to interpolate halfway between keyframe 1 and keyframe 2.
-    @Getter private short[][] transformationIndices; // This is signed fixed point 1.3.12. A value of 1.5 means to interpolate halfway between keyframe 1 and keyframe 2.
+    @Getter private short[][] transformationIndices; // [transform][keyframe], contains indices into the quaternion pool.
     private transient int keyFrameIndexListPointer;
     private transient int transformIndexListPointer;
+
+    public static final short TRANSFORM_INDEX_MASK = 0x7FFF; // Not sure why we chop off bit 15, but the original game seems to do this.
 
     public PTAction(PTActionSet actionSet) {
         super(actionSet != null ? actionSet.getGameInstance() : null);
@@ -32,9 +34,9 @@ public class PTAction extends SCSharedGameData {
         int actionIndex = reader.readUnsignedShortAsInt();
         reader.skipBytesRequireEmpty(Constants.POINTER_SIZE); // Runtime pointer.
         this.rootTransformIndex = reader.readUnsignedShortAsInt();
-        int transformsPerKeyFrame = reader.readUnsignedShortAsInt();
+        int transformCount = reader.readUnsignedShortAsInt();
         int keyFrameCount = reader.readUnsignedShortAsInt();
-        this.transformationIndices = new short[keyFrameCount][transformsPerKeyFrame];
+        this.transformationIndices = new short[transformCount][keyFrameCount];
         this.virtualFrames = new int[reader.readUnsignedShortAsInt()];
         this.keyFrameIndexListPointer = reader.readInt();
         this.transformIndexListPointer = reader.readInt(); // List of transform indices for each keyframe of each transform.
@@ -69,11 +71,9 @@ public class PTAction extends SCSharedGameData {
             throw new RuntimeException("Cannot read transform index list, the pointer is invalid.");
 
         requireReaderIndex(reader, this.transformIndexListPointer, "Expected transform index list");
-        for (int keyFrame = 0; keyFrame < this.transformationIndices.length; keyFrame++) {
-            short[] transformIndicesInKeyFrame = this.transformationIndices[keyFrame];
-            for (int i = 0; i < transformIndicesInKeyFrame.length; i++)
-                transformIndicesInKeyFrame[i] = reader.readShort();
-        }
+        for (int transform = 0; transform < this.transformationIndices.length; transform++)
+            for (int keyFrame = 0; keyFrame < this.transformationIndices[transform].length; keyFrame++)
+                this.transformationIndices[transform][keyFrame] = reader.readShort();
 
         this.transformIndexListPointer = -1;
     }
@@ -84,8 +84,8 @@ public class PTAction extends SCSharedGameData {
         writer.writeUnsignedShort(getActionIndex());
         writer.writeNullPointer(); // Runtime pointer.
         writer.writeUnsignedShort(this.rootTransformIndex);
-        writer.writeUnsignedShort(getTransformsPerKeyFrame()); // transformsPerKeyFrame
-        writer.writeUnsignedShort(getKeyFrameCount()); // keyFrameCount
+        writer.writeUnsignedShort(getTransformCount());
+        writer.writeUnsignedShort(getKeyFrameCount());
         writer.writeUnsignedShort(this.virtualFrames != null ? this.virtualFrames.length : 0); // Virtual Frame Count.
         this.keyFrameIndexListPointer = writer.writeNullPointer();
         this.transformIndexListPointer = writer.writeNullPointer();
@@ -115,11 +115,9 @@ public class PTAction extends SCSharedGameData {
             throw new RuntimeException("Cannot write transform index list, the pointer is invalid.");
 
         writer.writeAddressTo(this.transformIndexListPointer);
-        for (int keyFrame = 0; keyFrame < this.transformationIndices.length; keyFrame++) {
-            short[] transformIndicesInKeyFrame = this.transformationIndices[keyFrame];
-            for (int i = 0; i < transformIndicesInKeyFrame.length; i++)
-                writer.writeShort(transformIndicesInKeyFrame[i]);
-        }
+        for (int transform = 0; transform < this.transformationIndices.length; transform++)
+            for (int keyFrame = 0; keyFrame < this.transformationIndices[transform].length; keyFrame++)
+                writer.writeShort(this.transformationIndices[transform][keyFrame]);
 
         this.transformIndexListPointer = -1;
     }
@@ -132,17 +130,17 @@ public class PTAction extends SCSharedGameData {
     }
 
     /**
-     * Gets the transforms per keyframe.
+     * Gets the number of transforms.
      */
-    public int getTransformsPerKeyFrame() {
-        return this.transformationIndices != null ? this.transformationIndices[0].length : 0;
+    public int getTransformCount() {
+        return this.transformationIndices != null ? this.transformationIndices.length : 0;
     }
 
     /**
-     * Gets the keyframe count.
+     * Gets the keyframe count (per-transform).
      */
     public int getKeyFrameCount() {
-        return this.transformationIndices != null ? this.transformationIndices.length : 0;
+        return this.transformationIndices != null && this.transformationIndices.length > 0 ? this.transformationIndices[0].length : 0;
     }
 
     /**

@@ -96,17 +96,15 @@ public class PTTransformInstanceData extends SCSharedGameObject {
 
         // Process skeletal animation transform.
         if ((flags & FLAG_OVERRIDE_MATRIX) == 0) {
-            // TODO: This might not be valid.
-            PSXMatrix.MRMulMatrixABC(this.localMatrix, previousTransform, this.matrix);
+            // vPTModelUpdateStatic keeps the parent's rotation in the GTE: world = parent * local.
+            PSXMatrix.MRMulMatrixABC(previousTransform, this.localMatrix, this.matrix);
         }
 
         // Update the translation.
         if ((flags & FLAG_OVERRIDE_TRANSLATION) == 0) {
-            // Copy the previous transform's position to the current one.
-            System.arraycopy(previousTransform.getTransform(), 0, this.matrix.getTransform(), 0, this.matrix.getTransform().length);
-
             SVector inputVec;
-            if ((flags & (FLAG_OVERRIDE_LOCAL_TRANSLATION | FLAG_USE_LOCAL_TRANSLATION)) == FLAG_USE_LOCAL_TRANSLATION) {
+            if ((flags & (FLAG_OVERRIDE_LOCAL_TRANSLATION | FLAG_USE_LOCAL_TRANSLATION)) != 0
+                    && (flags & FLAG_OVERRIDE_LOCAL_TRANSLATION_USE_BONE) == 0) {
                 inputVec = new SVector(this.localMatrix.getTransform()[0], this.localMatrix.getTransform()[1], this.localMatrix.getTransform()[2]);
             } else {
                 inputVec = bone.getJointOffset();
@@ -114,7 +112,7 @@ public class PTTransformInstanceData extends SCSharedGameObject {
 
             // Apply the transform.
             IVector result = new IVector();
-            PSXMatrix.MRApplyMatrix(this.matrix, inputVec, result); // TODO: Format could be wrong, not sure.
+            PSXMatrix.MRApplyMatrix(previousTransform, inputVec, result);
             this.matrix.getTransform()[0] = result.getX();
             this.matrix.getTransform()[1] = result.getY();
             this.matrix.getTransform()[2] = result.getZ();

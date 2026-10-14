@@ -167,11 +167,12 @@ public class PTStaticFile extends SCSharedGameFile {
 
     @Override
     public void performDefaultUIAction() {
+        // TODO: We should first try to get the linked .SKEL/.ANIM files via ENT_DEF lookup.
         PTSkeletonFile skeletonFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".SKEL");
         PTActionSetFile animationFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".ANIM");
         PTModel model = new PTModel(this, skeletonFile, animationFile);
-        model.updateStaticModel();
         model.updateAnimation();
+        model.updateStaticModel(); // The static model relies on the animation data having been applied first.
         model.updateMimeAndSkin();
         MeshViewController.setupMeshViewer(getGameInstance(), new PTModelMeshController(getGameInstance()), new PTModelMesh(model));
     }
