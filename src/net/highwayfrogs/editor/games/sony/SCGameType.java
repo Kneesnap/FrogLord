@@ -259,24 +259,34 @@ public enum SCGameType implements IGameType {
             this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE, this::validateSelectedMwdFile);
         }
 
-        private boolean shouldEnableMwdFileBrowser() {
-            // When the game config is null, we choose to disable the MWD file path, because it can't always identify which version of the game to load.
+        private boolean shouldEnableMwdFileBrowserForGameType() {
+            // When the game config is null, or doesn't have an MWD, we choose to disable the MWD file path, because it can't always identify which version of the game to load.
             // So, by requiring the user to start with the exe, we'll ensure it will choose a version for them.
             SCGameConfig gameConfig = getActiveGameConfig();
             return gameConfig != null && !gameConfig.isMwdLooseFiles();
         }
 
+        private boolean shouldEnableMwdFileBrowser() {
+            if (!shouldEnableMwdFileBrowserForGameType())
+                return false;
+
+            // Otherwise, we test if the executable has been specified and is present.
+            // Users often don't understand that if they choose the MWD first, it can't identify that they've chosen the right version of the game.
+            // So to prevent user confusion, we require them to choose the executable file first.
+            return !StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
+        }
+
         @Override
         public boolean isLoadButtonDisabled() {
-            return (shouldEnableMwdFileBrowser() && StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()))
+            return (shouldEnableMwdFileBrowserForGameType() && StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()))
                     || StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
         }
 
         @Override
         protected void onChangeGameConfig(SCGameConfig oldGameConfig, Config oldEditorConfig, SCGameConfig newGameConfig, Config newEditorConfig) {
-            this.mwdFileBrowseComponent.setDisable(!shouldEnableMwdFileBrowser());
             this.mwdFileBrowseComponent.resetFilePath();
             this.exeFileBrowseComponent.resetFilePath();
+            this.mwdFileBrowseComponent.setDisable(!shouldEnableMwdFileBrowser());
         }
 
         @Override
@@ -289,6 +299,8 @@ public enum SCGameType implements IGameType {
         @SneakyThrows
         @SuppressWarnings("IfStatementMissingBreakInLoop")
         private boolean validateSelectedExecutable(String newFilePath, File newFile) {
+            this.mwdFileBrowseComponent.setDisable(true); // Disable it by default, re-enable if we see a valid version get selected.
+
             SCGameType gameType = getGameType() instanceof SCGameType ? (SCGameType) getGameType() : null;
             if (gameType != null) {
                 long exeChecksum = DataUtils.getCRC32(newFile);
@@ -313,7 +325,7 @@ public enum SCGameType implements IGameType {
                 } else if (!foundChecksum) {
                     SCGameConfig gameConfig = gameType.getConfigByExecutableChecksum(exeChecksum);
                     if (gameConfig != null) { // Found it.
-                        getParentController().selectVersion(gameConfig);
+                        selectVersion(gameConfig);
                     } else {
                         // Try to find the hash in other games.
                         SCGameConfig otherGameTypeConfig = null;
@@ -398,10 +410,15 @@ public enum SCGameType implements IGameType {
                 }
 
                 // Automatically become the correct version.
-                getParentController().selectVersion(foundConfig);
+                selectVersion(foundConfig);
             }
 
             return true;
+        }
+
+        private void selectVersion(GameConfig versionCfg) {
+            getParentController().selectVersion(versionCfg);
+            this.mwdFileBrowseComponent.setDisable(false);
         }
     }
 }
