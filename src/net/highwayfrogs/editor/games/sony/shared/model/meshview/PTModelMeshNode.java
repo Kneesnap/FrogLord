@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.model.meshview;
 
-import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.IPTPrimitive;
@@ -121,7 +119,7 @@ public class PTModelMeshNode extends DynamicMeshAdapterNode<PTStaticPartCel> {
     private Vector2f getTextureCoordinate(PTPolygon polygon, ITextureSource textureSource, Texture texture, int index, Vector2f fallback) {
         Vector2f localUv;
         if (polygon.getPolygonType().isTextured()) {
-            localUv = polygon.getTextureUvs()[index].toVector(this.tempVector);
+            localUv = polygon.getTextureCoordinate(index, this.tempVector);
         } else {
             localUv = this.tempVector.setXY(fallback);
         }
@@ -138,24 +136,39 @@ public class PTModelMeshNode extends DynamicMeshAdapterNode<PTStaticPartCel> {
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        /*PTStaticPartCel partCel = entry.getDataSource();
+        PTStaticPartCel partCel = entry.getDataSource();
         PTPolygon polygon = null;
+        int polygonVertexIndex = localTexCoordIndex;
 
         for (int i = 0; i < partCel.getPrimitiveBlocks().size(); i++) {
             PTPrimitiveBlock primitiveBlock = partCel.getPrimitiveBlocks().get(i);
 
-            for (int j = 0; j < )
+            for (int j = 0; j < primitiveBlock.getPrimitives().size(); j++) {
+                IPTPrimitive primitive = primitiveBlock.getPrimitives().get(j);
+                if (!(primitive instanceof PTPolygon))
+                    continue;
 
+                PTPolygon testPolygon = (PTPolygon) primitive;
+                if (polygonVertexIndex < testPolygon.getVertexCount()) {
+                    polygon = testPolygon;
+                    break;
+                }
+
+                polygonVertexIndex -= testPolygon.getVertexCount();
+            }
+
+            if (polygon != null)
+                break;
         }
 
         if (polygon == null)
-            return;
+            throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
 
         ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
         Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         Vector2f uv;
-        switch (localTexCoordIndex) {
+        switch (polygonVertexIndex) {
             case 0:
                 uv = getTextureCoordinate(polygon, textureSource, texture, 0, Vector2f.ZERO); // uvTopLeft, 0F, 0F
                 break;
@@ -172,7 +185,7 @@ public class PTModelMeshNode extends DynamicMeshAdapterNode<PTStaticPartCel> {
                 throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
         }
 
-        entry.writeTexCoordValue(localTexCoordIndex, uv);*/
+        entry.writeTexCoordValue(localTexCoordIndex, uv);
     }
 
     /**

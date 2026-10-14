@@ -44,6 +44,15 @@ public class PTModelMesh extends PSXShadedDynamicMesh<PTPolygon, PTModelShadedTe
     }
 
     @Override
+    public void updateShading() {
+        super.updateShading();
+
+        // Entries are keyed by part cel, so the generic shading manager cannot update them by polygon.
+        // Refresh even when changing shade definitions does not move any atlas rectangles.
+        this.mainNode.updateTexCoords();
+    }
+
+    @Override
     public Collection<PTPolygon> getAllShadedPolygons() {
         List<PTPolygon> polygons = new ArrayList<>();
         for (PTStaticPart part : this.model.getStaticMeshFile().getParts())

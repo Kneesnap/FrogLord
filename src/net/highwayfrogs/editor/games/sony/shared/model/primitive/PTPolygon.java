@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -250,6 +251,20 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
     }
 
     /**
+     * Converts new texture-local pixel coordinates to normalized uvs.
+     * Unlike older MOF files, they are not fractions of 255, but instead pixel offsets to the texture VRAM origin.
+     */
+    public Vector2f getTextureCoordinate(int index, Vector2f result) {
+        VloImage image = getTexture();
+        SCByteTextureUV uv = this.textureUvs[index];
+        if (image == null)
+            return uv.toVector(result);
+
+        return result.setXY((uv.getU() & 0xFF) / (float) Math.max(1, image.getUnpaddedWidth()),
+                (uv.getV() & 0xFF) / (float) Math.max(1, image.getUnpaddedHeight()));
+    }
+
+    /**
      * Creates a texture shade definition for this polygon.
      */
     public PSXShadeTextureDefinition createPolygonShadeDefinition(PTModelMesh modelMesh, boolean enableGouraudShading) {
@@ -259,8 +274,11 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
         SCByteTextureUV[] uvs = null;
         if (polygonType.isTextured()) {
             uvs = new SCByteTextureUV[getVertexCount()];
-            for (int i = 0; i < uvs.length; i++)
-                uvs[i] = this.textureUvs[i].clone();
+            Vector2f tempUv = new Vector2f();
+            for (int i = 0; i < uvs.length; i++) {
+                getTextureCoordinate(i, tempUv);
+                uvs[i] = new SCByteTextureUV(tempUv.getX(), tempUv.getY());
+            }
         }
 
         CVector[] colors = new CVector[polygonType.getColorCount()];
@@ -287,10 +305,17 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
 
         // Apply texture UVs.
         if (newPolygonType.isTextured() && shadeTexture.getTextureUVs() != null) {
+            ITextureSource image = shadeTexture.getTextureSource();
             for (int i = 0; i < newPolygonType.getVertexCount(); i++) {
                 SCByteTextureUV modifiedUv = shadeTexture.getTextureUVs()[i];
-                if (modifiedUv != null)
-                    this.textureUvs[i].copyFrom(modifiedUv);
+                if (modifiedUv != null) {
+                    if (image != null) {
+                        this.textureUvs[i].setU((byte) Math.round(modifiedUv.getFloatU() * Math.max(1, image.getUnpaddedWidth())));
+                        this.textureUvs[i].setV((byte) Math.round(modifiedUv.getFloatV() * Math.max(1, image.getUnpaddedHeight())));
+                    } else {
+                        this.textureUvs[i].copyFrom(modifiedUv);
+                    }
+                }
             }
         }
 
