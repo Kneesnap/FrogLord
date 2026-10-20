@@ -7,7 +7,9 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.generic.IGameType;
+import net.highwayfrogs.editor.games.psx.psyq.PsyQSymbolMap;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsConfig;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
@@ -32,6 +34,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.utils.data.reader.RandomAccessFileSource;
 
 import java.io.File;
@@ -69,10 +72,12 @@ public enum SCGameType implements IGameType {
 
     public static final String CONFIG_MWD_PATH = "mwdFilePath";
     public static final String CONFIG_EXE_PATH = "executableFilePath";
+    public static final String CONFIG_MAP_PATH = "debugSymbolMapFilePath";
 
     public static final BrowserFileType MWD_FILE_TYPE = new BrowserFileType("Millennium WAD", "MWD");
     public static final BrowserFileType EXECUTABLE_FILE_TYPE = new BrowserFileType("Game Executable",
             "EXE", "SLUS_*.*", "SLES_*.*", "SLPS_*.*", "SLPM_*.*", "SLED_*.*", "SCES_*.*", "SCUS_*.*", "dat");
+    public static final BrowserFileType MAP_FILE_TYPE = new BrowserFileType("Psy-Q Debug Symbol Map", "MAP");
 
     SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker, boolean showSaveWarning) {
         this.displayName = displayName;
@@ -149,21 +154,21 @@ public enum SCGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, GameConfig versionConfig, Config userConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof SCGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", which was not " + SCGameInstance.class.getSimpleName() + ".");
 
-        String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getAsString();
+        String exeFilePath = userConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getAsString();
         if (StringUtils.isNullOrWhiteSpace(exeFilePath))
             throw new RuntimeException("Invalid exeFilePath.");
 
-        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getAsString() : null;
+        String mwdFilePath = userConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? userConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getAsString() : null;
         File mwdFile = mwdFilePath != null && mwdFilePath.length() > 0 ? new File(mwdFilePath) : null;
         if (mwdFile != null && (!mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("Invalid mwdFilePath.");
 
         File exeFile = new File(exeFilePath);
-        ((SCGameInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
+        ((SCGameInstance) instance).loadGame(versionConfig, userConfig, mwdFile, exeFile, progressBar);
     }
 
     @Override
@@ -252,11 +257,13 @@ public enum SCGameType implements IGameType {
     public static class SCGameConfigUI extends GameConfigUIController<SCGameConfig> {
         private final GameConfigFileOpenBrowseComponent mwdFileBrowseComponent;
         private final GameConfigFileOpenBrowseComponent exeFileBrowseComponent;
+        private final GameConfigFileOpenBrowseComponent mapFileBrowseComponent;
 
         public SCGameConfigUI(GameConfigController controller) {
             super(controller, SCGameConfig.class);
             this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", EXECUTABLE_FILE_TYPE, this::validateSelectedExecutable);
             this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE, this::validateSelectedMwdFile);
+            this.mapFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MAP_PATH, "PsyQ Debug Symbol Map (.MAP)", "Please select a Psy-Q Debug Symbol Map", MAP_FILE_TYPE, this::validateSelectedMapFile);
         }
 
         private boolean shouldEnableMwdFileBrowserForGameType() {
@@ -279,14 +286,37 @@ public enum SCGameType implements IGameType {
         @Override
         public boolean isLoadButtonDisabled() {
             return (shouldEnableMwdFileBrowserForGameType() && StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()))
-                    || StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
+                    || StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath())
+                    || (isDebugSymbolMapFileBrowserEnabled(getActiveGameConfig()) && StringUtils.isNullOrWhiteSpace(this.mapFileBrowseComponent.getCurrentFilePath()));
         }
 
         @Override
         protected void onChangeGameConfig(SCGameConfig oldGameConfig, Config oldEditorConfig, SCGameConfig newGameConfig, Config newEditorConfig) {
             this.mwdFileBrowseComponent.resetFilePath();
             this.exeFileBrowseComponent.resetFilePath();
+            this.mapFileBrowseComponent.resetFilePath();
             this.mwdFileBrowseComponent.setDisable(!shouldEnableMwdFileBrowser());
+
+            // Manage the map display.
+            boolean oldDebugMapDisplay = isDebugSymbolMapFileBrowserEnabled(oldGameConfig);
+            boolean newDebugMapDisplay = isDebugSymbolMapFileBrowserEnabled(newGameConfig);
+            if (oldDebugMapDisplay != newDebugMapDisplay) {
+                if (oldDebugMapDisplay) {
+                    getParentController().getGuideLink().setVisible(true);
+                    removeController(this.mapFileBrowseComponent);
+                }
+                if (newDebugMapDisplay) {
+                    getParentController().getGuideLink().setVisible(false);
+                    addController(this.mapFileBrowseComponent);
+                    loadExistingSymbolMapIfPresent();
+                }
+            }
+        }
+
+        private static boolean isDebugSymbolMapFileBrowserEnabled(SCGameConfig gameConfig) {
+            return gameConfig instanceof ISCGameConfigPsyQMap
+                    && gameConfig.getPlatform() == GamePlatform.PLAYSTATION
+                    && CUSTOM_COMPILED_BUILD_INTERNAL_NAME.equals(gameConfig.getInternalName());
         }
 
         @Override
@@ -299,51 +329,75 @@ public enum SCGameType implements IGameType {
         @SneakyThrows
         @SuppressWarnings("IfStatementMissingBreakInLoop")
         private boolean validateSelectedExecutable(String newFilePath, File newFile) {
-            this.mwdFileBrowseComponent.setDisable(true); // Disable it by default, re-enable if we see a valid version get selected.
+            this.mwdFileBrowseComponent.setDisable(true); // Disable it by default, re-enable if we see a valid version get selected. TODO: I broke the thing which disables this.
 
             SCGameType gameType = getGameType() instanceof SCGameType ? (SCGameType) getGameType() : null;
-            if (gameType != null) {
-                long exeChecksum = DataUtils.getCRC32(newFile);
-
-                boolean foundChecksum = false;
-                if (getActiveGameConfig() != null) {
-                    long[] checksumsAvailable = getActiveGameConfig().getExecutableChecksums();
-                    for (int j = 0; !foundChecksum && j < checksumsAvailable.length; j++)
-                        if (checksumsAvailable[j] == exeChecksum)
-                            foundChecksum = true;
-                }
-
-                // Try to read any configuration stored in the executable.
-                Config executableConfig;
-                try (RandomAccessFileSource fileSource = new RandomAccessFileSource(newFile)) {
-                    DataReader reader = new DataReader(fileSource);
-                    executableConfig = FileUtils.loadConfigDataFromExecutable(reader, newFile.getName());
-                }
-
-                if (executableConfig != null) {
-                    applyBuildInfo(executableConfig);
-                } else if (!foundChecksum) {
-                    SCGameConfig gameConfig = gameType.getConfigByExecutableChecksum(exeChecksum);
-                    if (gameConfig != null) { // Found it.
-                        selectVersion(gameConfig);
-                    } else {
-                        // Try to find the hash in other games.
-                        SCGameConfig otherGameTypeConfig = null;
-                        for (SCGameType otherGameType : SCGameType.values())
-                            if ((otherGameTypeConfig = otherGameType.getConfigByExecutableChecksum(exeChecksum)) != null)
-                                break;
-
-                        if (otherGameTypeConfig != null) {
-                            // Don't select the version, since it overwrite the path on the previous game, instead of the correct place.
-                            FXUtils.showPopup(AlertType.ERROR, "Wrong game selected.", "That file is for " + otherGameTypeConfig.getGameType().getDisplayName() + ", not " + getGameType().getDisplayName() + ".");
-                            return false;
-                        } else {
-                            Utils.getInstanceLogger().warning("The provided executable was not registered, and it had a checksum of: %d.", exeChecksum);
-                        }
-                    }
-                }
+            if (gameType == null) {
+                this.mwdFileBrowseComponent.setDisable(false);
+                return true; // I didn't document why this returned true when I reorganized this function. This may have been a mistake.
             }
 
+            long exeChecksum = DataUtils.getCRC32(newFile);
+            boolean foundChecksum = false;
+            if (getActiveGameConfig() != null) {
+                long[] checksumsAvailable = getActiveGameConfig().getExecutableChecksums();
+                for (int j = 0; !foundChecksum && j < checksumsAvailable.length; j++)
+                    if (checksumsAvailable[j] == exeChecksum)
+                        foundChecksum = true;
+            }
+
+            // Try to read any configuration stored in the executable.
+            Config executableConfig;
+            boolean isPsxExecutable;
+            try (RandomAccessFileSource fileSource = new RandomAccessFileSource(newFile)) {
+                DataReader reader = new DataReader(fileSource);
+                isPsxExecutable = DataUtils.testSignature(reader.readBytes(FileUtils.PSX_EXECUTABLE_SIGNATURE.length()), FileUtils.PSX_EXECUTABLE_SIGNATURE);
+                executableConfig = FileUtils.loadConfigDataFromExecutable(reader, newFile.getName());
+            }
+
+            if (executableConfig != null) {
+                this.mwdFileBrowseComponent.setDisable(false);
+                applyBuildInfo(executableConfig);
+                return true;
+            }
+
+            // If the executable checksum was found with the current version, we're done.
+            if (foundChecksum) {
+                this.mwdFileBrowseComponent.setDisable(false);
+                return true;
+            }
+
+            SCGameConfig gameConfig = gameType.getConfigByExecutableChecksum(exeChecksum);
+            if (gameConfig != null) { // Found the exe checksum, same game.
+                selectVersion(gameConfig);
+                return true;
+            }
+
+            // Try to find the hash in other games.
+            SCGameConfig otherGameTypeConfig = null;
+            for (SCGameType otherGameType : SCGameType.values())
+                if ((otherGameTypeConfig = otherGameType.getConfigByExecutableChecksum(exeChecksum)) != null)
+                    break;
+
+            if (otherGameTypeConfig != null) {
+                // Don't select the version, since it overwrite the path on the previous game, instead of the correct place.
+                FXUtils.showPopup(AlertType.ERROR, "Wrong game selected.", "That file is for " + otherGameTypeConfig.getGameType().getDisplayName() + ", not " + getGameType().getDisplayName() + ".");
+                return false;
+            }
+
+            // This executable is truly unknown.
+            Utils.getInstanceLogger().warning("The provided executable was not registered, and it had a checksum of: %d.", exeChecksum);
+
+            // We can try to generate a custom config for games which support it.
+            if (getActiveGameConfig() instanceof ISCGameConfigPsyQMap && isPsxExecutable) {
+                SCGameConfig newCustomConfig = (SCGameConfig) gameType.createCustomConfig(GamePlatform.PLAYSTATION, null);
+                selectVersion(newCustomConfig);
+                return true;
+            }
+
+            // As a last resort, allow the user to continue, but warn them that something seems a little bit off.
+            this.mwdFileBrowseComponent.setDisable(false);
+            FXUtils.showPopup(AlertType.WARNING, "Unrecognized File", "This file is not recognized by FrogLord.\nIt probably means you've selected the wrong file.");
             return true;
         }
 
@@ -376,6 +430,42 @@ public enum SCGameType implements IGameType {
             }
 
             return true;
+        }
+
+        @SneakyThrows
+        private boolean validateSelectedMapFile(String newFilePath, File newFile) {
+            if (newFile == null || !newFile.exists() || !newFile.isFile())
+                return false;
+
+            PsyQSymbolMap symbolMap;
+
+            try {
+                symbolMap = PsyQSymbolMap.readSymbolMap(newFile);
+            } catch (Throwable th) {
+                Utils.handleError(getLogger(), th, true, "Could not interpret '%s' as a PsyQ debug symbol map file.", newFile.getName());
+                return false;
+            }
+
+            String exeFilePath = this.exeFileBrowseComponent.getCurrentFilePath();
+            if (StringUtils.isNullOrWhiteSpace(exeFilePath))
+                return true; // Accept the symbol map, but there's nothing to do since the exe file isn't loaded.
+
+            // Apply the symbol mapping.
+            File exeFile = new File(exeFilePath);
+            DataReader exeReader = new DataReader(new FileSource(exeFile));
+            ((ISCGameConfigPsyQMap) getActiveGameConfig()).generateConfigData(exeReader, symbolMap);
+            return true;
+        }
+
+        private void loadExistingSymbolMapIfPresent() {
+            if (!isDebugSymbolMapFileBrowserEnabled(getActiveGameConfig()))
+                return; // Nothing to do if it's not enabled.
+
+            String debugSymbolFilePath = this.mapFileBrowseComponent.getCurrentFilePath();
+            if (StringUtils.isNullOrWhiteSpace(debugSymbolFilePath))
+                return; // The file path isn't valid.
+
+            validateSelectedMapFile(debugSymbolFilePath, new File(debugSymbolFilePath));
         }
 
         private boolean parseBuildInfo(byte[] configBytes) {
@@ -419,6 +509,7 @@ public enum SCGameType implements IGameType {
         private void selectVersion(GameConfig versionCfg) {
             getParentController().selectVersion(versionCfg);
             this.mwdFileBrowseComponent.setDisable(false);
+            loadExistingSymbolMapIfPresent();
         }
     }
 }

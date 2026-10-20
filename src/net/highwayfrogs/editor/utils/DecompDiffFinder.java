@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.utils;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.psx.psyq.PsyQSymbolMap;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.io.File;
@@ -25,7 +23,7 @@ public class DecompDiffFinder {
     private static final int CONSECUTIVE_BYTE_MATCH_TO_RESET = 2048;
 
     public static void main(String[] args) {
-        List<PsyqMapSymbol> orderedSymbols = getOrderedSymbols();
+        PsyQSymbolMap symbolMap = PsyQSymbolMap.readSymbolMap(SYMBOL_MAP_FILE);
 
         byte[] originalFileBytes = FileUtils.readBytesFromFile(ORIGINAL_EXECUTABLE);
         if (originalFileBytes == null || originalFileBytes.length == 0) {
@@ -64,7 +62,7 @@ public class DecompDiffFinder {
                     int mismatchAddress = currentIndex - consecutiveBytesMismatched + 1;
                     int mismatchRamAddress = mismatchAddress + FILE_TO_ADDRESS_OFFSET;
                     System.out.println("Mismatch Address: " + NumberUtils.toHexString(mismatchAddress) + "/" + NumberUtils.to0PrefixedHexString(mismatchRamAddress)
-                            + ", Symbol: " + getSymbolContaining(orderedSymbols, mismatchRamAddress));
+                            + ", Symbol: " + symbolMap.getSymbolContaining(mismatchRamAddress));
                     // TODO: Print mismatch and info about the start position.
                 }
             } else {
@@ -93,57 +91,12 @@ public class DecompDiffFinder {
                 continue;
             }
 
-            PsyqMapSymbol symbol = getSymbolContaining(orderedSymbols, address);
+            PsyQSymbolMap.PsyQMapSymbol symbol = symbolMap.getSymbolContaining(address);
             if (symbol == null)
-                symbol = getSymbolContaining(orderedSymbols, address + FILE_TO_ADDRESS_OFFSET);
+                symbol = symbolMap.getSymbolContaining(address + FILE_TO_ADDRESS_OFFSET);
 
             System.out.println("Symbol: " + symbol);
             System.out.println();
-        }
-    }
-
-    private static List<PsyqMapSymbol> getOrderedSymbols() {
-        Map<Integer, String> symbolMap = SCUtils.readSymbolMap(SYMBOL_MAP_FILE);
-
-        // Get ordered list of symbols.
-        List<PsyqMapSymbol> mapSymbols = new ArrayList<>();
-        for (Map.Entry<Integer, String> symbolEntry : symbolMap.entrySet())
-            mapSymbols.add(new PsyqMapSymbol(symbolEntry.getValue(), symbolEntry.getKey()));
-
-        mapSymbols.sort(Comparator.comparingInt(PsyqMapSymbol::getAddress));
-        return mapSymbols;
-    }
-
-    private static PsyqMapSymbol getSymbolContaining(List<PsyqMapSymbol> symbols, int address) {
-        int left = 0, right = symbols.size() - 1;
-
-        long tempAddress = address & 0xFFFFFFFFL;
-        while (left <= right) {
-            int middle = (left + right) >> 1;
-            PsyqMapSymbol symbol = symbols.get(middle);
-            int nextSymbolAddress = middle + 1 >= symbols.size() ? 0xFFFFFFFF : symbols.get(middle + 1).getAddress();
-
-            if (tempAddress >= (nextSymbolAddress & 0xFFFFFFFFL)) {
-                left = middle + 1;
-            } else if (tempAddress < (symbol.getAddress() & 0xFFFFFFFFL)) {
-                right = middle - 1;
-            } else { // Found the symbol.
-                return symbol;
-            }
-        }
-
-        return null;
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    private static class PsyqMapSymbol {
-        private final String name;
-        private final int address;
-
-        @Override
-        public String toString() {
-            return this.name + "[" + NumberUtils.to0PrefixedHexString(this.address) + "]";
         }
     }
 }

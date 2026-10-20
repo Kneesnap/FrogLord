@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.shared.basic;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
@@ -36,11 +37,11 @@ public abstract class BasicGameInstance extends GameInstance {
 
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
-     * @param gameVersionConfigName The name of the version configuration file to load.
+     * @param versionConfig The version configuration for this game.
      * @param mainFolder the main folder file to read game files from
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, Config userConfig, File mainFolder, ProgressBarComponent progressBar) {
+    public void loadGame(GameConfig versionConfig, Config userConfig, File mainFolder, ProgressBarComponent progressBar) {
         if (this.rootFolder != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -49,7 +50,7 @@ public abstract class BasicGameInstance extends GameInstance {
 
         if (mainFolder.isDirectory()) {
             this.rootFolder = mainFolder;
-            loadGameConfig(gameVersionConfigName, userConfig);
+            loadGameConfig(versionConfig, userConfig);
             loadFilesFromFolderRecursive(mainFolder, progressBar);
         } else {
             throw new RuntimeException("Don't know how to load '" + mainFolder + "', which reported as not a directory!");

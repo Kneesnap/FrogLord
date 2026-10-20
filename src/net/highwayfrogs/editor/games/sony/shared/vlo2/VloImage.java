@@ -145,6 +145,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     private static final int PADDING_TRANSPARENT_PIXEL_PC = 0xFF000000;
     private static final int PADDING_TRANSPARENT_PIXEL_PSX = 0x00000000;
 
+    public static final int MR_TEXTURE_SIZE_IN_BYTES = 16; // The size of a texture header.
+
     public VloImage(VloFile parentFile) {
         super(parentFile != null ? parentFile.getGameInstance() : null);
         this.imageChangeListeners = new ArrayList<>();

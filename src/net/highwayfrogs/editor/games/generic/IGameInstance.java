@@ -65,11 +65,10 @@ public interface IGameInstance {
 
     /**
      * Loads the game configuration from the provided config.
-     * @param configName the name of the configuration game data is loaded from
-     * @param config the config object to load data from
-     * @param instanceConfig the config containing configuration for this specific instance
+     * @param versionConfig the configuration data for this game version
+     * @param userConfig the config containing configuration for this specific instance
      */
-    void loadGameConfig(String configName, Config config, net.highwayfrogs.editor.system.Config instanceConfig);
+    void loadGameConfig(GameConfig versionConfig, net.highwayfrogs.editor.system.Config userConfig);
 
     /**
      * Get the target platform this game version runs on.

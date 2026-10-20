@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.medievil;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.*;
@@ -236,8 +237,8 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
         SCSourceFileGenerator.generateMwdCHeader(this, "S:\\\\", file, "MED", "STD", "VLO", "MOF", "FMOF", "MAP", "QTR", "PGD");
     }
 
-    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
-        super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
+    public void loadGame(GameConfig versionConfig, net.highwayfrogs.editor.system.Config userConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfig, userConfig, mwdFile, exeFile, progressBar);
         loadCreditsImages();
     }
 

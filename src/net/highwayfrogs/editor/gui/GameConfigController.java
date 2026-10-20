@@ -22,13 +22,13 @@ import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import java.io.File;
 import java.net.URL;
@@ -46,7 +46,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
     private final Config gameConfigRoot;
     private final Config unknownGameConfig = new Config("$UnknownGameConfig");
     private GameConfigUIController<?> activeConfigController;
-    private String selectedVersionConfigName;
+    private GameConfig selectedVersionConfig;
     @FXML private ImageView frogLordGameLogoView;
     @FXML private ComboBox<IGameType> gameTypeComboBox;
     @FXML private ComboBox<GameConfig> gameVersionComboBox;
@@ -54,6 +54,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
     @FXML private VBox bottomBox;
     @FXML private Button loadButton;
     @FXML private Button cancelButton;
+    private Hyperlink guideLink;
 
     public static final String CONFIG_GAME_INSTANCE_DATA = "InstanceData";
     public static final String CONFIG_ROOT_LAST_SELECTED_GAME_TYPE = "lastSelectedGame";
@@ -90,9 +91,9 @@ public class GameConfigController extends GameUIController<GameInstance> {
         this.gameVersionComboBox.setDisable(true); // Disable version selection until the game type is chosen.
         addHelpText(SELECT_GAME_TEXT); // Show the select game help text by default.
         this.gameTypeComboBox.setItems(FXCollections.observableArrayList(Constants.getGameTypes()));
-        this.gameTypeComboBox.setConverter(new AbstractStringConverter<>(IGameType::getDisplayName));
+        FXUtils.applyComboBoxDisplaySettings(this.gameTypeComboBox, () -> new LazyFXListCell<>(IGameType::getDisplayName, "None"));
         this.gameTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldType, newType) -> onGameTypeChange(oldType, newType));
-        this.gameVersionComboBox.setConverter(new AbstractStringConverter<>(GameConfig::getDisplayName));
+        FXUtils.applyComboBoxDisplaySettings(this.gameVersionComboBox, () -> new LazyFXListCell<>(GameConfig::getDisplayName, "None"));
         this.gameVersionComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldVersion, newVersion) -> onGameVersionChange(oldVersion, newVersion));
 
         // Load previously active gameType.
@@ -127,10 +128,10 @@ public class GameConfigController extends GameUIController<GameInstance> {
     @FXML
     private void loadGame(ActionEvent event) {
         IGameType gameType = getSelectedGameType();
-        String gameVersion = this.selectedVersionConfigName;
+        GameConfig versionConfig = this.selectedVersionConfig;
 
         // Failsafe.
-        if (gameType == null || StringUtils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
+        if (gameType == null || versionConfig == null || StringUtils.isNullOrWhiteSpace(versionConfig.getInternalName()) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
             FXUtils.showPopup(AlertType.ERROR, "Load Failure", "Cannot load game without being fully configured!");
             return;
         }
@@ -143,7 +144,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         GameInstance newInstance = gameType.createGameInstance();
         ProgressBarComponent.openProgressBarWindow(newInstance, "Loading Game Data...", progressBar -> {
             try {
-                gameType.loadGameInstance(newInstance, gameVersion, getOrCreateGameConfig(), getOrCreateInstanceConfig(), progressBar);
+                gameType.loadGameInstance(newInstance, versionConfig, getOrCreateGameConfig(), progressBar);
             } catch (Throwable th) {
                 // Eat the error, we still want to boot into the main menu if an error occurs.
                 Utils.handleError(newInstance.getLogger(), th, true, "Failed to load the game data.");
@@ -203,7 +204,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         if (Objects.equals(oldVersionConfig, newVersionConfig))
             return;
 
-        this.selectedVersionConfigName = newVersionConfig != null ? newVersionConfig.getInternalName() : null;
+        this.selectedVersionConfig = newVersionConfig;
         if (newVersionConfig == null) {
             this.loadButton.setDisable(true);
             return;
@@ -250,10 +251,10 @@ public class GameConfigController extends GameUIController<GameInstance> {
         } else {
             addHelpText(SELECT_GAME_VERSION_TEXT);
 
-            Hyperlink guideLink = new Hyperlink("View setup guide");
-            guideLink.setAlignment(Pos.CENTER_LEFT);
-            guideLink.setOnAction(event -> FXUtils.openPageInWebBrowser(GUIDE_URL));
-            this.topBox.getChildren().add(guideLink);
+            this.guideLink = new Hyperlink("View setup guide");
+            this.guideLink.setAlignment(Pos.CENTER_LEFT);
+            this.guideLink.setOnAction(event -> FXUtils.openPageInWebBrowser(GUIDE_URL));
+            this.topBox.getChildren().add(this.guideLink);
         }
 
         // Create new game-specific UI.
@@ -324,14 +325,6 @@ public class GameConfigController extends GameUIController<GameInstance> {
             return this.unknownGameConfig; // Don't know the version yet!
 
         return perGameConfig.getOrCreateChildConfigByName(lastVersion);
-    }
-
-    /**
-     * Gets or creates the configuration for the instance which would be loaded for the active selection.
-     * @return instanceConfig
-     */
-    public Config getOrCreateInstanceConfig() {
-        return getOrCreateGameConfig().getOrCreateChildConfigByName(CONFIG_GAME_INSTANCE_DATA);
     }
 
     /**

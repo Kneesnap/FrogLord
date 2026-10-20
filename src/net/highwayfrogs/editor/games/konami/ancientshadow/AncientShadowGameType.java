@@ -47,16 +47,16 @@ public class AncientShadowGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, GameConfig versionConfig, Config userConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof AncientShadowInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + AncientShadowInstance.class.getSimpleName() + " was required.");
 
-        String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FILE_PATH).getAsString();
+        String mainFilePath = userConfig.getKeyValueNodeOrError(CONFIG_MAIN_FILE_PATH).getAsString();
         if (StringUtils.isNullOrWhiteSpace(mainFilePath))
             throw new IllegalArgumentException("Invalid mainFilePath.");
 
         File mainFile = new File(mainFilePath);
-        ((AncientShadowInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mainFile, progressBar);
+        ((AncientShadowInstance) instance).loadGame(versionConfig, userConfig, mainFile, progressBar);
     }
 
     @Override

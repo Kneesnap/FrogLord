@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
@@ -24,7 +25,8 @@ public class GreatQuestRunners {
         // Load main bin.
         System.out.println("Loading file...");
         GreatQuestInstance instance = new GreatQuestInstance();
-        instance.loadGame("pc-retail", new Config("FakeConfig"), binFile, null);
+        GreatQuestConfig gameConfig = (GreatQuestConfig) GreatQuestGameType.INSTANCE.getVersionConfigByName("pc-retail");
+        instance.loadGame(gameConfig, new Config("FakeConfig"), binFile, null);
         System.out.println("Loaded.");
 
         // Switch the level hashes, so it loads it.

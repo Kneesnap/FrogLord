@@ -643,7 +643,7 @@ public class FileUtils {
         private Config getSavedPaths(GameInstance instance) {
             if (instance == null)
                 throw new NullPointerException("instance");
-            return instance.getConfig().getOrCreateChildConfigByName("FilePaths");
+            return instance.getUserConfig().getOrCreateChildConfigByName("FilePaths");
         }
 
         /**
@@ -964,7 +964,8 @@ public class FileUtils {
 
     public static final String FROGLORD_EXECUTABLE_SIGNATURE = "FROGLORD";
     public static final byte[] FROGLORD_EXECUTABLE_SIGNATURE_BYTES = FROGLORD_EXECUTABLE_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
-    private static final String PSX_EXECUTABLE_SIGNATURE = "PS-X EXE";
+    public static final String PSX_EXECUTABLE_SIGNATURE = "PS-X EXE";
+    public static final int PSX_EXECUTABLE_HEADER_SIZE = Constants.CD_SECTOR_SIZE;
     private static final short PSX_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
     private static final int PSX_BASIC_HEADER_SIZE = FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length + 1;
     private static final String WINDOWS_PE_EXECUTABLE_SIGNATURE = "MZ";
@@ -1097,6 +1098,21 @@ public class FileUtils {
         } else {
             throw new UnsupportedOperationException("saveConfigDataToExecutable() doesn't support the " + gameInstance.getPlatform() + " platform yet.");
         }
+    }
+
+    /**
+     * Determine the address in memory which the PSX executable data (starting at 0x800 in a PSX executable file) will be placed.
+     * @param reader the reader reading file bytes to pull from
+     * @return baseMemoryAddress
+     */
+    public static long readPsxExecutableBaseMemoryAddress(DataReader reader) {
+        reader.jumpTemp(0);
+        reader.verifyString(PSX_EXECUTABLE_SIGNATURE); // Ensure it's a PSX executable.
+        reader.skipBytes(16);
+        long baseMemoryAddress = reader.readUnsignedIntAsLong();
+        reader.jumpReturn();
+
+        return baseMemoryAddress;
     }
 
     /**

@@ -52,16 +52,19 @@ public class GreatQuestGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, GameConfig versionConfig, Config userConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof GreatQuestInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + GreatQuestInstance.class.getSimpleName() + " was required.");
 
-        String binFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_BIN_PATH).getAsString();
+        String binFilePath = userConfig.getKeyValueNodeOrError(CONFIG_BIN_PATH).getAsString();
         if (StringUtils.isNullOrWhiteSpace(binFilePath))
             throw new IllegalArgumentException("Invalid binFilePath.");
 
+        if (!(versionConfig instanceof GreatQuestConfig))
+            throw new ClassCastException("Cannot treat " + Utils.getSimpleName(versionConfig) + " as a " + GreatQuestConfig.class.getSimpleName() + ".");
+
         File binFile = new File(binFilePath);
-        ((GreatQuestInstance) instance).loadGame(gameVersionConfigName, instanceConfig, binFile, progressBar);
+        ((GreatQuestInstance) instance).loadGame((GreatQuestConfig) versionConfig, userConfig, binFile, progressBar);
     }
 
     @Override

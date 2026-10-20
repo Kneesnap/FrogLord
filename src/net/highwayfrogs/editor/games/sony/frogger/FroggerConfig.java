@@ -1,10 +1,16 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.psx.psyq.PsyQSymbolMap;
+import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapConfig;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +20,7 @@ import java.util.Map;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class FroggerConfig extends SCGameConfig {
+public class FroggerConfig extends SCGameConfig implements ISCGameConfigPsyQMap {
     private int build;
     private int mapBookAddress;
     private int themeBookAddress;
@@ -46,15 +52,15 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     private void readBasicConfigData(Config config) {
-        this.pickupDataAddress = config.getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
+        this.pickupDataAddress = config.getInt("pickupData", -1); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.themeBookAddress = config.getInt("themeBook", -1);
         this.mapBookAddress = config.getInt("mapBook", -1);
         // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00".
         // Search for the pointer that points to this (Don't forget to include ramOffset)
-        this.scriptArrayAddress = config.getInt("scripts", 0);
+        this.scriptArrayAddress = config.getInt("scripts", -1);
         // Music is generally always the same data, so you can find it with a search.
         this.musicAddress = config.getInt("musicAddress", -1);
-        this.arcadeLevelAddress = config.getInt("arcadeLevelAddress", 0);
+        this.arcadeLevelAddress = config.getInt("arcadeLevelAddress", -1);
     }
 
     private void readMapConfigs(Config config) {
@@ -274,5 +280,80 @@ public class FroggerConfig extends SCGameConfig {
     public boolean isAtOrBeforeBuild51() {
         return (this.build >= 0 && this.build <= 51) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta()
                 || isKaosPrototype() || isSeptemberUsDemo();
+    }
+
+    @Override
+    public void generateConfigData(DataReader executableReader, PsyQSymbolMap symbolMap) {
+        FroggerConfig masterBuildCfg = (FroggerConfig) SCGameType.FROGGER.getVersionConfigByName("psx-retail-usa");
+        int ramOffset = (int) FileUtils.readPsxExecutableBaseMemoryAddress(executableReader) - FileUtils.PSX_EXECUTABLE_HEADER_SIZE;
+
+        this.config = masterBuildCfg.getConfig(); // Treat this as having loaded from the build 71 config
+
+        // SCGameConfig data.
+        this.MWIOffset = symbolMap.getSymbolAddressOrError("frogpsx_mwi") - ramOffset;
+        this.MWILength = symbolMap.getUnpaddedSymbolSizeInBytesOrError("frogpsx_mwi", MWIResourceEntry.SIZE_IN_BYTES_1997);
+        this.bmpPointerAddress = symbolMap.getSymbolAddressSafe("bmp_pointers") - ramOffset;
+
+        this.region = masterBuildCfg.getRegion(); // See explanation below.
+        this.soundBank = masterBuildCfg.getSoundBank();
+        this.animationBank = masterBuildCfg.getAnimationBank();
+        this.vloTreeConfig = masterBuildCfg.getVloTreeConfig();
+        this.hiddenPartIds.putAll(masterBuildCfg.getHiddenPartIds());
+        this.mofRenderOverrides.putAll(masterBuildCfg.getMofRenderOverrides());
+        this.mofParentOverrides.putAll(masterBuildCfg.getMofParentOverrides());
+        this.fallbackFileNames.addAll(masterBuildCfg.getFallbackFileNames());
+
+        // Generate a mapping of symbol addresses to texture IDs.
+        Map<Integer, Short> textureIdsBySymbolAddress = new HashMap<>();
+        if (this.bmpPointerAddress > 0) {
+            int textureCount = symbolMap.getPaddedSymbolSizeInBytesOrError("bmp_pointers") / Constants.POINTER_SIZE;
+            executableReader.jumpTemp(this.bmpPointerAddress);
+            for (int i = 0; i < textureCount; i++) {
+                int texturePointer = executableReader.readInt();
+                if (texturePointer != 0)
+                    textureIdsBySymbolAddress.put(texturePointer, (short) i);
+            }
+
+            executableReader.jumpReturn();
+        }
+
+        // Go through bss symbols.
+        PsyQSymbolMap.PsyQMapSection section = symbolMap.getSectionByName(".bss");
+        if (section != null) {
+            Map<Short, String> textureNameMapping = new HashMap<>();
+            for (PsyQSymbolMap.PsyQMapSymbol symbol : symbolMap.getSymbolsWithin(section)) {
+                if (symbol.getPaddedSizeInBytes() == VloImage.MR_TEXTURE_SIZE_IN_BYTES && symbol.getName().startsWith(SCUtils.IMAGE_C_PREFIX)) {
+                    Short textureId = textureIdsBySymbolAddress.get(symbol.getAddress());
+                    if (textureId != null) // If there's actually a texture here.
+                        textureNameMapping.put(textureId, symbol.getName().substring(SCUtils.IMAGE_C_PREFIX.length()));
+                } else {
+                    this.bssSymbols.put(symbol.getAddress(), new SCBssSymbol(symbol.getAddress(), symbol.getName(), symbol.getPaddedSizeInBytes(), SCBssSymbolType.UNKNOWN));
+                }
+            }
+
+            this.imageList.loadList(textureNameMapping);
+        }
+
+        // Frogger-specific config stuff.
+        this.build = masterBuildCfg.getBuild(); // Build matches retail NTSC for proper data versioning and whatnot.
+        this.mapBookAddress = symbolMap.getSymbolAddressSafe("Map_library") - ramOffset;
+        this.themeBookAddress = symbolMap.getSymbolAddressSafe("Theme_library") - ramOffset;
+        this.arcadeLevelAddress = symbolMap.getSymbolAddressSafe("Sel_arcade_levels") - ramOffset;
+        this.musicAddress = symbolMap.getSymbolAddressSafe("Game_xa_tunes") - ramOffset;
+        this.pickupDataAddress = symbolMap.getSymbolAddressSafe("Pickup_data") - ramOffset;
+        this.scriptArrayAddress = symbolMap.getSymbolAddressSafe("Scripts") - ramOffset;
+        this.skyLandTextureAddress = symbolMap.getSymbolAddressSafe("txl_sky_land") - ramOffset;
+
+        // These are not possible to determine from the map file.
+        // I've made the call that pretty much nobody is ever going to be trying to mod a build of the game which is based on anything other than build 71/NTSC.
+        // Nobody is going to want to have a mod run on the PAL 25 FPS, and if they do, they can just make a PAL build based on build 71.
+        // And nobody is going to want to use the NTSC-J release either. We haven't even decompiled either.
+        // And I can't think of a situation where we'd want to mod any of the prototype builds. That'd take byte-matching them too.
+        // If someone needs custom banks, they're doing something advanced enough that they probably will need to just add a custom version of their mod into FrogLord.
+        this.formBank = masterBuildCfg.getFormBank();
+        this.entityBank = masterBuildCfg.getEntityBank();
+        this.scriptBank = masterBuildCfg.getScriptBank();
+        this.scriptCallbackBank = masterBuildCfg.getScriptCallbackBank();
+        this.mapConfigs.putAll(masterBuildCfg.getMapConfigs());
     }
 }

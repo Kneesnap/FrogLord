@@ -20,21 +20,21 @@ import java.util.regex.Pattern;
 public class SCGameConfig extends GameConfig {
     private long[] executableChecksums = EMPTY_LONG_ARRAY;
     private long overrideRamOffset;
-    private long overlayTableOffset;
-    private int MWIOffset;
-    private int MWILength;
-    private int bmpPointerAddress;
+    protected long overlayTableOffset;
+    protected int MWIOffset;
+    protected int MWILength;
+    protected int bmpPointerAddress;
     private boolean mwdLooseFiles;
-    private SCGameRegion region;
-    private SCNameBank soundBank;
-    private SCNameBank animationBank;
-    private net.highwayfrogs.editor.system.Config vloTreeConfig;
-    private final Map<String, int[]> hiddenPartIds = new HashMap<>();
-    private final Map<String, String> mofRenderOverrides = new HashMap<>();
-    private final Map<String, String> mofParentOverrides = new HashMap<>();
-    private final List<String> fallbackFileNames = new ArrayList<>();
-    private final SCImageList imageList;
-    private final Map<Integer, SCBssSymbol> bssSymbols = new HashMap<>();
+    protected SCGameRegion region;
+    protected SCNameBank soundBank;
+    protected SCNameBank animationBank;
+    protected net.highwayfrogs.editor.system.Config vloTreeConfig;
+    protected final Map<String, int[]> hiddenPartIds = new HashMap<>();
+    protected final Map<String, String> mofRenderOverrides = new HashMap<>();
+    protected final Map<String, String> mofParentOverrides = new HashMap<>();
+    protected final List<String> fallbackFileNames = new ArrayList<>();
+    protected final SCImageList imageList;
+    protected final Map<Integer, SCBssSymbol> bssSymbols = new HashMap<>();
 
     private static final String CFG_FILE_NAMES = "Files";
     private static final String CFG_CHILD_IMAGE_NAMES = "ImageNames";
@@ -83,7 +83,7 @@ public class SCGameConfig extends GameConfig {
         this.MWILength = config.getInt("mwiLength");
         this.overrideRamOffset = config.getLong("ramOffset", 0); // If I have an offset in a file, adding this number will give its pointer.
         this.overlayTableOffset = config.getLong("overlayTable", 0);
-        this.bmpPointerAddress = config.getInt("bmpPointerAddress", 0); // Generally right at the start of the 'data' section.
+        this.bmpPointerAddress = config.getInt("bmpPointerAddress", -1); // Generally right at the start of the 'data' section.
     }
 
     /**
@@ -156,7 +156,7 @@ public class SCGameConfig extends GameConfig {
             Config imageListCfg = new Config(getGameType().getEmbeddedResourceStream( "images/" + imageListName + ".cfg"));
             this.imageList.loadList(imageListCfg);
         } else {
-            this.imageList.loadList(null);
+            this.imageList.loadList((Config) null);
         }
     }
 
@@ -240,6 +240,19 @@ public class SCGameConfig extends GameConfig {
                 String imageName = config.getString(key);
                 this.imageNamesById.put(textureId, imageName);
                 this.imageIdsByName.put(imageName, textureId);
+            }
+        }
+
+        /**
+         * Loads the image list from the provided map.
+         * @param textureIdMapping the map to load data from
+         */
+        public void loadList(Map<Short, String> textureIdMapping) {
+            this.imageNamesById.clear();
+            this.imageIdsByName.clear();
+            for (Map.Entry<Short, String> entry : textureIdMapping.entrySet()) {
+                this.imageNamesById.put(entry.getKey(), entry.getValue());
+                this.imageIdsByName.put(entry.getValue(), entry.getKey());
             }
         }
 

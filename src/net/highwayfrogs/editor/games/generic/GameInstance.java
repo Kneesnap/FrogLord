@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class GameInstance implements IGameInstance {
     @Getter private final IGameType gameType;
     @Getter private NoodleScriptEngine scriptEngine;
-    @Getter private net.highwayfrogs.editor.system.Config config; // This contains user/instance configuration data. It is automatically saved on shutdown, and differs on a per-game-config basis.
+    @Getter private net.highwayfrogs.editor.system.Config userConfig; // This contains user/instance configuration data. It is automatically saved on shutdown, and differs on a per-game-config basis.
     @Getter private GameConfig versionConfig;
     @Getter private MainMenuController<?, ?> mainMenuController;
     @Getter private final MainGameInstanceLogger logger;
@@ -148,35 +147,6 @@ public abstract class GameInstance implements IGameInstance {
     public abstract boolean isShowSaveWarning();
 
     /**
-     * Loads the game configuration from the provided config.
-     * @param configName the name of the configuration game data is loaded from
-     * @param config the config object to load data from
-     */
-    public void loadGameConfig(String configName, Config config, net.highwayfrogs.editor.system.Config userConfig) {
-        if (userConfig == null)
-            throw new NullPointerException("userConfig");
-        if (this.versionConfig != null)
-            throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
-
-        // Register to FrogLordApplication and log.
-        FrogLordApplication.getActiveGameInstances().add(this);
-        getLogger().info("Hello! FrogLord is loading config '%s'.", configName);
-
-        // Setup.
-        this.config = userConfig;
-        this.scriptEngine = new NoodleScriptEngine(this, configName + "@" + Utils.getSimpleName(this));
-
-        // Create & load config.
-        this.versionConfig = this.gameType.createConfig(configName);
-        this.versionConfig.loadData(config, this.gameType);
-        this.onConfigLoad(config);
-
-        // Setup script engine. (Occurs after loading configs)
-        setupScriptEngine(this.scriptEngine);
-        this.scriptEngine.seal();
-    }
-
-    /**
      * Sets up the script engine for use with this game instance.
      */
     protected void setupScriptEngine(NoodleScriptEngine engine) {
@@ -185,53 +155,39 @@ public abstract class GameInstance implements IGameInstance {
 
     /**
      * Load and setup game config data relating to the game such as version configuration and game files.
-     * @param gameVersionConfigName the name of the version config file to load
-     * @param instanceConfig the instance configuration
+     * @param versionConfig the already loaded version config data
+     * @param userConfig the config object to load user data from
      */
-    protected void loadGameConfig(String gameVersionConfigName, net.highwayfrogs.editor.system.Config instanceConfig) {
-        if (this.versionConfig != null)
-            throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
-
-        // Load config.
-        String configPath = "versions/" + gameVersionConfigName + ".cfg";
-        InputStream configStream = this.gameType.getEmbeddedResourceStream(configPath);
-        if (configStream == null)
-            throw new IllegalStateException("Could not load game config '" + this.gameType.getEmbeddedResourcePath(configPath) + "'.");
-
-        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(configStream);
-        loadGameConfig(gameVersionConfigName, gameConfig, instanceConfig);
-    }
-
-    /**
-     * Load and setup game config data relating to the game such as version configuration and game files.
-     * @param config the already loaded config file
-     * @param instanceConfig the instance configuration
-     */
-    protected void loadGameConfig(GameConfig config, net.highwayfrogs.editor.system.Config instanceConfig) {
-        if (config == null)
+    public void loadGameConfig(GameConfig versionConfig, net.highwayfrogs.editor.system.Config userConfig) {
+        if (versionConfig == null)
             throw new NullPointerException("config");
-        if (this.config == null)
+        if (userConfig == null)
             throw new NullPointerException("userConfig");
         if (this.versionConfig != null)
-            throw new IllegalStateException("Cannot load the game configuration '" + config.getInternalName() + "' because it has already been loaded.");
-
-        // Setup user config.
-        this.config = instanceConfig;
+            throw new IllegalStateException("Cannot load the game configuration '" + versionConfig.getInternalName() + "' because it has already been loaded.");
 
         // Register to FrogLordApplication and log.
         FrogLordApplication.getActiveGameInstances().add(this);
-        getLogger().info("Hello! FrogLord is loading config '%s'.", config.getInternalName());
+        getLogger().info("Hello! FrogLord is loading config '%s'.", versionConfig.getInternalName());
 
-        // Create & load config.
-        this.versionConfig = config;
-        this.onConfigLoad(config.getConfig());
+        // Setup.
+        this.userConfig = userConfig;
+        this.scriptEngine = new NoodleScriptEngine(this, versionConfig.getInternalName() + "@" + Utils.getSimpleName(this));
+
+        // Apply config.
+        this.versionConfig = versionConfig;
+        this.onConfigLoad(versionConfig.getConfig());
+
+        // Setup script engine. (Occurs after loading configs)
+        setupScriptEngine(this.scriptEngine);
+        this.scriptEngine.seal();
     }
 
     /**
      * Called when configuration data is loaded.
-     * @param configObj The config object which data is loaded from.
+     * @param versionConfig The config object which data is loaded from.
      */
-    protected void onConfigLoad(Config configObj) {
+    protected void onConfigLoad(Config versionConfig) {
         // Does nothing by default.
     }
 

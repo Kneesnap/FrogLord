@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
@@ -117,13 +118,13 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
-     * @param versionConfigName The name of the version configuration to load.
-     * @param instanceConfig The configuration stored for the user on a per-game-version basis.
+     * @param versionConfig The version configuration for this game.
+     * @param userConfig The user configuration stored for this game version.
      * @param mwdFile The file representing the Millennium WAD.
      * @param exeFile The main game executable file, containing the MWI.
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+    public void loadGame(GameConfig versionConfig, net.highwayfrogs.editor.system.Config userConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
         if (this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -133,7 +134,7 @@ public abstract class SCGameInstance extends GameInstance {
 
         this.mwdFile = mwdFile;
         this.exeFile = exeFile;
-        loadGameConfig(versionConfigName, instanceConfig);
+        loadGameConfig(versionConfig, userConfig);
         if (!this.getVersionConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
 
@@ -838,11 +839,7 @@ public abstract class SCGameInstance extends GameInstance {
         if (this.getVersionConfig().getOverrideRamOffset() != 0) {
             this.ramOffset = this.getVersionConfig().getOverrideRamOffset();
         } else if (isPSX()) {
-            reader.jumpTemp(0);
-            reader.verifyString("PS-X EXE"); // Ensure it's a PSX executable.
-            reader.skipBytes(16);
-            this.ramOffset = reader.readUnsignedIntAsLong() - 0x800; // 0x800 is a CD sector. It's also the distance between the exe header and the start of the executable data put in memory.
-            reader.jumpReturn();
+            this.ramOffset = FileUtils.readPsxExecutableBaseMemoryAddress(reader) - FileUtils.PSX_EXECUTABLE_HEADER_SIZE;
         } else {
             throw new RuntimeException("Failed to load ramOffset for '" + this.getVersionConfig().getInternalName() + "', it may need to be added to the configuration.");
         }

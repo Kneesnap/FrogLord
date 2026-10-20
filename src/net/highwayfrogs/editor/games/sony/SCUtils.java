@@ -335,25 +335,6 @@ public class SCUtils {
     }
 
     /**
-     * Reads the symbols in a .MAP file.
-     * @param file the file to read
-     * @return symbolMapping
-     */
-    @SuppressWarnings("unused")
-    public static Map<Integer, String> readSymbolMap(File file) {
-        Pattern pattern = Pattern.compile("\\s*([a-fA-F0-9]{8})\\s*([a-zA-Z_][a-zA-Z0-9_]+)");
-
-        Map<Integer, String> map = new HashMap<>();
-        for (String line : FileUtils.readLinesFromFile(file)) {
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.matches())
-                map.put((int) Long.parseLong(matcher.group(1), 16), matcher.group(2));
-        }
-
-        return map;
-    }
-
-    /**
      * Gets all instances of SC games except the provided game instance.
      * @param instance the instance to search from
      * @return gameInstances, if there are any.

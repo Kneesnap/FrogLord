@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.generic;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -17,11 +18,11 @@ import java.util.function.BiFunction;
 @Getter
 public class GameConfig {
     private final String internalName;
-    private Config config;
+    protected Config config;
     private IGameType gameType;
 
     // Loaded configuration data.
-    private String displayName;
+    private String displayName = "Unknown";
     private GamePlatform platform;
     private TemporalAccessor buildTime; // The time at which the build was made.
 
@@ -38,7 +39,7 @@ public class GameConfig {
      * @param config The config to load data from.
      */
     public final void loadData(Config config, IGameType gameType) {
-        if (this.config != null)
+        if (this.config != null || this.gameType != null)
             throw new RuntimeException("The config " + this.internalName + " already has its data loaded.");
 
         if (config == null)
@@ -47,6 +48,25 @@ public class GameConfig {
         this.gameType = gameType;
         this.config = config;
         readConfigData(config);
+    }
+
+    /**
+     * Initialize the config as a custom config, ready for manual preparation.
+     * @param gameType the game type to apply
+     * @param platform the platform to apply
+     * @param displayName the display name, if known. Provide null for the default name.
+     */
+    protected final void initCustom(IGameType gameType, GamePlatform platform, String displayName) {
+        if (this.config != null || this.gameType != null)
+            throw new RuntimeException("The config " + this.internalName + " already has its data loaded.");
+        if (gameType == null)
+            throw new NullPointerException("gameType");
+        if (platform == null)
+            throw new NullPointerException("platform");
+
+        this.gameType = gameType;
+        this.platform = platform;
+        this.displayName = StringUtils.isNullOrWhiteSpace(displayName) ? "Custom" : displayName;
     }
 
     /**

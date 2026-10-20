@@ -213,7 +213,7 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
                 }
             }
 
-            // Apply the new file path to the config.
+            // Apply the new file path to the config. (NOTE: Important that we get the active editor config after the validity test ran, since the validity test may select a different game version)
             Config editorConfig = this.controller.getActiveEditorConfig();
             if (editorConfig != null) {
                 editorConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);

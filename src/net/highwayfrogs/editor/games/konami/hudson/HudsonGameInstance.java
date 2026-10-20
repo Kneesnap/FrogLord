@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.hudson;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonDummyFile;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
@@ -31,11 +32,11 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
 
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
-     * @param gameVersionConfigName The name of the version configuration file to load.
+     * @param gameConfig The game version configuration.
      * @param mainFile the main archive file to read
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, Config userConfig, File mainFile, ProgressBarComponent progressBar) {
+    public void loadGame(GameConfig gameConfig, Config userConfig, File mainFile, ProgressBarComponent progressBar) {
         if (this.rootFolder != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -44,10 +45,10 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
 
         if (mainFile.isFile()) {
             this.rootFolder = mainFile.getParentFile();
-            loadGameConfig(gameVersionConfigName, userConfig);
+            loadGameConfig(gameConfig, userConfig);
             loadFile(mainFile, true, progressBar);
         } else {
-            super.loadGame(gameVersionConfigName, userConfig, mainFile, progressBar);
+            super.loadGame(gameConfig, userConfig, mainFile, progressBar);
         }
     }
 

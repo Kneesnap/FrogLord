@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -59,8 +60,8 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
-        super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
+    public void loadGame(GameConfig versionConfig, net.highwayfrogs.editor.system.Config userConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfig, userConfig, mwdFile, exeFile, progressBar);
         OldFroggerMapEntityMarkerPacket.showFormGenerationOutput();
     }
 

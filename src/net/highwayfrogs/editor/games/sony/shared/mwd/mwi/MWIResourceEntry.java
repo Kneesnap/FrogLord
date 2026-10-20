@@ -50,6 +50,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     // 1997: 32
     // 1999: 36
     private static final int OLD_FIXED_FILE_PATH_LENGTH = 40;
+    public static final int SIZE_IN_BYTES_1997 = 32;
 
     public MWIResourceEntry(SCGameInstance instance, int resourceId) {
         super(instance);

@@ -111,12 +111,12 @@ public class GreatQuestInstance extends GameInstance {
 
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
-     * @param gameVersionConfigName The name of the version configuration file to load.
-     * @param instanceConfig the configuration stored for the user on a per-game-version basis.
+     * @param versionConfig the game version configuration data
+     * @param userConfig the configuration stored for the user on a per-game-version basis.
      * @param binFile the main archive file to read
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, Config instanceConfig, File binFile, ProgressBarComponent progressBar) {
+    public void loadGame(GreatQuestConfig versionConfig, Config userConfig, File binFile, ProgressBarComponent progressBar) {
         if (this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -124,7 +124,7 @@ public class GreatQuestInstance extends GameInstance {
             throw new RuntimeException("The main archive file '" + binFile + "' does not exist.");
 
         this.mainArchiveBinFile = binFile;
-        loadGameConfig(gameVersionConfigName, instanceConfig);
+        loadGameConfig(versionConfig, userConfig);
         loadSoundFilePaths();
 
         // Load the sound files.

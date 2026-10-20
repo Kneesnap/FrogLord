@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.generic;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -24,6 +25,8 @@ import java.util.List;
  * Created by Kneesnap on 4/10/2024.
  */
 public interface IGameType {
+    String CUSTOM_COMPILED_BUILD_INTERNAL_NAME = "custom";
+
     /**
      * Gets the display name of the game.
      */
@@ -43,18 +46,28 @@ public interface IGameType {
     /**
      * Loads the game instance with the provided config.
      * @param instance the game instance to setup from configuration
-     * @param gameVersionConfigName the name of the version config file to use
-     * @param gameSetupConfig the configuration data to load the game instance with
-     * @param instanceConfig the config which the instance stores its user-configuration data within
+     * @param versionConfig the name of the version config file to use
+     * @param userConfig the config which the instance stores its user-configuration data within
      * @param progressBar the progress bar to display load progress on (optional)
      */
-    void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar);
+    void loadGameInstance(GameInstance instance, GameConfig versionConfig, Config userConfig, ProgressBarComponent progressBar);
 
     /**
      * Creates a new config for this game type.
      * @param configName the name of the config to create
      */
     GameConfig createConfig(String configName);
+
+    /**
+     * Create a custom config as a custom config, ready for manual preparation.
+     * @param platform the platform to apply
+     * @param displayName the display name, if known. Provide null for the default name.
+     */
+    default GameConfig createCustomConfig(GamePlatform platform, String displayName) {
+        GameConfig newConfig = createConfig(CUSTOM_COMPILED_BUILD_INTERNAL_NAME);
+        newConfig.initCustom(this, platform, displayName);
+        return newConfig;
+    }
 
     /**
      * Creates config UI to configure the load of a potential game instance.
