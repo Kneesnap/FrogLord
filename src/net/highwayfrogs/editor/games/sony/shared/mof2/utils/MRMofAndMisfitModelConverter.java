@@ -335,9 +335,9 @@ public class MRMofAndMisfitModelConverter {
     }
 
     private static void vecToFloat(SVector vec, float[] output) {
-        output[0] = -vec.getFloatX();
-        output[1] = -vec.getFloatY();
-        output[2] = vec.getFloatZ();
+        output[0] = vec.getFloatX();
+        output[1] = vec.getFloatY();
+        output[2] = -vec.getFloatZ();
     }
 
     private static String getAnimationName(MRModel model, int animationId) {
@@ -591,26 +591,38 @@ public class MRMofAndMisfitModelConverter {
             for (MMTriangleNormalsBlock block : jointNormals) {
                 int[] trackedIndices = new int[3];
 
-                SVector n1 = new SVector(-block.getV1Normals()[0], -block.getV1Normals()[1], block.getV1Normals()[2]);
+                StringBuilder errorMessage = new  StringBuilder();
+                // Normals from mm3d can be NaN, but normals are mostly for lighting. Set NaN to zero to avoid errors
+                // Normals are also in reverse order: rearrange them here
+                SVector n1 = MRModelImportUtils.newSVectorZeroOutNaN(block.getV3Normals()[0], block.getV3Normals()[1], -block.getV3Normals()[2], errorMessage, "n1");
+                // mm3d uses normal ranges from -1 to 1, but Frogger uses -256 to 256. Without changing this, parallel lighting is near black
+                n1 = MRModelImportUtils.normalizeVectorToMagnitude(n1, 256.0);
                 if ((temp = normalIndices.get(n1)) == null) {
                     normalIndices.put(n1, temp = staticPartCel.getNormals().size());
                     staticPartCel.getNormals().add(n1);
                 }
                 trackedIndices[0] = temp;
 
-                SVector n2 = new SVector(-block.getV2Normals()[0], -block.getV2Normals()[1], block.getV2Normals()[2]);
+                SVector n2 = MRModelImportUtils.newSVectorZeroOutNaN(block.getV2Normals()[0], block.getV2Normals()[1], -block.getV2Normals()[2], errorMessage, "n2");
+                n2 = MRModelImportUtils.normalizeVectorToMagnitude(n2, 256.0);
                 if ((temp = normalIndices.get(n2)) == null) {
                     normalIndices.put(n2, temp = staticPartCel.getNormals().size());
                     staticPartCel.getNormals().add(n2);
                 }
                 trackedIndices[1] = temp;
 
-                SVector n3 = new SVector(-block.getV3Normals()[0], -block.getV3Normals()[1], block.getV3Normals()[2]);
+                SVector n3 = MRModelImportUtils.newSVectorZeroOutNaN(block.getV1Normals()[0], block.getV1Normals()[1], -block.getV1Normals()[2], errorMessage, "n3");
+                n3 = MRModelImportUtils.normalizeVectorToMagnitude(n3, 256.0);
                 if ((temp = normalIndices.get(n3)) == null) {
                     normalIndices.put(n3, temp = staticPartCel.getNormals().size());
                     staticPartCel.getNormals().add(n3);
                 }
                 trackedIndices[2] = temp;
+
+                // We only want one error message per face, since all NaN is likely when there is at least one NaN
+                if (errorMessage.length() > 0) {
+                    logger.warning(errorMessage.insert(0, "NaN in normal vector detected! Setting to 0 so the import can succeed. ").append("Index: ").append(block.getTriangleIndex()).toString());
+                }
 
                 partCelNormalIdsByNormalBlock.put(block, trackedIndices);
             }
