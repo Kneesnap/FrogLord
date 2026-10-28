@@ -361,9 +361,9 @@ public class VloVramSnapshot extends SCSharedGameObject {
                 VloImage image = ((VloVramEntryImage) entry).getImage();
                 int endPageGridX = VloUtils.getPageGridX(psxMode, endPage);
                 int endPageGridY = VloUtils.getPageGridY(psxMode, endPage);
-                if (endPageGridX > startPageGridX && (!psxMode || entryWidth < ((pageWidth * image.getWidthMultiplier()) / PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT)))
+                if (endPageGridX > startPageGridX && (!psxMode || entryWidth <= ((pageWidth * image.getWidthMultiplier()) / PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT)))
                     return false; // If this check is removed on PSX, texture overflow will occur and the game will render the part of the texture page which does not have the texture.
-                if (endPageGridY > startPageGridY && (!psxMode || entryHeight < pageHeight))
+                if (endPageGridY > startPageGridY && (!psxMode || entryHeight <= pageHeight))
                     return false;
             }
 
