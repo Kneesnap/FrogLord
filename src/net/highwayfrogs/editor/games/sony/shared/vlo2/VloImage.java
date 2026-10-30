@@ -564,27 +564,29 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         // Allow the user to choose bit depth.
-        Menu setBitDepthMenu = new Menu("Set Image Quality");
-        CheckMenuItem setBitDepth4 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT4, "4-Bit (16 Colors)");
-        CheckMenuItem setBitDepth8 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT8, "8-Bit (256 Colors)");
-        CheckMenuItem setBitDepth16 = createMenuItemSetBitDepth(PsxImageBitDepth.SBGR1555, "16-Bit");
-        setBitDepthMenu.getItems().addAll(setBitDepth4, setBitDepth8, setBitDepth16);
+        if (getGameInstance().isPSX()) {
+            Menu setBitDepthMenu = new Menu("Set Image Quality");
+            CheckMenuItem setBitDepth4 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT4, "4-Bit (16 Colors)");
+            CheckMenuItem setBitDepth8 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT8, "8-Bit (256 Colors)");
+            CheckMenuItem setBitDepth16 = createMenuItemSetBitDepth(PsxImageBitDepth.SBGR1555, "16-Bit");
+            setBitDepthMenu.getItems().addAll(setBitDepth4, setBitDepth8, setBitDepth16);
 
-        setBitDepthMenu.setOnShowing(event -> {
-            switch (this.bitDepth) {
-                case CLUT4:
-                    setBitDepth4.setSelected(true);
-                    break;
-                case CLUT8:
-                    setBitDepth8.setSelected(true);
-                    break;
-                case SBGR1555:
-                    setBitDepth16.setSelected(true);
-                    break;
-            }
-        });
+            setBitDepthMenu.setOnShowing(event -> {
+                switch (this.bitDepth) {
+                    case CLUT4:
+                        setBitDepth4.setSelected(true);
+                        break;
+                    case CLUT8:
+                        setBitDepth8.setSelected(true);
+                        break;
+                    case SBGR1555:
+                        setBitDepth16.setSelected(true);
+                        break;
+                }
+            });
 
-        contextMenu.getItems().add(setBitDepthMenu);
+            contextMenu.getItems().add(setBitDepthMenu);
+        }
 
         // Import/export
         MenuItem importItem = new MenuItem("Import / Replace");
