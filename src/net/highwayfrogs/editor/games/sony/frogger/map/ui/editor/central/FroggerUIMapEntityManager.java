@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
@@ -10,6 +11,7 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
+import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import lombok.Getter;
@@ -48,6 +50,8 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
     private final float[] posCache = new float[6];
     private final float[] selectedMouseEntityPosition = new float[6];
     private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
+    private final Affine billboardTransform = new Affine();
+    private final ChangeListener<Transform> cameraTransformListener = (observable, oldTransform, newTransform) -> updateBillboardTransform(newTransform);
     @Getter private DisplayList litEntityRenderList;
     @Getter private DisplayList unlitEntityRenderList;
     private FroggerMapEntity selectedMouseEntity;
@@ -65,6 +69,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     public void onSetup() {
+        updateBillboardTransform(getController().getCamera().getLocalToSceneTransform());
+        getController().getCamera().localToSceneTransformProperty().addListener(this.cameraTransformListener);
+
         // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger.
         // Even though there are some (such as the sky cloud patch), making them display properly would hide all entities underwater, so it's preferable to do it like this.
         // Situations such as transparent water layers should show the entities under the water too.
@@ -75,6 +82,12 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         setPickupAnimationsVisible(true);
 
         getController().getInputManager().addMouseListener(this::handleSelectedEntityMouseInput);
+    }
+
+    @Override
+    public void onRemove() {
+        getController().getCamera().localToSceneTransformProperty().removeListener(this.cameraTransformListener);
+        super.onRemove();
     }
 
     @Override
@@ -330,6 +343,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
                 DynamicMesh.tryRemoveMesh(entityMeshView);
                 modelMesh.addView(entityMeshView, getController().getMeshTracker(), isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
                 entityMeshView.setCullFace(CullFace.BACK);
+                setBillboardEnabled(entity, entityMeshView, false);
 
                 // Update entity display material and such.
                 if (isEntityHighlighted) {
@@ -342,8 +356,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             }
         }
 
-        // Unregister the attached mesh as we're about to potentially
+        // Unregister the attached mesh as we're about to potentially reconfigure.
         DynamicMesh.tryRemoveMesh(entityMeshView);
+        entityMeshView.setCullFace(CullFace.NONE);
 
         // Attempt to use a fly sprite.
         FroggerGameInstance config = getMap().getGameInstance();
@@ -351,6 +366,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         if (pickupData != null && pickupData.getFrames().size() > 0) {
             PickupAnimationFrame pickupAnimationFrame = pickupData.getFrames().get(Math.max(0, this.pickupAnimationFrameCounter) % pickupData.getFrames().size());
             if (pickupAnimationFrame != null && pickupAnimationFrame.applyToMeshView(entityMeshView, isEntityHighlighted)) {
+                setBillboardEnabled(entity, entityMeshView, true);
                 registerUnlitEntity(entityMeshView);
                 return;
             }
@@ -359,6 +375,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         // Setup entity placeholder sprite mesh.
         entityMeshView.setMesh(ENTITY_PLACEHOLDER_SPRITE_MESH);
         entityMeshView.setMaterial(isEntityHighlighted ? ENTITY_HIGHLIGHTED_PLACEHOLDER_SPRITE_MATERIAL : ENTITY_PLACEHOLDER_SPRITE_MATERIAL);
+        setBillboardEnabled(entity, entityMeshView, false);
         registerUnlitEntity(entityMeshView);
     }
 
@@ -413,6 +430,13 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             }
         }
 
+        entityMeshView.setTranslateX(positionData != null ? positionData[0] : 0);
+        entityMeshView.setTranslateY(positionData != null ? positionData[1] : 0);
+        entityMeshView.setTranslateZ(positionData != null ? positionData[2] : 0);
+
+        if (entityMeshView.getTransforms().contains(this.billboardTransform))
+            return; // Billboard sprites use the camera orientation instead of the entity rotation.
+
         float pitch = positionData != null ? positionData[3] : 0;
         float yaw = positionData != null ? positionData[4] : 0;
         float roll = positionData != null ? positionData[5] : 0;
@@ -440,10 +464,25 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Y_AXIS));
             entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.X_AXIS));
         }
+    }
 
-        entityMeshView.setTranslateX(positionData != null ? positionData[0] : 0);
-        entityMeshView.setTranslateY(positionData != null ? positionData[1] : 0);
-        entityMeshView.setTranslateZ(positionData != null ? positionData[2] : 0);
+    private void updateBillboardTransform(Transform cameraTransform) {
+        // Copy only the camera orientation, this seems to work for all sprites without specifying their individual positions.
+        this.billboardTransform.setToTransform(
+                cameraTransform.getMxx(), cameraTransform.getMxy(), cameraTransform.getMxz(), 0,
+                cameraTransform.getMyx(), cameraTransform.getMyy(), cameraTransform.getMyz(), 0,
+                cameraTransform.getMzx(), cameraTransform.getMzy(), cameraTransform.getMzz(), 0);
+    }
+
+    private void setBillboardEnabled(FroggerMapEntity entity, MeshView meshView, boolean enabled) {
+        if (enabled) {
+            if (!meshView.getTransforms().contains(this.billboardTransform)) {
+                meshView.getTransforms().removeIf(transform -> transform instanceof Rotate);
+                meshView.getTransforms().add(0, this.billboardTransform); // Rotate after the sprite's local scaling so non-square sprites keep their proportions.
+            }
+        } else if (meshView.getTransforms().remove(this.billboardTransform)) {
+            updateEntityPositionRotation(entity, meshView);
+        }
     }
 
     private void tickPickupAnimations(MeshViewFixedFrameRateTimerTask<?> timerTask) {
