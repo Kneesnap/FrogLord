@@ -43,6 +43,8 @@ public class PSXMath {
     // Sometimes this table is accessed as an integer array, seen in RotMatrix()
     public static final short[] RCOSSIN_TBL = readShortTable("rcossin_tbl", 8192);
 
+    public static final short[] SQRT_TBL = readShortTable("sqrt_tbl", 192);
+
     /**
      * Creates a rotation matrix based on the given rotation angles.
      * @param rotationAngles the rotation angles (4.12 fixed point) to create the matrix from, a length of at least 3 is expected.
@@ -227,6 +229,46 @@ public class PSXMath {
 
     private static short[] readShortTable(String fileName, int length) {
         return readShortTable(FileUtils.getResourceStream("platforms/psx/" + fileName), length);
+    }
+
+    private static int gte_leadingzerocount(int lzcs) {
+        int lzcr = 0; // Can't use the faster method due to its reliance on an unsigned integer data type.
+
+        if ((lzcs & 0x80000000) == 0)
+            lzcs = ~lzcs;
+
+        while ((lzcs & 0x80000000) != 0) {
+            lzcr++;
+            lzcs <<= 1;
+        }
+
+        return lzcr;
+    }
+
+    /**
+     * Calculates the square root of an integer.
+     * Based on the original PSX SquareRoot0 function. Works on fixed point and non-fixed point numbers.
+     * Copied from Psy-Cross.
+     * @param a the input number to calculate the square root of
+     * @return square root
+     */
+    public static int SquareRoot0(int a) {
+        // correct Psy-Q implementation
+        int idx;
+        int lzcs;
+        lzcs = gte_leadingzerocount(a);
+
+        if (lzcs == 32)
+            return 0;
+
+        lzcs &= 0xfffffffe;
+
+        if ((lzcs - 24) < 0)
+            idx = a >> (24 - lzcs);
+        else
+            idx = a << (lzcs - 24);
+
+        return SQRT_TBL[idx - 64] << (31 - lzcs >> 1) >> 12;
     }
 
     /**

@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.games.sony;
 
+import net.highwayfrogs.editor.games.psx.math.PSXMath;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRBezierCurve;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
@@ -266,5 +268,21 @@ public class SCMath {
         bezierCurve.getControl1().setValues(c1x, c1y, c1z);
         bezierCurve.getControl2().setValues(c2x, c2y, c2z);
         return bezierCurve;
+    }
+
+    /**
+     * Calculates the fixed square root using the correct algorithm for the given game instance.
+     * @param instance the game instance to calculate a square root for
+     * @param input the input number
+     * @return square root
+     */
+    public static int fixedSqrt(SCGameInstance instance, int input) {
+        if (instance == null || instance.isPC()) {
+            // TODO: I haven't investigated how the PC version calculates square roots, but I assume it's more accurate than the PSX.
+            return MathUtils.fixedSqrt(input);
+        } else {
+            // PsyQ has a very fast square root implementation based on a lookup table.
+            return PSXMath.SquareRoot0(input);
+        }
     }
 }
