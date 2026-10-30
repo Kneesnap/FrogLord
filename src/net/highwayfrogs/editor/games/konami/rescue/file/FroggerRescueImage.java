@@ -116,13 +116,13 @@ public class FroggerRescueImage extends HudsonGameFile {
             DataChunk3 chunk3 = this.dataChunk3List.get(i);
 
             // Read palette data.
-            reader.alignRequireByte(PADDING, PADDING_ALIGNMENT);
+            reader.alignRequireByte(PADDING_ALIGNMENT, PADDING);
             requireReaderIndex(reader, chunk3.paletteDataStartIndex, "Expected chunk3[" + i + "] palette data");
             if (chunk3.paletteColorCount != 0)
                 chunk3.paletteData = reader.readBytes(chunk3.paletteColorCount * chunk3.getImageFormat().getPaletteBytesPerPixel());
 
             // Read image data.
-            reader.alignRequireByte(PADDING, PADDING_ALIGNMENT);
+            reader.alignRequireByte(PADDING_ALIGNMENT, PADDING);
             requireReaderIndex(reader, chunk3.imageDataStartIndex, "Expected chunk3[" + i + "] image data");
             chunk3.imageData = reader.readBytes(chunk3.dataBufferSizeInBytes);
         }

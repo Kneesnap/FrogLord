@@ -429,14 +429,14 @@ public class DataReader {
      * @param alignment The number of bytes the index should have an increment of.
      */
     public void alignRequireEmpty(int alignment) {
-        alignRequireByte(Constants.NULL_BYTE, alignment);
+        alignRequireByte(alignment, Constants.NULL_BYTE);
     }
 
     /**
      * Skip bytes to align to the given byte boundary, requiring the bytes skipped be 0.
      * @param alignment The number of bytes the index should have an increment of.
      */
-    public void alignRequireByte(byte value, int alignment) {
+    public void alignRequireByte(int alignment, byte value) {
         int index = getIndex();
         int offsetAmount = (index % alignment);
         if (offsetAmount != 0)

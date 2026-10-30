@@ -135,7 +135,7 @@ public class PTStaticPart extends SCSharedGameData {
         if (this.partCelStartAddress <= 0)
             throw new RuntimeException("Cannot write partCel list, the pointer is invalid.");
 
-        writer.writeAddressTo(this.partCelStartAddress);
+        writer.writeCurrentAddressTo(this.partCelStartAddress);
         for (int i = 0; i < this.partCels.size(); i++)
             this.partCels.get(i).save(writer);
 

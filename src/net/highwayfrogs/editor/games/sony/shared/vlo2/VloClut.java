@@ -228,7 +228,7 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
         if (this.colors == null)
             throw new RuntimeException("Cannot write VloClut color data, there are no colors to write.");
 
-        writer.writeAddressTo(this.tempColorsPointer);
+        writer.writeCurrentAddressTo(this.tempColorsPointer);
         this.tempColorsPointer = -1;
 
         for (int y = 0; y < this.colors.length; y++) {

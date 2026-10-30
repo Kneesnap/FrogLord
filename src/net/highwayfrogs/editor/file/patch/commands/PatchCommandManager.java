@@ -30,9 +30,9 @@ public class PatchCommandManager {
         addCommand(new PatchCommandPrint());
         addCommand(new PatchCommandSet());
         addCommand(new PatchCommandSubtract());
-        addCommand(new PatchCommandWrite("writeb", (writer, value) -> writer.writeUnsignedByte((short) (value.getAsInteger() & 0xFF))));
+        addCommand(new PatchCommandWrite("writeb", (writer, value) -> writer.writeUnsignedByte(value.getAsInteger())));
         addCommand(new PatchCommandWrite("writes", (writer, value) -> writer.writeShort((short) value.getAsInteger())));
-        addCommand(new PatchCommandWrite("writei", (writer, value) -> writer.writeInt(value.getAsInteger() & 0xFF)));
+        addCommand(new PatchCommandWrite("writei", (writer, value) -> writer.writeInt(value.getAsInteger())));
         addCommand(new PatchCommandWrite("writef", (writer, value) -> writer.writeFloat((float) value.getAsDecimal())));
         addCommand(new PatchCommandWrite("writecolor", (writer, value) -> writer.writeInt(ColorUtils.toRGB(value.getAsColor()))));
         addCommand(new PatchCommandIf());

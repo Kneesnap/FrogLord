@@ -49,7 +49,7 @@ public class MRMofBoundingBoxSet extends SCSharedGameData {
         int groupPointer = writer.writeNullPointer();
 
         // Write groups.
-        writer.writeAddressTo(groupPointer);
+        writer.writeCurrentAddressTo(groupPointer);
         for (int i = 0; i < this.boundingBoxGroups.size(); i++)
             this.boundingBoxGroups.get(i).save(writer);
 

@@ -89,12 +89,12 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket implements IPro
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeUnsignedByte((short) this.splines.size());
+        writer.writeUnsignedByte(this.splines.size());
         writer.align(Constants.INTEGER_SIZE); // There seems to be garbage data here.
         int splineDataStartIndex = writer.writeNullPointer();
 
         // Write splines.
-        writer.writeAddressTo(splineDataStartIndex);
+        writer.writeCurrentAddressTo(splineDataStartIndex);
         for (int i = 0; i < this.splines.size(); i++)
             this.splines.get(i).save(writer);
 

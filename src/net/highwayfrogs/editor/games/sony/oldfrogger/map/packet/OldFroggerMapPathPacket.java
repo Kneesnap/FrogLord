@@ -125,7 +125,7 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
                 return;
 
             // Write spline pointer.
-            writer.writeAddressTo(this.splinePointerAddress);
+            writer.writeCurrentAddressTo(this.splinePointerAddress);
             this.splinePointerAddress = -1;
 
             // Write splines

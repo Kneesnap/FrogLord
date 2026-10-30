@@ -94,7 +94,7 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
         saveExtensionData(writer);
 
         // Save regions.
-        writer.writeAddressTo(regionDataStartAddress);
+        writer.writeCurrentAddressTo(regionDataStartAddress);
         for (int i = 0; i < this.regions.size(); i++)
             this.regions.get(i).save(writer);
     }

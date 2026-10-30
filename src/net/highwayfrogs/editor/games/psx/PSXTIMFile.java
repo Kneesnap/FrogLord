@@ -308,7 +308,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private static void write8BppTexture(DataWriter writer, BufferedImage image, boolean enableTransparency, Map<PSXClutColor, Integer> palette) {
         for (int y = 0; y < image.getHeight(); y++)
             for (int x = 0; x < image.getWidth(); x++)
-                writer.writeUnsignedByte((short) (palette.get(PSXClutColor.fromARGB(image.getRGB(x, y), enableTransparency)) & 0xFF));
+                writer.writeUnsignedByte((palette.get(PSXClutColor.fromARGB(image.getRGB(x, y), enableTransparency)) & 0xFF));
     }
 
     private static void write16BppTexture(DataWriter writer, BufferedImage image, boolean enableTransparency) {

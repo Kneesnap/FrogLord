@@ -215,7 +215,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                 }
             }
 
-            writer.writeTo(pixelLineStartIndex + stride, PADDING_BYTE);
+            writer.writeByteUntilTarget(pixelLineStartIndex + stride, PADDING_BYTE);
         }
 
         // Write palette.

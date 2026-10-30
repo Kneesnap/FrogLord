@@ -48,7 +48,7 @@ public class OldFroggerPathData extends SCGameData<OldFroggerGameInstance> {
         writer.writeUnsignedShort(this.splineId);
         writer.writeUnsignedShort(this.splinePosition);
         writer.writeNull(1); // Padding
-        writer.writeUnsignedByte((short) (this.motionType != null ? this.motionType.ordinal() : 0));
+        writer.writeUnsignedByte(this.motionType != null ? this.motionType.ordinal() : 0);
     }
 
     /**

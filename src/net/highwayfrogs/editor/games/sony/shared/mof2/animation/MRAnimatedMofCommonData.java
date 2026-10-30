@@ -100,14 +100,14 @@ public class MRAnimatedMofCommonData extends SCSharedGameData {
         int bboxPointer = writer.writeNullPointer(); // bboxPointer is always set, even when the count is zero.
 
         // Write Transforms.
-        writer.writeAddressTo(transformPointer);
+        writer.writeCurrentAddressTo(transformPointer);
         for (int i = 0; i < this.transforms.size(); i++)
             this.transforms.get(i).save(writer);
         writer.align(Constants.INTEGER_SIZE);
 
         // Write bbox pointer even if there aren't any. (Pretty much only been seen for MRORGAN.XAR in MediEvil ECTS onward)
         this.boundingBoxes.clear();
-        writer.writeAddressTo(bboxPointer);
+        writer.writeCurrentAddressTo(bboxPointer);
         for (int i = 0; i < this.boundingBoxes.size(); i++)
             this.boundingBoxes.get(i).save(writer);
     }

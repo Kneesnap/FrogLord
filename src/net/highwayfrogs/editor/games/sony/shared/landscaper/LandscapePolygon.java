@@ -105,7 +105,7 @@ public abstract class LandscapePolygon extends SCSharedGameData implements ILand
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) getPolygonType().ordinal());
+        writer.writeUnsignedByte(getPolygonType().ordinal());
 
         // 1) Write vertices.
         for (int i = 0; i < this.vertices.length; i++) {

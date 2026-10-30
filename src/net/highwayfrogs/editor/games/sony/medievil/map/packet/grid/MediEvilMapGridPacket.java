@@ -328,7 +328,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         short gridYSquareCount = reader.readUnsignedByteAsShort();
         int gridSquareSize = reader.readUnsignedShortAsInt();
         this.gridShift = reader.readUnsignedByteAsShort();
-        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
+        reader.alignRequireByte(Constants.INTEGER_SIZE, (byte) 0xFF);
         int gridIdTablePtr = reader.readInt();
         int gridDataBasePtr = reader.readInt();
 
@@ -457,16 +457,16 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeUnsignedByte((short) getGridSize());
-        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedByte(getGridSize());
+        writer.writeUnsignedByte(getGridSize());
         writer.writeUnsignedShort(getGridSquareSize());
         writer.writeUnsignedByte(this.gridShift);
-        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
+        writer.alignWithPaddingByte(Constants.INTEGER_SIZE, (byte) 0xFF);
         int gridIdTablePtr = writer.writeNullPointer();
         int gridDataBasePtr = writer.writeNullPointer();
 
         // Write grid ID table.
-        writer.writeAddressTo(gridIdTablePtr);
+        writer.writeCurrentAddressTo(gridIdTablePtr);
         int storageIndex = 0;
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             MediEvilMapGridSquare gridSquare = this.gridSquaresByPosition[i];
@@ -482,7 +482,7 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
         }
 
         // Write grid squares.
-        writer.writeAddressTo(gridDataBasePtr);
+        writer.writeCurrentAddressTo(gridDataBasePtr);
         for (int i = 0; i < this.gridSquares.size(); i++)
             this.gridSquares.get(i).save(writer);
         for (int i = 0; i < this.gridSquares.size(); i++)

@@ -86,7 +86,7 @@ public class PTActionSetFile extends SCSharedGameFile {
         int actionSetListPointer = writer.writeNullPointer();
 
         // 1) Write action sets.
-        writer.writeAddressTo(actionSetListPointer);
+        writer.writeCurrentAddressTo(actionSetListPointer);
         for (int i = 0; i < this.actionSets.size(); i++)
             this.actionSets.get(i).save(writer);
 

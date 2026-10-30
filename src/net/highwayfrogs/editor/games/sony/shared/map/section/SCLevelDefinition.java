@@ -118,7 +118,7 @@ public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTable
         writer.writeShort(this.levelNameId);
         writer.writeShort(this.unknown1);
         writer.writeUnsignedByte(this.unknown2);
-        writer.writeUnsignedByte((short) this.levelSections.size());
+        writer.writeUnsignedByte(this.levelSections.size());
         writer.writeUnsignedInt(this.sectionDefinitionsPointer);
         if (this.unknownData != null)
             writer.writeBytes(this.unknownData);

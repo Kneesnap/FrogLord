@@ -182,7 +182,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
         List<FroggerMapEntity> pathEntities = recalculateListOfEntitiesUsingPath();
 
         // Write entity data.
-        writer.writeAddressTo(this.tempEntityIndexPointer);
+        writer.writeCurrentAddressTo(this.tempEntityIndexPointer);
         for (int i = 0; i < pathEntities.size(); i++)
             writer.writeUnsignedShort(pathEntities.get(i).getEntityIndex());
         writer.writeShort(ENTITY_LIST_TERMINATOR);

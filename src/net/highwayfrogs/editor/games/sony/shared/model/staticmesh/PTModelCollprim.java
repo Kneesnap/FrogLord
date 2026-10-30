@@ -55,7 +55,7 @@ public class PTModelCollprim extends PTCollprim {
             throw new RuntimeException("Cannot write collprim matrix, the pointer " + NumberUtils.toHexString(this.matrixAddress) + " is invalid.");
 
         if (this.matrix != null) {
-            writer.writeAddressTo(this.matrixAddress);
+            writer.writeCurrentAddressTo(this.matrixAddress);
             this.matrix.save(writer);
         }
 

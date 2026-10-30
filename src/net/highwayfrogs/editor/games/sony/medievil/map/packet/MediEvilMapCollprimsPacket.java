@@ -48,7 +48,7 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
         int collprimListPtr = writer.writeNullPointer();
 
         // Write collprims.
-        writer.writeAddressTo(collprimListPtr);
+        writer.writeCurrentAddressTo(collprimListPtr);
         for (int i = 0; i < this.collprims.size(); i++)
             this.collprims.get(i).save(writer);
     }

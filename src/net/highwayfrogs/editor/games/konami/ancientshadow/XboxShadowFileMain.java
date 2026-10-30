@@ -362,7 +362,7 @@ public class XboxShadowFileMain {
                     dFile.save(writer);
                     int writtenBytes = (writer.getIndex() - startIndex);
                     cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
-                    writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
+                    writer.writeNullBytesUntilTarget(cdSector * Constants.CD_SECTOR_SIZE);
                     writer.jumpReturn();
                     writer.writeIntAtPos(dataSizePtr, writtenBytes);
                 }
@@ -390,7 +390,7 @@ public class XboxShadowFileMain {
                 dFile.save(writer);
                 int writtenBytes = (writer.getIndex() - startIndex);
                 cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
-                writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
+                writer.writeNullBytesUntilTarget(cdSector * Constants.CD_SECTOR_SIZE);
                 writer.jumpReturn();
                 writer.writeIntAtPos(dataSizePtr, writtenBytes);
             }

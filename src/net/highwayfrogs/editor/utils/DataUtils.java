@@ -298,6 +298,17 @@ public class DataUtils {
     }
 
     /**
+     * Convert an unsigned short back into an unsigned byte.
+     * @param unsignedInt the short to turn back into a byte.
+     * @return byte
+     */
+    public static byte unsignedIntToByte(int unsignedInt) {
+        if (unsignedInt < 0 || unsignedInt > 0xFF)
+            throw new RuntimeException("The provided int value is outside the range of an unsigned byte. [0,255]. Value: " + unsignedInt);
+        return (byte) unsignedInt;
+    }
+
+    /**
      * Convert an unsigned short into an int, which can be converted back into a short.
      * @param unsignedShort The short to convert into an int.
      * @return unsignedShort

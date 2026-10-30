@@ -146,7 +146,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.actionListAddress <= 0)
             throw new RuntimeException("Cannot write action list, the action list pointer is invalid.");
 
-        writer.writeAddressTo(this.actionListAddress);
+        writer.writeCurrentAddressTo(this.actionListAddress);
         for (int i = 0; i < this.actions.size(); i++)
             this.actions.get(i).save(writer);
 
@@ -161,7 +161,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.rotationDataPointer <= 0)
             throw new RuntimeException("Cannot write untranslated rotation list, the pointer is invalid.");
 
-        writer.writeAddressTo(this.rotationDataPointer);
+        writer.writeCurrentAddressTo(this.rotationDataPointer);
         for (int i = 0; i < this.rotations.size(); i++)
             this.rotations.get(i).save(writer);
 
@@ -176,7 +176,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.rotationTranslationDataPointer <= 0)
             throw new RuntimeException("Cannot write translated rotation list, the pointer is invalid.");
 
-        writer.writeAddressTo(this.rotationTranslationDataPointer);
+        writer.writeCurrentAddressTo(this.rotationTranslationDataPointer);
         for (int i = 0; i < this.rotationWithTranslations.size(); i++)
             this.rotationWithTranslations.get(i).save(writer);
 

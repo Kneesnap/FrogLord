@@ -94,7 +94,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
             getLogger().severe(failureMessage);
 
         // Alignment padding
-        reader.alignRequireByte(GreatQuestInstance.PADDING_BYTE_DEFAULT, 16);
+        reader.alignRequireByte(16, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Read branches.
         this.branches.clear();
@@ -143,7 +143,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
         writer.writeNull(RUNTIME_VALUE_COUNT * Constants.INTEGER_SIZE);
 
         // Alignment padding
-        writer.align(16, GreatQuestInstance.PADDING_BYTE_DEFAULT);
+        writer.alignWithPaddingByte(16, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Read branches.
         for (int i = 0; i < this.branches.size(); i++)

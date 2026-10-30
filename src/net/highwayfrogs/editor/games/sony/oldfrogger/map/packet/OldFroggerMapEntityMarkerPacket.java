@@ -124,7 +124,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
 
         // Write entity data & update table.
         for (int i = 0; i < this.entities.size(); i++) {
-            writer.writeAddressTo(entityPointerStartIndex + (i * Constants.INTEGER_SIZE));
+            writer.writeCurrentAddressTo(entityPointerStartIndex + (i * Constants.INTEGER_SIZE));
             OldFroggerMapEntity entity = this.entities.get(i);
             this.entitiesByFileOffsets.put(writer.getIndex(), entity);
             this.entityFileOffsets.put(entity, writer.getIndex());

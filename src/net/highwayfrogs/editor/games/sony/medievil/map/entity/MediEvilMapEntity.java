@@ -104,7 +104,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
         writer.writeUnsignedByte(this.rotationX);
         writer.writeUnsignedByte(this.rotationY);
         writer.writeUnsignedByte(this.rotationZ);
-        writer.writeUnsignedByte((short) 0xFF);
+        writer.writeUnsignedByte(0xFF);
         this.position.saveWithPadding(writer);
         this.position.saveWithPadding(writer);
         writer.writeUnsignedInt(this.triggerData);

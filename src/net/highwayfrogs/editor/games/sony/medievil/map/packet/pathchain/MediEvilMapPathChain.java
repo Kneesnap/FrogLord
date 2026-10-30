@@ -117,10 +117,10 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) this.previousChains.size());
-        writer.writeUnsignedByte((short) this.nextChains.size());
-        writer.writeUnsignedByte((short) this.pathSplines.size());
-        writer.writeUnsignedByte((short) this.groupType.ordinal());
+        writer.writeUnsignedByte(this.previousChains.size());
+        writer.writeUnsignedByte(this.nextChains.size());
+        writer.writeUnsignedByte(this.pathSplines.size());
+        writer.writeUnsignedByte(this.groupType.ordinal());
 
         this.previousChains.tempChainIdOffset = writer.writeNullPointer();
         this.nextChains.tempChainIdOffset = writer.writeNullPointer();
@@ -140,7 +140,7 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
         if (this.tempPathSplineIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save pathSplineIdOffset, the pointer " + NumberUtils.toHexString(this.tempPathSplineIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempPathSplineIdOffset);
+        writer.writeCurrentAddressTo(this.tempPathSplineIdOffset);
         this.tempPathSplineIdOffset = writer.writeNullPointer();
     }
 
@@ -157,10 +157,10 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
         if (this.tempPathSplineIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save pathSplineIds, the pointer " + NumberUtils.toHexString(this.tempPathSplineIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempPathSplineIdOffset);
+        writer.writeCurrentAddressTo(this.tempPathSplineIdOffset);
         this.tempPathSplineIdOffset = -1;
         for (int i = 0; i < this.pathSplines.size(); i++)
-            writer.writeUnsignedByte((short) this.pathSplines.get(i).getId());
+            writer.writeUnsignedByte(this.pathSplines.get(i).getId());
     }
 
     void resolvePathSplines() {
@@ -193,7 +193,7 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
         if (this.tempCameraSplineIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save cameraSplineIdOffset, the pointer " + NumberUtils.toHexString(this.tempCameraSplineIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempCameraSplineIdOffset);
+        writer.writeCurrentAddressTo(this.tempCameraSplineIdOffset);
         this.tempCameraSplineIdOffset = writer.writeNullPointer();
     }
 
@@ -210,10 +210,10 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
         if (this.tempCameraSplineIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save cameraSplineIds, the pointer " + NumberUtils.toHexString(this.tempCameraSplineIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempCameraSplineIdOffset);
+        writer.writeCurrentAddressTo(this.tempCameraSplineIdOffset);
         this.tempCameraSplineIdOffset = -1;
         for (int i = 0; i < this.pathSplines.size(); i++)
-            writer.writeUnsignedByte((short) this.pathSplines.get(i).getId());
+            writer.writeUnsignedByte(this.pathSplines.get(i).getId());
     }
 
     void resolveCameraSplines() {

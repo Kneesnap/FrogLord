@@ -111,7 +111,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @return the position the next grid stack will write its grid squares to
      */
     public int save(DataWriter writer, int gridSquareStartIndex) {
-        writer.writeUnsignedByte((short) this.gridSquares.size());
+        writer.writeUnsignedByte(this.gridSquares.size());
         writer.writeByte(this.rawCliffHeightValue);
         writer.writeUnsignedShort(gridSquareStartIndex);
         return gridSquareStartIndex + this.gridSquares.size();

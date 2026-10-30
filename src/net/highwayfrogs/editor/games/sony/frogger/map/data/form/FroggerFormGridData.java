@@ -88,7 +88,7 @@ public class FroggerFormGridData extends SCGameData<FroggerGameInstance> {
         writer.writeInt(gridSquareHeightsPointer); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
         // Write grid square flag list.
-        writer.writeAddressTo(gridSquareFlagsPointer);
+        writer.writeCurrentAddressTo(gridSquareFlagsPointer);
         for (int z = 0; z < this.gridFlags.length; z++)
             for (int x = 0; x < this.gridFlags[z].length; x++)
                 writer.writeShort(this.gridFlags[z][x]);

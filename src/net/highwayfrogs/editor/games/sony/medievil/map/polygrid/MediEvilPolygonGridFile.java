@@ -326,8 +326,8 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) getGridSize());
-        writer.writeUnsignedByte((short) getGridSize());
+        writer.writeUnsignedByte(getGridSize());
+        writer.writeUnsignedByte(getGridSize());
         writer.writeUnsignedShort(getGridSquareSize());
         writer.writeUnsignedByte(this.gridShift);
         writer.align(Constants.INTEGER_SIZE);
@@ -336,7 +336,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         int gridDataBasePtr = writer.writeNullPointer();
 
         // Write grid ID table.
-        writer.writeAddressTo(gridIdTablePtr);
+        writer.writeCurrentAddressTo(gridIdTablePtr);
         int storageIndex = 0;
         for (int i = 0; i < this.gridSquaresByPosition.length; i++) {
             MediEvilPolygonGridSquare gridSquare = this.gridSquaresByPosition[i];
@@ -352,7 +352,7 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
         }
 
         // Write grid squares.
-        writer.writeAddressTo(gridDataBasePtr);
+        writer.writeCurrentAddressTo(gridDataBasePtr);
         for (int i = 0; i < this.gridSquares.size(); i++)
             this.gridSquares.get(i).save(writer);
         for (int i = 0; i < this.gridSquares.size(); i++)

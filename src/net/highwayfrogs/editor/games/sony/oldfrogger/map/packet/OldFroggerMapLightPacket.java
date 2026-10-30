@@ -98,10 +98,10 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeUnsignedByte((short) (this.type != null ? this.type.ordinal() : 0));
+            writer.writeUnsignedByte(this.type != null ? this.type.ordinal() : 0);
             writer.writeUnsignedByte(this.priority);
             writer.writeUnsignedShort(this.parentId);
-            writer.writeUnsignedByte((short) (this.apiType != null ? this.apiType.getBitFlagMask() : 0));
+            writer.writeUnsignedByte(this.apiType != null ? this.apiType.getBitFlagMask() : 0);
             writer.align(4);
             this.color.save(writer);
             this.position.saveWithPadding(writer);

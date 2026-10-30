@@ -63,7 +63,7 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
     public void loadEntityLists(DataReader reader) {
         for (int i = 0; i < this.paths.size(); i++)
             this.paths.get(i).loadEntityList(reader);
-        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
+        reader.alignRequireByte(Constants.INTEGER_SIZE, (byte) 0xFF);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
     public void saveEntityLists(DataWriter writer) {
         for (int i = 0; i < this.paths.size(); i++)
             this.paths.get(i).saveEntityList(writer);
-        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
+        writer.alignWithPaddingByte(Constants.INTEGER_SIZE, (byte) 0xFF);
     }
 
     @Override

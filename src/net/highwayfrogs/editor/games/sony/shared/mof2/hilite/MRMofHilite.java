@@ -57,7 +57,7 @@ public class MRMofHilite extends SCSharedGameData {
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedByte(this.hiliteType);
-        writer.writeUnsignedByte((short) this.attachType.ordinal());
+        writer.writeUnsignedByte(this.attachType.ordinal());
 
         int saveId;
         if (this.attachType == HiliteAttachType.VERTEX) {

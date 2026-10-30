@@ -83,7 +83,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         for (int i = 0; i < this.entries.size(); i++)
             this.entries.get(i).writeFileContents(writer);
 
-        writer.writeAddressTo(fileLengthPtr);
+        writer.writeCurrentAddressTo(fileLengthPtr);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
                 throw new RuntimeException("Cannot write raw file contents, the pointer " + NumberUtils.toHexString(this.startAddress) + " is invalid.");
 
             // This data doesn't actually exist, so just write the pointer and be done with it.
-            writer.writeAddressTo(this.startAddress);
+            writer.writeCurrentAddressTo(this.startAddress);
             if (this.rawFileContents != null)
                 writer.writeBytes(this.rawFileContents);
             this.startAddress = -1;

@@ -70,7 +70,7 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
         writer.writeUnsignedShort(VERSION_CODE); // Version code.
         writer.writeNullTerminatedFixedSizeString(this.levelString, LEVEL_STRING_LENGTH);
         int headerListPtrAddress = writer.writeNullPointer();
-        writer.writeAddressTo(headerListPtrAddress);
+        writer.writeCurrentAddressTo(headerListPtrAddress);
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
             SCFilePacket<? extends SCChunkedFile<MediEvilGameInstance>, MediEvilGameInstance> filePacket = getParentFile().getFilePackets().get(i);
             if (filePacket.isActive())

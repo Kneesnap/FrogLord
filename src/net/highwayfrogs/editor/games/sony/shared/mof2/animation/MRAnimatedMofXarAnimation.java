@@ -158,14 +158,14 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
             throw new RuntimeException("MRAnimatedMofXarAnimation did not have save(DataWriter) run first, so writing animation data cannot occur.");
 
         // Read celNumbers.
-        writer.writeAddressTo(this.tempCelNumberPointer);
+        writer.writeCurrentAddressTo(this.tempCelNumberPointer);
         this.tempCelNumberPointer = -1;
         for (int i = 0; i < this.celNumbers.size(); i++)
             writer.writeUnsignedShort(this.celNumbers.get(i));
         writer.align(Constants.INTEGER_SIZE);
 
         // Read transform indices.
-        writer.writeAddressTo(this.tempTransformIdListPointer);
+        writer.writeCurrentAddressTo(this.tempTransformIdListPointer);
         this.tempTransformIdListPointer = -1;
         for (int i = 0; i < this.transformIds.size(); i++)
             writer.writeShort(this.transformIds.get(i));

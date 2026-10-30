@@ -115,10 +115,10 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) 1); // Light type. Always LIGHT_TYPE_STATIC.
+        writer.writeUnsignedByte(1); // Light type. Always LIGHT_TYPE_STATIC.
         writer.writeUnsignedByte(getPriority(this.lightType, this.enabled));
         writer.writeUnsignedShort(this.parentId);
-        writer.writeUnsignedByte((short) this.lightType.getBitFlagMask());
+        writer.writeUnsignedByte(this.lightType.getBitFlagMask());
         writer.align(Constants.INTEGER_SIZE); // Padding
         writer.writeInt(this.color);
         this.position.saveWithPadding(writer);

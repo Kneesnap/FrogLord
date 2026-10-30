@@ -342,7 +342,7 @@ public class Config implements IBinarySerializable {
         }
 
         // Write section name.
-        writer.writeUnsignedByte((short) (this.sectionName != null ? this.sectionName.length() : 0));
+        writer.writeUnsignedByte(this.sectionName != null ? this.sectionName.length() : 0);
         if (this.sectionName != null && this.sectionName.length() > 0)
             writer.writeStringBytes(this.sectionName);
 
@@ -359,7 +359,7 @@ public class Config implements IBinarySerializable {
         writer.writeInt(this.keyValuePairs.size());
         for (String entryKey : this.orderedKeyValuePairs) {
             ConfigValueNode valueNode = this.keyValuePairs.get(entryKey);
-            writer.writeUnsignedByte((short) (entryKey != null ? entryKey.length() : 0));
+            writer.writeUnsignedByte(entryKey != null ? entryKey.length() : 0);
             writer.writeStringBytes(entryKey);
             valueNode.saveToWriter(writer, saveSettings);
         }

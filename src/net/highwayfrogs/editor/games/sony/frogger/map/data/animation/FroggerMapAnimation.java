@@ -177,7 +177,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             throw new RuntimeException("Cannot write texture id list, the pointer " + NumberUtils.toHexString(this.textureIdListPointerAddress) + " is invalid.");
 
         // Write texture IDs.
-        writer.writeAddressTo(this.textureIdListPointerAddress);
+        writer.writeCurrentAddressTo(this.textureIdListPointerAddress);
         for (int i = 0; i < this.textureIds.size(); i++)
             writer.writeShort(this.textureIds.get(i));
         for (int i = 0; i < this.unusedTextureIds.size(); i++)
@@ -195,7 +195,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             throw new RuntimeException("Cannot write target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
         // Write target polygons.
-        writer.writeAddressTo(this.targetPolygonListPointerAddress);
+        writer.writeCurrentAddressTo(this.targetPolygonListPointerAddress);
         for (int i = 0; i < this.targetPolygons.size(); i++)
             this.targetPolygons.get(i).save(writer);
 

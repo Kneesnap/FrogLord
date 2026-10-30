@@ -65,7 +65,7 @@ public class FroggerMapFilePacketAnimation extends FroggerMapFilePacket {
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeInt(this.animations.size());
-        writer.writeAddressTo(writer.writeNullPointer());
+        writer.writeCurrentAddressTo(writer.writeNullPointer());
 
         // Write animation data.
         for (int i = 0; i < this.animations.size(); i++)
@@ -78,7 +78,7 @@ public class FroggerMapFilePacketAnimation extends FroggerMapFilePacket {
         // Write unused texture ids.
         for (int i = 0; i < this.unusedTextureIds.size(); i++)
             writer.writeShort(this.unusedTextureIds.get(i));
-        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF); // Mark end of texture id list.
+        writer.alignWithPaddingByte(Constants.INTEGER_SIZE, (byte) 0xFF); // Mark end of texture id list.
 
         // Write animation id lists.
         for (int i = 0; i < this.animations.size(); i++)

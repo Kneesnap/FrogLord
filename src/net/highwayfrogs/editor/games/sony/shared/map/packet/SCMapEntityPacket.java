@@ -51,7 +51,7 @@ public class SCMapEntityPacket<TGameInstance extends SCGameInstance> extends SCM
         writer.writeUnsignedShort(this.entities.size());
         writer.writeNull(Constants.SHORT_SIZE); // Padding.
         int entityListStartPtrAddress = writer.writeNullPointer();
-        writer.writeAddressTo(entityListStartPtrAddress);
+        writer.writeCurrentAddressTo(entityListStartPtrAddress);
 
         // Write entities.
         for (int i = 0; i < this.entities.size(); i++)

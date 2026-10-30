@@ -84,7 +84,7 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
 
             // Write identifier.
             String identifier = classEntry.getIdentifier();
-            writer.writeUnsignedByte((short) (identifier.length() - 1));
+            writer.writeUnsignedByte(identifier.length() - 1);
             writer.writeStringBytes(identifier);
 
             // Write full class name as fallback.
@@ -347,7 +347,7 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
         } else if (this.entries.size() > 0x100) {
             writer.writeUnsignedShort(classId);
         } else {
-            writer.writeUnsignedByte((short) (int) classId);
+            writer.writeUnsignedByte(classId);
         }
     }
 }

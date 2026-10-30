@@ -127,7 +127,7 @@ public class MediEvilPolygonGridSquare extends SCGameData<MediEvilGameInstance> 
         if (this.polygons.isEmpty())
             throw new IllegalStateException("Tried to save a grid square with zero polygons. (Shouldn't this just be null?)");
 
-        writer.writeAddressTo(this.tempPolygonIdPointer);
+        writer.writeCurrentAddressTo(this.tempPolygonIdPointer);
         this.tempPolygonIdPointer = -1;
 
         List<MediEvilMapPolygon> polygons = getMap().getGraphicsPacket().getPolygons();

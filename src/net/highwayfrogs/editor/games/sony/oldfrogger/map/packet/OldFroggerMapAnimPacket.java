@@ -56,15 +56,15 @@ public class OldFroggerMapAnimPacket extends OldFroggerMapPacket {
         int extraDataPtr = writer.writeNullPointer();
 
         // Write UV animations.
-        writer.writeAddressTo(uvAnimPtr);
+        writer.writeCurrentAddressTo(uvAnimPtr);
         for (int i = 0; i < this.uvAnimations.size(); i++)
             this.uvAnimations.get(i).save(writer);
 
         // Write texture animations.
-        writer.writeAddressTo(texAnimPtr);
+        writer.writeCurrentAddressTo(texAnimPtr);
 
         // Write extra data.
-        writer.writeAddressTo(extraDataPtr);
+        writer.writeCurrentAddressTo(extraDataPtr);
     }
 
     @Override

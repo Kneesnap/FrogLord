@@ -72,7 +72,7 @@ public class MRMofBoundingBoxGroup extends SCSharedGameData {
         if (this.tempBoundingBoxCount >= 0)
             throw new RuntimeException("Cannot write bounding boxes, the state appears to be corrupted.");
 
-        writer.writeAddressTo(this.tempBoundingBoxPointer);
+        writer.writeCurrentAddressTo(this.tempBoundingBoxPointer);
         this.tempBoundingBoxPointer = -1;
         for (int i = 0; i < this.boundingBoxes.size(); i++)
             this.boundingBoxes.get(i).save(writer);

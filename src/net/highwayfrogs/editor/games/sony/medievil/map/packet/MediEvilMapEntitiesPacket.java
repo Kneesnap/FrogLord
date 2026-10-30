@@ -47,7 +47,7 @@ public class MediEvilMapEntitiesPacket extends MediEvilMapPacket implements IPro
         writer.writeShort((short) -1); // Padding.
         int entityListPtr = writer.writeNullPointer();
 
-        writer.writeAddressTo(entityListPtr);
+        writer.writeCurrentAddressTo(entityListPtr);
         for (int i = 0; i < this.entities.size(); i++)
             this.entities.get(i).save(writer);
     }

@@ -48,7 +48,7 @@ public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, 
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeInt(this.entities.size());
         int entityDataStartPointer = writer.writeNullPointer();
-        writer.writeAddressTo(entityDataStartPointer);
+        writer.writeCurrentAddressTo(entityDataStartPointer);
 
         // Write entities.
         for (int i = 0; i < this.entities.size(); i++)

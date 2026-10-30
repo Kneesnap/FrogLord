@@ -231,7 +231,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         }
 
         // This data doesn't actually exist, so just write the pointer and be done with it.
-        writer.writeAddressTo(this.staticEntityListPointer);
+        writer.writeCurrentAddressTo(this.staticEntityListPointer);
         this.staticEntityListPointer = -1;
     }
 

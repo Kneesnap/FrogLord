@@ -120,13 +120,13 @@ public class PTStaticFile extends SCSharedGameFile {
 
         // Write collprim.
         if (this.collprim != null) {
-            writer.writeAddressTo(collprimAddress);
+            writer.writeCurrentAddressTo(collprimAddress);
             this.collprim.save(writer);
             this.collprim.writeMatrix(writer);
         }
 
         // Write part data.
-        writer.writeAddressTo(partDataStartAddress);
+        writer.writeCurrentAddressTo(partDataStartAddress);
         for (int i = 0; i < this.parts.size(); i++)
             this.parts.get(i).save(writer);
 

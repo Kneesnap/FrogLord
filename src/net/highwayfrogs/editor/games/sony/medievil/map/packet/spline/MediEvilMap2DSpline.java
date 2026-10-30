@@ -322,9 +322,9 @@ public class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implem
     @Override
     public void save(DataWriter writer) {
         updateFlags();
-        writer.writeUnsignedByte((short) this.subDivisions.size());
-        writer.writeUnsignedByte((short) (this.cameraSpline != null ? this.cameraSpline.getId() : 0xFF));
-        writer.writeUnsignedByte((short) this.pathChain.getId());
+        writer.writeUnsignedByte(this.subDivisions.size());
+        writer.writeUnsignedByte(this.cameraSpline != null ? this.cameraSpline.getId() : 0xFF);
+        writer.writeUnsignedByte(this.pathChain.getId());
         writer.writeByte(this.numDeadSubDivsStart);
         writer.writeByte(this.numDeadSubDivsEnd);
         writer.writeByte(this.flags);
@@ -348,7 +348,7 @@ public class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implem
         if (this.tempSplineSubDivPointer <= 0)
             throw new RuntimeException("Cannot save tempSplineSubDivPointer, the pointer " + NumberUtils.toHexString(this.tempSplineSubDivPointer) + " is invalid.");
 
-        writer.writeAddressTo(this.tempSplineSubDivPointer);
+        writer.writeCurrentAddressTo(this.tempSplineSubDivPointer);
         this.tempSplineSubDivPointer = -1;
 
         // Write subdivisions.

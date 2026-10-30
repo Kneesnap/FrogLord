@@ -75,7 +75,7 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
         int clutDataPointer = writer.writeNullPointer();
 
         // Write image data pointer.
-        writer.writeAddressTo(imageDataPointer);
+        writer.writeCurrentAddressTo(imageDataPointer);
         imageDataPointer = writer.getIndex();
 
         // Write image data.

@@ -52,7 +52,7 @@ public abstract class AdvancedHeightFieldLandscapeNode<TVertex extends AdvancedH
                 if (column == null)
                     continue;
 
-                writer.writeUnsignedByte((short) column.getSortedVertices().size());
+                writer.writeUnsignedByte(column.getSortedVertices().size());
                 for (int j = 0; j < column.getSortedVertices().size(); j++)
                     column.getSortedVertices().get(j).save(writer);
             }

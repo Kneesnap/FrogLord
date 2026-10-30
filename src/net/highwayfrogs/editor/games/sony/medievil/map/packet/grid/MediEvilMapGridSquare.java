@@ -120,8 +120,8 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
         this.tempColPrimIdPointer = writer.writeNullPointer();
         writer.writeNullPointer(); // Seems to be set to null during map load.
         this.tempSplinePointer = writer.writeNullPointer();
-        writer.writeUnsignedByte((short) this.collprims.size());
-        writer.writeUnsignedByte((short) this.splines.size());
+        writer.writeUnsignedByte(this.collprims.size());
+        writer.writeUnsignedByte(this.splines.size());
         writer.writeUnsignedShort(0); // Skip unknown value.
 
         // 2 Runtime pointer fields.
@@ -169,7 +169,7 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
             return;
         }
 
-        writer.writeAddressTo(this.tempColPrimIdPointer);
+        writer.writeCurrentAddressTo(this.tempColPrimIdPointer);
         this.tempColPrimIdPointer = -1;
 
         MediEvilMapCollprimsPacket collprimsPacket = getMap().getCollprimsPacket();
@@ -215,11 +215,11 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
             return;
         }
 
-        writer.writeAddressTo(this.tempSplinePointer);
+        writer.writeCurrentAddressTo(this.tempSplinePointer);
         this.tempSplinePointer = -1;
 
         for (int i = 0; i < this.splines.size(); i++)
-            writer.writeUnsignedByte((short) this.splines.get(i).getId());
+            writer.writeUnsignedByte(this.splines.get(i).getId());
     }
 
     @Override

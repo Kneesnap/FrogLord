@@ -128,7 +128,7 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
         writer.jumpReturn();
 
         // 5) Write final file size.
-        writer.writeAddressTo(fullFileSizePtr);
+        writer.writeCurrentAddressTo(fullFileSizePtr);
     }
 
     /*@Override

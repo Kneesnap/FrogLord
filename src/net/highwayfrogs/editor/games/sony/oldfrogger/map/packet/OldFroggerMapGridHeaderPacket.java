@@ -85,7 +85,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeUnsignedByte((short) (this.type != null ? this.type.ordinal() : 0));
+        writer.writeUnsignedByte(this.type != null ? this.type.ordinal() : 0);
         writer.writeNull(1);
         writer.writeUnsignedShort(this.grids.size());
         writer.writeInt(this.xSize);
@@ -100,15 +100,15 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         int staticEntityPointer = writer.writeNullPointer();
 
         // Write grid data.
-        writer.writeAddressTo(gridDataStartAddress);
+        writer.writeCurrentAddressTo(gridDataStartAddress);
         for (int i = 0; i < this.grids.size(); i++)
             this.grids.get(i).save(writer);
 
         // Write quad data. (Currently unimplemented)
-        writer.writeAddressTo(quadPointer);
+        writer.writeCurrentAddressTo(quadPointer);
 
         // Write entity list.
-        writer.writeAddressTo(staticEntityPointer);
+        writer.writeCurrentAddressTo(staticEntityPointer);
         for (int i = 0; i < this.grids.size(); i++) {
             OldFroggerMapGrid grid = this.grids.get(i);
             grid.saveEntityListAddress(writer, writer.getIndex());
@@ -280,16 +280,16 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeUnsignedByte((short) this.staticEntities.size());
+            writer.writeUnsignedByte(this.staticEntities.size());
             writer.writeNull(3);
-            writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_F4).size()); // numFloorF4
-            writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_FT4).size()); // numFloorFT4
-            writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numFloorG4
-            writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_GT4).size()); // numFloorGT4
-            writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_F4).size()); // numCeilingF4
-            writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_FT4).size()); // numCeilingFT4
-            writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numCeilingG4
-            writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_GT4).size()); // numCeilingGT4
+            writer.writeUnsignedByte(this.floorPolygonsByType.get(PSXPolygonType.POLY_F4).size()); // numFloorF4
+            writer.writeUnsignedByte(this.floorPolygonsByType.get(PSXPolygonType.POLY_FT4).size()); // numFloorFT4
+            writer.writeUnsignedByte(this.floorPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numFloorG4
+            writer.writeUnsignedByte(this.floorPolygonsByType.get(PSXPolygonType.POLY_GT4).size()); // numFloorGT4
+            writer.writeUnsignedByte(this.ceilingPolygonsByType.get(PSXPolygonType.POLY_F4).size()); // numCeilingF4
+            writer.writeUnsignedByte(this.ceilingPolygonsByType.get(PSXPolygonType.POLY_FT4).size()); // numCeilingFT4
+            writer.writeUnsignedByte(this.ceilingPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numCeilingG4
+            writer.writeUnsignedByte(this.ceilingPolygonsByType.get(PSXPolygonType.POLY_GT4).size()); // numCeilingGT4
 
             this.writtenDataOffset = writer.getIndex();
             writer.writeNull(8 * Constants.INTEGER_SIZE); // Pointers to polygon data. (Overwritten to not be null later)

@@ -68,7 +68,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
 
         // Zone data.
         for (int i = 0; i < this.zones.size(); i++) {
-            writer.writeAddressTo(zonePointerStartIndex + (i * Constants.INTEGER_SIZE));
+            writer.writeCurrentAddressTo(zonePointerStartIndex + (i * Constants.INTEGER_SIZE));
             this.zones.get(i).save(writer);
         }
     }
@@ -134,7 +134,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             writer.writeInt(this.objBoundAZ1);
             writer.writeInt(this.objBoundAX2);
             writer.writeInt(this.objBoundAZ2);
-            writer.writeUnsignedByte((short) this.regions.size());
+            writer.writeUnsignedByte(this.regions.size());
             writer.align(4);
             writer.writeUnsignedShort(this.difficulty);
             writer.writeUnsignedShort(this.zoneType != null ? this.zoneType.ordinal() : 0);

@@ -311,7 +311,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         }
 
         // After file data, write global strings.
-        writer.writeAddressTo(globalPathTablePtr);
+        writer.writeCurrentAddressTo(globalPathTablePtr);
         writer.writeInt(this.globalPaths.size());
         for (String globalPath : this.globalPaths)
             writer.writeNullTerminatedFixedSizeString(globalPath, NAME_SIZE);

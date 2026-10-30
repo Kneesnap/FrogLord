@@ -193,13 +193,13 @@ public class VloFile extends SCSharedGameFile {
         }
 
         // Write images.
-        writer.writeAddressTo(imageHeaderPointer);
+        writer.writeCurrentAddressTo(imageHeaderPointer);
         for (int i = 0; i < this.images.size(); i++)
             this.images.get(i).save(writer);
 
         // Write CLUT entries.
         if (isPsxMode()) {
-            writer.writeAddressTo(clutStartAddress);
+            writer.writeCurrentAddressTo(clutStartAddress);
             List<VloClut> cluts = this.clutList.getCluts();
             for (int i = 0; i < cluts.size(); i++)
                 cluts.get(i).save(writer);
@@ -251,7 +251,7 @@ public class VloFile extends SCSharedGameFile {
             VloImage image = this.images.get(index);
             String imageName = image.getName();
             writer.writeUnsignedShort(index);
-            writer.writeUnsignedByte((short) imageName.length());
+            writer.writeUnsignedByte(imageName.length());
             writer.writeStringBytes(imageName);
         }
     }

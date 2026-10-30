@@ -60,7 +60,7 @@ public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCM
         writer.writeUnsignedShort(VERSION_CODE); // Version code.
         writer.writeInt(this.sectionId); // Section ID.
         int headerListPtrAddress = writer.writeNullPointer();
-        writer.writeAddressTo(headerListPtrAddress);
+        writer.writeCurrentAddressTo(headerListPtrAddress);
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
             SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> filePacket = getParentFile().getFilePackets().get(i);
             if (filePacket.isActive())

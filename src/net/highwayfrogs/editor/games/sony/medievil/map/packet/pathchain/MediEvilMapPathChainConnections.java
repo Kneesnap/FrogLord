@@ -142,17 +142,17 @@ public class MediEvilMapPathChainConnections extends SCGameObject<MediEvilGameIn
         requireReaderIndex(reader, this.tempChainIdOffset, "Expected " + this.name + "ChainIdOffset");
         this.tempChainIdOffset = reader.readInt();
         this.tempConnectionDirections = reader.readByte();
-        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
+        reader.alignRequireByte(Constants.INTEGER_SIZE, (byte) 0xFF);
     }
 
     void saveChainIdOffset(DataWriter writer) {
         if (this.tempChainIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save " + this.name + "ChainIdOffset, the pointer " + NumberUtils.toHexString(this.tempChainIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempChainIdOffset);
+        writer.writeCurrentAddressTo(this.tempChainIdOffset);
         this.tempChainIdOffset = writer.writeNullPointer();
         writer.writeByte(generateConnectionDirectionByte());
-        writer.align(Constants.INTEGER_SIZE, (byte) 0xFF);
+        writer.alignWithPaddingByte(Constants.INTEGER_SIZE, (byte) 0xFF);
     }
 
     void loadChainIds(DataReader reader) {
@@ -168,10 +168,10 @@ public class MediEvilMapPathChainConnections extends SCGameObject<MediEvilGameIn
         if (this.tempChainIdOffset <= 0) // This is not observed to be 0/empty.
             throw new RuntimeException("Cannot save " + this.name + "ChainIds, the pointer " + NumberUtils.toHexString(this.tempChainIdOffset) + " is invalid.");
 
-        writer.writeAddressTo(this.tempChainIdOffset);
+        writer.writeCurrentAddressTo(this.tempChainIdOffset);
         this.tempChainIdOffset = -1;
         for (int i = 0; i < this.connections.size(); i++)
-            writer.writeUnsignedByte((short) this.connections.get(i).getId());
+            writer.writeUnsignedByte(this.connections.get(i).getId());
     }
 
     void resolveChains() {

@@ -115,29 +115,29 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
         int gridLengthTableStartIndex = writer.writeNullPointer();
 
         // Read polygons.
-        writer.writeAddressTo(polygonDataStartIndex);
+        writer.writeCurrentAddressTo(polygonDataStartIndex);
         for (int i = 0; i < this.polygons.size(); i++)
             this.polygons.get(i).save(writer);
 
         // Write vertices.
-        writer.writeAddressTo(vertexDataStartIndex);
+        writer.writeCurrentAddressTo(vertexDataStartIndex);
         for (int i = 0; i < this.vertices.size(); i++)
             this.vertices.get(i).save(writer);
 
         // Write grid offset table.
-        writer.writeAddressTo(gridOffsetTableStartIndex);
+        writer.writeCurrentAddressTo(gridOffsetTableStartIndex);
         for (int y = 0; y < this.vertexGridOffsetTable.length; y++)
             for (int x = 0; x < this.vertexGridOffsetTable[y].length; x++)
                 writer.writeShort(this.vertexGridOffsetTable[y][x]);
 
         // Write grid length table.
-        writer.writeAddressTo(gridLengthTableStartIndex);
+        writer.writeCurrentAddressTo(gridLengthTableStartIndex);
         for (int y = 0; y < this.vertexGridLengthTable.length; y++)
             for (int x = 0; x < this.vertexGridLengthTable[y].length; x++)
                 writer.writeShort(this.vertexGridLengthTable[y][x]);
 
         // Write UVs.
-        writer.writeAddressTo(uvDataStartIndex);
+        writer.writeCurrentAddressTo(uvDataStartIndex);
         for (int i = 0; i < this.uvs.size(); i++)
             this.uvs.get(i).save(writer);
     }

@@ -192,7 +192,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.primitiveBlockStartAddress <= 0)
             throw new RuntimeException("Cannot write primitive block list, the pointer " + NumberUtils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
 
-        writer.writeAddressTo(this.primitiveBlockStartAddress);
+        writer.writeCurrentAddressTo(this.primitiveBlockStartAddress);
         for (int i = 0; i < this.primitiveBlocks.size(); i++)
             this.primitiveBlocks.get(i).save(writer);
 
@@ -207,7 +207,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.collprimListAddress <= 0)
             throw new RuntimeException("Cannot write collprim list, the pointer " + NumberUtils.toHexString(this.collprimListAddress) + " is invalid.");
 
-        writer.writeAddressTo(this.collprimListAddress);
+        writer.writeCurrentAddressTo(this.collprimListAddress);
         for (int i = 0; i < this.collprims.size(); i++)
             this.collprims.get(i).save(writer);
 
@@ -231,7 +231,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.mimeVectorStartAddress <= 0)
             throw new RuntimeException("Cannot write mime vector list, the pointer " + NumberUtils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
 
-        writer.writeAddressTo(this.mimeVectorStartAddress);
+        writer.writeCurrentAddressTo(this.mimeVectorStartAddress);
         if ((this.parentPart.getFlags() & PTStaticPart.FLAG_MIME_ENABLED) == PTStaticPart.FLAG_MIME_ENABLED)
             for (int i = 0; i < this.mimeVectors.size(); i++)
                 this.mimeVectors.get(i).saveWithPadding(writer);
@@ -247,7 +247,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.vectorStartAddress <= 0)
             throw new RuntimeException("Cannot write vector list, the pointer " + NumberUtils.toHexString(this.vectorStartAddress) + " is invalid.");
 
-        writer.writeAddressTo(this.vectorStartAddress);
+        writer.writeCurrentAddressTo(this.vectorStartAddress);
         for (int i = 0; i < this.vectors.size(); i++)
             this.vectors.get(i).saveWithPadding(writer);
 

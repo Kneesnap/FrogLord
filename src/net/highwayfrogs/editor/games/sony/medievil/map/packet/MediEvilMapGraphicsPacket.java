@@ -140,22 +140,22 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         int vertexGridLengthTablePtr = writer.writeNullPointer();
 
         // Write polygons.
-        writer.writeAddressTo(polygonListPtr);
+        writer.writeCurrentAddressTo(polygonListPtr);
         for (int i = 0; i < this.polygons.size(); i++)
             this.polygons.get(i).save(writer);
 
         // Write vertices.
-        writer.writeAddressTo(vertexListPtr);
+        writer.writeCurrentAddressTo(vertexListPtr);
         for (int i = 0; i < this.vertices.size(); i++)
             this.vertices.get(i).saveWithPadding(writer);
 
         // Write grid offset table.
-        writer.writeAddressTo(vertexGridOffsetTablePtr);
+        writer.writeCurrentAddressTo(vertexGridOffsetTablePtr);
         for (int i = 0; i < this.vertexGridOffsetTable.length; i++)
             writer.writeShort(this.vertexGridOffsetTable[i]);
 
         // Write grid length table.
-        writer.writeAddressTo(vertexGridLengthTablePtr);
+        writer.writeCurrentAddressTo(vertexGridLengthTablePtr);
         for (int i = 0; i < this.vertexGridLengthTable.length; i++)
             writer.writeShort(this.vertexGridLengthTable[i]);
     }

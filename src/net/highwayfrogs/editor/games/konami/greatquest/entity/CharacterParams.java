@@ -192,8 +192,8 @@ public class CharacterParams extends kcActorDesc implements IPropertyListCreator
         writer.writeUnsignedByte(this.AITemp2);
         writer.writeUnsignedByte(this.AITemp3);
         writer.writeUnsignedByte(this.AITemp4);
-        writer.writeUnsignedByte((short) 0); // AITemp5
-        writer.writeUnsignedByte((short) 0); // AITemp6
+        writer.writeUnsignedByte(0); // AITemp5
+        writer.writeUnsignedByte(0); // AITemp6
         writer.writeInt(this.closeDistance);
         writer.writeUnsignedByte(this.dodgePercent);
         writer.writeUnsignedByte(this.tauntPercent);

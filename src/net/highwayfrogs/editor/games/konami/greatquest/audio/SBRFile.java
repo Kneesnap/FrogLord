@@ -156,7 +156,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             writer.writeInt(GreatQuestInstance.PADDING_CD_INT);
 
         int sfxAttributeDataStart = writer.getIndex();
-        writer.writeAddressTo(sfxAttrOffset);
+        writer.writeCurrentAddressTo(sfxAttrOffset);
         for (int i = 0; i < this.soundEffects.size(); i++) {
             writer.writeIntAtPos(sfxAttrOffsets[i], writer.getIndex() - sfxAttributeDataStart);
             this.soundEffects.get(i).getAttributes().save(writer);
@@ -166,7 +166,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         // Write wav.
         int waveHeaderStartIndex = writer.getIndex();
         int writtenWaveDataBytes = 0;
-        writer.writeAddressTo(waveAttrOffset);
+        writer.writeCurrentAddressTo(waveAttrOffset);
         for (int i = 0; i < this.waves.size(); i++) {
             SfxWave wave = this.waves.get(i);
             wave.save(writer, writtenWaveDataBytes);
@@ -177,7 +177,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         // Write wav data.
         int waveDataStartsAt = writer.getIndex();
-        writer.writeAddressTo(waveDataOffset);
+        writer.writeCurrentAddressTo(waveDataOffset);
         for (int i = 0; i < this.waves.size(); i++)
             this.waves.get(i).saveAudioData(writer);
 

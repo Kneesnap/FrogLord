@@ -56,7 +56,7 @@ public class AdvancedHeightFieldVertexColumn extends SCSharedGameData {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.rootVertex != null ? this.rootVertex.getVertexId() : -1);
-        writer.writeUnsignedByte((short) this.sortedVertices.size());
+        writer.writeUnsignedByte(this.sortedVertices.size());
         for (int i = 0; i < this.sortedVertices.size(); i++)
             writer.writeInt(this.sortedVertices.get(i).getVertexId());
     }

@@ -16,7 +16,6 @@ import java.util.Stack;
 
 /**
  * Allows writing data to a receiver.
- * TODO: Go over this and error when we write stuff outside of the expected values.
  * Created by Kneesnap on 8/10/2018.
  */
 public class DataWriter {
@@ -63,16 +62,15 @@ public class DataWriter {
      * @param alignment The number of bytes the index should have an increment of.
      */
     public void align(int alignment) {
-        align(alignment, Constants.NULL_BYTE);
+        alignWithPaddingByte(alignment, Constants.NULL_BYTE);
     }
 
     /**
      * Skip bytes to align to the given byte boundary.
-     * TODO: Make byte argument ordering consistent with DataReader.
      * @param alignment The number of bytes the index should have an increment of.
      * @param padding   The padding byte
      */
-    public void align(int alignment, byte padding) {
+    public void alignWithPaddingByte(int alignment, byte padding) {
         int index = getIndex();
         int offsetAmount = (index % alignment);
         if (offsetAmount != 0)
@@ -82,21 +80,20 @@ public class DataWriter {
 
     /**
      * Write null bytes to a given address.
-     * TODO: Poor function name.
      * @param address The address to end at.
      */
-    public void writeTo(int address) {
-        writeTo(address, Constants.NULL_BYTE);
+    public void writeNullBytesUntilTarget(int address) {
+        writeByteUntilTarget(address, Constants.NULL_BYTE);
     }
 
     /**
      * Write null bytes to a given address.
      * @param address The address to end at.
      */
-    public void writeTo(int address, byte writeByte) {
+    public void writeByteUntilTarget(int address, byte writeByte) {
         int bytes = address - getIndex();
         if (bytes < 0)
-            throw new RuntimeException("writeTo cannot write backwards! (" + bytes + ")");
+            throw new RuntimeException("writeByteUntilTarget cannot write backwards! (" + bytes + ")");
 
         byte[] byteArray = new byte[bytes];
         if (writeByte != Constants.NULL_BYTE)
@@ -199,10 +196,18 @@ public class DataWriter {
 
     /**
      * Writes an unsigned byte short as an unsigned byte.
-     * @param value the short to write. TODO: Accept integer, and throw if outside of range. Throw if a negative value is provided too.
+     * @param value the short to write.
      */
     public void writeUnsignedByte(short value) {
         writeByte(DataUtils.unsignedShortToByte(value));
+    }
+
+    /**
+     * Writes an unsigned byte integer as an unsigned byte.
+     * @param value the int value to write.
+     */
+    public void writeUnsignedByte(int value) {
+        writeByte(DataUtils.unsignedIntToByte(value));
     }
 
     /**
@@ -273,23 +278,6 @@ public class DataWriter {
     }
 
     /**
-     * Write a number, taking up a wanted amount of bytes.
-     * @param value The number value to write.
-     * @param bytes The number of bytes.
-     */
-    public void writeNumber(Number value, int bytes) {
-        if (bytes == Constants.BYTE_SIZE) {
-            writeByte(value.byteValue());
-        } else if (bytes == Constants.SHORT_SIZE) {
-            writeShort(value.shortValue());
-        } else if (bytes == Constants.INTEGER_SIZE) {
-            writeInt(value.intValue());
-        } else {
-            throw new RuntimeException("Failed to write " + value + ". Don't know how to write " + bytes + " bytes.");
-        }
-    }
-
-    /**
      * Write the bytes to a string, then return the amount of bytes written.
      * WARNING: This has no terminator or length, so only use this if you know what you're doing.
      * @param str The string to write.
@@ -354,7 +342,7 @@ public class DataWriter {
      * Write an address.
      * @param writeTo The old address to write the current address to.
      */
-    public void writeAddressTo(int writeTo) {
+    public void writeCurrentAddressTo(int writeTo) {
         writeIntAtPos(writeTo, getIndex());
     }
 
@@ -420,7 +408,7 @@ public class DataWriter {
 
         if (pathEndIndex != getIndex()) { // If the string reaches the end, it should be considered cut off because it was too long.
             writeByte(Constants.NULL_BYTE); // Terminator Byte
-            writeTo(pathEndIndex, padding);
+            writeByteUntilTarget(pathEndIndex, padding);
         }
     }
 

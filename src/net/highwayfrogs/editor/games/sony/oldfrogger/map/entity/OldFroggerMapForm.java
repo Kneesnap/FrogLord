@@ -100,7 +100,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
 
         // Write form data entries.
         for (int i = 0; i < this.formDataEntries.size(); i++) {
-            writer.writeAddressTo(formEntryDataStartAddress + (i * Constants.INTEGER_SIZE));
+            writer.writeCurrentAddressTo(formEntryDataStartAddress + (i * Constants.INTEGER_SIZE));
             this.formDataEntries.get(i).save(writer);
         }
     }

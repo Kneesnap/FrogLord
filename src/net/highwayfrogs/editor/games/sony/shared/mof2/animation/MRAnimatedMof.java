@@ -138,7 +138,7 @@ public class MRAnimatedMof extends MRBaseModelData {
         int staticFilePointer = writer.writeNullPointer(); // After common data.
 
         // Write model sets.
-        writer.writeAddressTo(modelSetPointer);
+        writer.writeCurrentAddressTo(modelSetPointer);
         for (int i = 0; i < this.modelSets.size(); i++)
             this.modelSets.get(i).save(writer);
 
@@ -147,7 +147,7 @@ public class MRAnimatedMof extends MRBaseModelData {
             this.modelSets.get(i).writeModelSetData(writer);
 
         // Write common data.
-        writer.writeAddressTo(commonDataPointer);
+        writer.writeCurrentAddressTo(commonDataPointer);
         this.commonData.save(writer);
 
         // Write static MOFs.
@@ -163,7 +163,7 @@ public class MRAnimatedMof extends MRBaseModelData {
         }
 
         // Write MOF pointer table.
-        writer.writeAddressTo(staticFilePointer);
+        writer.writeCurrentAddressTo(staticFilePointer);
         for (int i = 0; i < mofPointers.length; i++)
             writer.writeInt(mofPointers[i]);
     }

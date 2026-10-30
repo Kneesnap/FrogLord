@@ -89,7 +89,7 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket implements IPro
         int quadDataStartAddress = writer.writeNullPointer();
 
         // Write quads.
-        writer.writeAddressTo(quadDataStartAddress);
+        writer.writeCurrentAddressTo(quadDataStartAddress);
         OldFroggerMapGridHeaderPacket gridPacket = getParentFile().getGridPacket();
         List<PSXPolygonType> polygonOrder = OldFroggerMapGrid.POLYGON_TYPE_ORDER;
 

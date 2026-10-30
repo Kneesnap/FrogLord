@@ -133,12 +133,12 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket implements IPr
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeNull(Constants.SHORT_SIZE); // Runtime values probably.
-        writer.writeUnsignedByte((short) this.pathChainNodes.size());
+        writer.writeUnsignedByte(this.pathChainNodes.size());
         writer.writeByte(Constants.NULL_BYTE); // Padding (garbage)
         int chainDataStartAddress = writer.writeNullPointer();
 
         // Write path chains.
-        writer.writeAddressTo(chainDataStartAddress);
+        writer.writeCurrentAddressTo(chainDataStartAddress);
         for (int i = 0; i < this.pathChainNodes.size(); i++)
             this.pathChainNodes.get(i).save(writer);
 

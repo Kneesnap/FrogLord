@@ -695,7 +695,7 @@ public class MRMofPart extends SCSharedGameData {
         }
 
         // Write PartCel headers.
-        writer.writeAddressTo(partcelPointer);
+        writer.writeCurrentAddressTo(partcelPointer);
         if (incompleteMof) {
             writer.writeNull(this.partCels.size() * MRMofPartCel.SIZE_IN_BYTES);
         } else {
@@ -740,7 +740,7 @@ public class MRMofPart extends SCSharedGameData {
         if (this.hilites.isEmpty())
             return;
 
-        writer.writeAddressTo(hilitePointer);
+        writer.writeCurrentAddressTo(hilitePointer);
         for (int i = 0; i < this.hilites.size(); i++)
             this.hilites.get(i).save(writer);
     }
@@ -772,7 +772,7 @@ public class MRMofPart extends SCSharedGameData {
         if (this.collPrims.isEmpty())
             return;
 
-        writer.writeAddressTo(collPrimPointer);
+        writer.writeCurrentAddressTo(collPrimPointer);
         for (int i = 0; i < this.collPrims.size(); i++)
             this.collPrims.get(i).save(writer);
     }
@@ -839,7 +839,7 @@ public class MRMofPart extends SCSharedGameData {
         if (this.collPrimMatrices.isEmpty())
             return;
 
-        writer.writeAddressTo(matrixPointer);
+        writer.writeCurrentAddressTo(matrixPointer);
         for (int i = 0; i < this.collPrims.size(); i++)
             this.collPrimMatrices.get(i).save(writer);
     }
@@ -906,7 +906,7 @@ public class MRMofPart extends SCSharedGameData {
         if (this.textureAnimations.isEmpty() && this.textureAnimationPolygonTargets.isEmpty())
             return;
 
-        writer.writeAddressTo(partPolyAnimPointer);
+        writer.writeCurrentAddressTo(partPolyAnimPointer);
         writer.writeInt(this.textureAnimationPolygonTargets.size());
 
         // Write texture animation targets.
@@ -947,7 +947,7 @@ public class MRMofPart extends SCSharedGameData {
         if (this.flipbook.getAnimations().isEmpty())
             return;
 
-        writer.writeAddressTo(flipbookPointer);
+        writer.writeCurrentAddressTo(flipbookPointer);
         this.flipbook.save(writer);
     }
 
@@ -986,7 +986,7 @@ public class MRMofPart extends SCSharedGameData {
         /*if (doesVersionFormatHaveExtraZeroBeforePolygonData())
             writer.writeInt(0);*/ // I don't think this is necessary.
 
-        writer.writeAddressTo(primitivePointer);
+        writer.writeCurrentAddressTo(primitivePointer);
 
         // Write polygons.
         for (int i = 0; i < this.polygonBlocks.size(); i++)

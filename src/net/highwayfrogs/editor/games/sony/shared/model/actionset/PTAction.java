@@ -99,7 +99,7 @@ public class PTAction extends SCSharedGameData {
         if (this.keyFrameIndexListPointer <= 0)
             throw new RuntimeException("Cannot read key frame list, the pointer is invalid.");
 
-        writer.writeAddressTo(this.keyFrameIndexListPointer);
+        writer.writeCurrentAddressTo(this.keyFrameIndexListPointer);
         for (int i = 0; i < this.virtualFrames.length; i++)
             writer.writeInt(this.virtualFrames[i]);
 
@@ -114,7 +114,7 @@ public class PTAction extends SCSharedGameData {
         if (this.transformIndexListPointer <= 0)
             throw new RuntimeException("Cannot write transform index list, the pointer is invalid.");
 
-        writer.writeAddressTo(this.transformIndexListPointer);
+        writer.writeCurrentAddressTo(this.transformIndexListPointer);
         for (int transform = 0; transform < this.transformationIndices.length; transform++)
             for (int keyFrame = 0; keyFrame < this.transformationIndices[transform].length; keyFrame++)
                 writer.writeShort(this.transformationIndices[transform][keyFrame]);

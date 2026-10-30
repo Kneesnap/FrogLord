@@ -70,8 +70,8 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(EXPECTED_TYPE);
-        writer.writeUnsignedByte((short) this.models.size());
-        writer.writeUnsignedByte((short) CEL_SET_COUNT);
+        writer.writeUnsignedByte(this.models.size());
+        writer.writeUnsignedByte(CEL_SET_COUNT);
         this.tempBboxSetCountPointer = writer.getIndex();
         writer.writeNull(2); // BBOX Count (written later) and 1 byte of padding.
 
@@ -162,7 +162,7 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
             throw new RuntimeException("Cannot save MRAnimatedMofModelSet body data, as save(DataReader) has been called yet.");
 
         // Write models.
-        writer.writeAddressTo(this.tempModelPointer);
+        writer.writeCurrentAddressTo(this.tempModelPointer);
         for (int i = 0; i < this.models.size(); i++)
             this.models.get(i).save(writer);
 
@@ -172,7 +172,7 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
 
         // Write Celset.
         int celSetDataPointer = writer.getIndex();
-        writer.writeAddressTo(this.tempCelSetPointer);
+        writer.writeCurrentAddressTo(this.tempCelSetPointer);
         this.celSet.save(writer);
 
         // Writes Cel Set Pointers.
@@ -180,7 +180,7 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
             this.models.get(i).writeCelSetPointer(writer, celSetDataPointer);
 
         // Write bboxSets.
-        writer.writeAddressTo(this.tempBboxSetPointer);
+        writer.writeCurrentAddressTo(this.tempBboxSetPointer);
         Map<MRMofBoundingBoxSet, Integer> writtenBoundingBoxSets = null;
         for (int i = 0; i < this.models.size(); i++) {
             MRAnimatedMofModel model = this.models.get(i);
@@ -204,7 +204,7 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
 
         // Write the number of bounding box sets.
         writer.jumpTemp(this.tempBboxSetCountPointer);
-        writer.writeUnsignedByte((short) (writtenBoundingBoxSets != null ? writtenBoundingBoxSets.size() : 0));
+        writer.writeUnsignedByte(writtenBoundingBoxSets != null ? writtenBoundingBoxSets.size() : 0);
         writer.jumpReturn();
 
         // Clear temp data.

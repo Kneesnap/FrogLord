@@ -201,10 +201,10 @@ public class MRAnimatedMofModel extends SCSharedGameData {
         // Write BBOX
         if (this.boundingBox != null) {
             // TODO: Better support...!!!
-            writer.writeAddressTo(bboxPointer);
+            writer.writeCurrentAddressTo(bboxPointer);
             this.parentModelSet.getParentMof().makeBoundingBox().save(writer);
         } else if (!doesVersionFormatUseEmptyBoundingBoxPointer()) {
-            writer.writeAddressTo(bboxPointer);
+            writer.writeCurrentAddressTo(bboxPointer);
         }
     }
 

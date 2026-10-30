@@ -761,7 +761,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         if (this.tempImageDataPointer < 0)
             throw new RuntimeException("Cannot write image data, the image data pointer is invalid.");
 
-        writer.writeAddressTo(this.tempImageDataPointer);
+        writer.writeCurrentAddressTo(this.tempImageDataPointer);
         writeImageBytes(writer);
 
         this.tempImageDataPointer = -1;

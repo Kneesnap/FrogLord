@@ -137,7 +137,7 @@ public class MisfitModel3DObject implements IBinarySerializable {
         }
 
         // Write the count after calculating which segments are being written.
-        writer.writeUnsignedByte((short) (this.segments.size() + 1)); // Add 1 to account for EOF.
+        writer.writeUnsignedByte((this.segments.size() + 1)); // Add 1 to account for EOF.
 
         // Write headers.
         Map<MMDataBlockHeader<?>, Integer> headerAddressMap = new HashMap<>();
@@ -152,12 +152,12 @@ public class MisfitModel3DObject implements IBinarySerializable {
 
         // Write chunks.
         for (MMDataBlockHeader<?> header : getSegments()) {
-            writer.writeAddressTo(headerAddressMap.remove(header));
+            writer.writeCurrentAddressTo(headerAddressMap.remove(header));
             header.save(writer);
         }
 
         // Write EOF Pointer.
-        writer.writeAddressTo(eofHeaderAddress);
+        writer.writeCurrentAddressTo(eofHeaderAddress);
     }
 
     /**

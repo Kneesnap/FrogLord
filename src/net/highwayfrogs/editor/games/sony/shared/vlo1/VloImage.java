@@ -82,7 +82,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         if (actualLength != expectedLength)
             throw new IllegalStateException("The image was expected to have " + expectedLength + " bytes, but actually had " + actualLength + " bytes of data.");
 
-        writer.writeAddressTo(this.tempImageDataPointer);
+        writer.writeCurrentAddressTo(this.tempImageDataPointer);
         this.tempImageDataPointer = -1;
         if (this.imageBytes != null)
             writer.writeBytes(this.imageBytes);

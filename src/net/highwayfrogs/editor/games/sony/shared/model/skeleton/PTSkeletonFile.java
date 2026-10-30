@@ -63,7 +63,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
         int boneDataStartAddress = writer.writeNullPointer();
 
         // Write bones.
-        writer.writeAddressTo(boneDataStartAddress);
+        writer.writeCurrentAddressTo(boneDataStartAddress);
         for (int i = 0; i < this.bones.size(); i++)
             this.bones.get(i).save(writer);
     }

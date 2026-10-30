@@ -77,7 +77,7 @@ public class OldFroggerMapFormInstancePacket extends OldFroggerMapPacket {
             OldFroggerMapForm form = this.forms.get(i);
 
             // Update form table.
-            writer.writeAddressTo(formPointerArrayStart + (form.getFormType() * Constants.INTEGER_SIZE));
+            writer.writeCurrentAddressTo(formPointerArrayStart + (form.getFormType() * Constants.INTEGER_SIZE));
 
             // Save form.
             form.save(writer);

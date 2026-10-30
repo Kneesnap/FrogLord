@@ -107,9 +107,9 @@ public class MediEvilMap3DSpline extends SCGameData<MediEvilGameInstance> implem
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) this.subDivisions.size());
-        writer.writeUnsignedByte((short) this.pathChain.getId());
-        writer.writeUnsignedByte((short) this.pathSpline.getId());
+        writer.writeUnsignedByte(this.subDivisions.size());
+        writer.writeUnsignedByte(this.pathChain.getId());
+        writer.writeUnsignedByte(this.pathSpline.getId());
         writer.writeNull(3); // Alignment/garbage.
         writer.writeShort(this.uniqueId);
         this.tempSplineSubDivPointer = writer.writeNullPointer();
@@ -137,7 +137,7 @@ public class MediEvilMap3DSpline extends SCGameData<MediEvilGameInstance> implem
         if (this.tempSplineSubDivPointer <= 0)
             throw new RuntimeException("Cannot save tempSplineSubDivPointer, the pointer " + NumberUtils.toHexString(this.tempSplineSubDivPointer) + " is invalid.");
 
-        writer.writeAddressTo(this.tempSplineSubDivPointer);
+        writer.writeCurrentAddressTo(this.tempSplineSubDivPointer);
         this.tempSplineSubDivPointer = -1;
 
         // Write subdivisions.
