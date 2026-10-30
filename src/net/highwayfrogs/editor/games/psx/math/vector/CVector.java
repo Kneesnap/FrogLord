@@ -240,7 +240,6 @@ public class CVector implements IBinarySerializable {
      */
     public void fromARGB(int argbValue) {
         fromRGB(argbValue);
-        // TODO: !
     }
 
     /**
