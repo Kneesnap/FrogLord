@@ -25,8 +25,8 @@ public class FroggerMainMenuUIController extends SCMainMenuUIController<FroggerG
         addMenuItem(this.menuBarEdit, "Edit Scripts", () -> ScriptEditorController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Edit Demo Table", () -> DemoTableEditorController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Patches", () -> PatchController.openMenu(getGameInstance()));
-        addMenuItem(this.menuBarEdit, "Make Difference Report", FroggerVersionComparison::generateReport);
-        addMenuItem(this.menuBarEdit, "Find Unused Vertices", this::findUnusedVertices);
+        addMenuItem(this.menuBarDebug, "Make Difference Report", FroggerVersionComparison::generateReport);
+        addMenuItem(this.menuBarDebug, "Find Unused Vertices", this::findUnusedVertices);
         addMenuItem(this.menuBarEdit, "Create Text Textures", () -> FroggerTextBuilderUIController.openEditor(getGameInstance()));
     }
 

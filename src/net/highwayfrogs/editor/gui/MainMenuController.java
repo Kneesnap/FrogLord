@@ -40,6 +40,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
     @FXML protected MenuItem menuItemLoadMain;
     @FXML protected MenuItem menuItemSaveMain;
     @FXML protected Menu menuBarEdit;
+    protected Menu menuBarDebug = new Menu("Debug");
     @FXML protected MenuItem menuItemRunScript;
     @FXML protected Menu menuBarHelp;
 
@@ -111,6 +112,12 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         });
 
         this.menuBarEdit.getItems().add(this.menuItemRunScript);
+
+        // Add the debug menu after it has been populated. It's a bit of a hack, but I think that's okay.
+        Platform.runLater(() -> {
+            if (!this.menuBarDebug.getItems().isEmpty())
+                this.menuBar.getMenus().add(this.menuBar.getMenus().indexOf(this.menuBarEdit) + 1, this.menuBarDebug);
+        });
     }
 
     /**

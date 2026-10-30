@@ -59,7 +59,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         super.onControllerLoad(rootNode);
 
         // Allow exporting MWI.
-        addMenuItem(this.menuBarFile, "Export MWI", () -> {
+        addMenuItem(this.menuBarDebug, "Export MWI", () -> {
             File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), MWI_FILE, "FROGPSX.MWI");
             if (selectedFile == null)
                 return; // Cancel.
@@ -71,7 +71,10 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
             getLogger().info("Exported MWI.");
         });
+        addMenuItem(this.menuBarDebug, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
+        addMenuItem(this.menuBarDebug, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
 
+        addMenuItem(this.menuBarEdit, "Find Texture", this::promptSearchForTexture);
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
         if (getGameInstance().getVloTree() != null) {
             addMenuItem(this.menuBarEdit, "Rebuild Vlo Files", () -> {
@@ -84,11 +87,8 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             });
         }
 
-        addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
-        addMenuItem(this.menuBarEdit, "Find Texture By ID", this::promptSearchForTexture);
-        addMenuItem(this.menuBarEdit, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
         if (getGameInstance() instanceof ISCMWDHeaderGenerator) {
-            addMenuItem(this.menuBarEdit, "Generate MWD Header File (.H)", () -> {
+            addMenuItem(this.menuBarDebug, "Generate MWD Header File (.H)", () -> {
                 String defaultFileName = getGameInstance().getGameType().getMwdHeaderFileName();
                 if (defaultFileName == null)
                     defaultFileName = "export.h";
@@ -98,7 +98,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
                     ((ISCMWDHeaderGenerator) getGameInstance()).generateMwdCHeader(targetFile);
             });
 
-            addMenuItem(this.menuBarEdit, "Generate VLO Source Files (.C/.H)", () -> {
+            addMenuItem(this.menuBarDebug, "Generate VLO Source Files (.C/.H)", () -> {
                 String defaultFileName = getGameInstance().getGameType().getVloHeaderFileName();
                 if (defaultFileName == null)
                     defaultFileName = "vlo.h";

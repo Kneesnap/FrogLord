@@ -16,6 +16,6 @@ public class OldFroggerMainMenuUIController extends SCMainMenuUIController<OldFr
     @Override
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
-        addMenuItem(this.menuBarEdit, "Generate FontForge Script", () -> OldFroggerFontGenerator.saveFontForgePythonScript(getGameInstance()));
+        addMenuItem(this.menuBarDebug, "Generate FontForge Script", () -> OldFroggerFontGenerator.saveFontForgePythonScript(getGameInstance()));
     }
 }
