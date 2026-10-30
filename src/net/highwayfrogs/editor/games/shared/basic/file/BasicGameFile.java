@@ -33,6 +33,7 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     @Setter private byte[] rawData;
 
     private static final SavedFilePath CHUNK_FILE_PATH = new SavedFilePath("rawFileDataPath", "Please select the file to export the raw data as.", BrowserFileType.ALL_FILES);
+    private static final long LARGE_FILE_DATA_THRESHOLD = 50 * DataSizeUnit.MEGABYTE.getIncrement();
 
 
     @SuppressWarnings("unchecked")
@@ -44,6 +45,11 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), BasicGameFile::getLoggerString, this);
+    }
+
+    @Override
+    public boolean isLargeFile() {
+        return this.rawData != null && this.rawData.length >= LARGE_FILE_DATA_THRESHOLD;
     }
 
     /**

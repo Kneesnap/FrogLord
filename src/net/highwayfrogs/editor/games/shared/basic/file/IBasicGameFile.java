@@ -20,6 +20,11 @@ public interface IBasicGameFile extends IGameObject, ICollectionViewEntry, IProp
     IGameFileDefinition getFileDefinition();
 
     /**
+     * Returns true iff saving this file should use a LargeFileReceiver.
+     */
+    boolean isLargeFile();
+
+    /**
      * Gets the displayed name of the file.
      * @return fileDisplayName
      */

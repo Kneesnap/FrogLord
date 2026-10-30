@@ -72,7 +72,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
 
                 File targetFile = file.getFileDefinition().getFile();
                 progressBar.setStatusMessage("Saving '" + targetFile.getName() + "'");
-                DataWriter writer = new DataWriter(targetFile.getName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(targetFile) : new FileReceiver(targetFile)); // TODO: Allow specifying if it needs a large receiver.
+                DataWriter writer = new DataWriter(file.isLargeFile() ? new LargeFileReceiver(targetFile) : new FileReceiver(targetFile));
                 file.save(writer);
                 writer.closeReceiver();
 
