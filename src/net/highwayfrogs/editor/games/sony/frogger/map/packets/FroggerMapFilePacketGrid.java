@@ -128,31 +128,20 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
 
         // Validate grid stack heights look okay.
         if (doGridStacksHaveCliffHeights()) {
-            // Due to floating point precision loss (game uses 16-bit fixed point, and mappy used 32-bit floats), we can't actually use a single threshold.
-            // This is because when vertices were rounded to their nearest 16-bit fixed point representation, many vertices also crossed the threshold of "not part of the stack" to "part of the stack" or the other way around.
-            // In other words, due to imprecision, the real threshold may be off by +1 or -1 on a per-vertex basis.
-            // For performance & conceptual complexity reasons, we don't actually do a full per-vertex calculation.
-            // Instead, we just use the same threshold for all vertices, and try the different thresholds, as this works in most cases.
-            Map<FroggerGridStack, List<SVector>> lessVertices = calculateVertexSquareMapping(FroggerGridStack.NEARBY_VERTEX_THRESHOLD - 1);
-            Map<FroggerGridStack, List<SVector>> usualVertices = calculateVertexSquareMapping(FroggerGridStack.NEARBY_VERTEX_THRESHOLD);
-            Map<FroggerGridStack, List<SVector>> moreVertices = calculateVertexSquareMapping(FroggerGridStack.NEARBY_VERTEX_THRESHOLD + 1);
+            Map<FroggerGridStack, List<SVector>> verticesPerStack = calculateVertexSquareMapping(FroggerGridStack.NEARBY_VERTEX_THRESHOLD);
 
             // The goal is to find grid stacks where our cliff height algorithm recreation isn't accurate, so a warning can be shown.
             int nonMatchingStacks = 0;
             for (int z = 0; z < this.gridStacks.length; z++) {
                 for (int x = 0; x < this.gridStacks[z].length; x++) {
                     FroggerGridStack gridStack = this.gridStacks[z][x];
-                    if ((FroggerGridStack.calculateRawCliffHeightValue(usualVertices.get(gridStack)) != gridStack.getRawCliffHeightValue())
-                            && (FroggerGridStack.calculateRawCliffHeightValue(lessVertices.get(gridStack)) != gridStack.getRawCliffHeightValue())
-                            && (FroggerGridStack.calculateRawCliffHeightValue(moreVertices.get(gridStack)) != gridStack.getRawCliffHeightValue()))
+                    if (FroggerGridStack.calculateRawCliffHeightValue(verticesPerStack.get(gridStack)) != gridStack.getRawCliffHeightValue())
                         nonMatchingStacks++;
                 }
             }
 
-            // In build 30, the maximum seen is 13 in VOL2.MAP, with the only other being 2 in VOL3.MAP.
-            // In build 71, the maximum seen is 12 in VOL2.MAP, followed by 2 in a few other maps.
-            if (nonMatchingStacks >= 20)
-                getLogger().warning("Found %d grid stacks with unmatched cliff heights.", nonMatchingStacks);
+            if (nonMatchingStacks > 0)
+                getLogger().warning("Found %d grid stacks with unmatched cliff height(s).", nonMatchingStacks);
         }
 
         // Ensure all grid triangles use the last vertex as the fourth vertex for calculation purposes.
@@ -189,14 +178,13 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
                     int polygonGridX = getGridXFromWorldX(tempCenterOfPolygon.getX());
                     int polygonGridZ = getGridZFromWorldZ(tempCenterOfPolygon.getZ());
 
-                    // The only time this has been observed is in SWP5_WIN95.MAP, and that data looks damaged/unintended.
-                    if (polygonGridX != gridStack.getX() && polygonGridZ != gridStack.getZ() && !getParentFile().getFileDisplayName().equalsIgnoreCase("SWP5_WIN95.MAP"))
+                    if (polygonGridX != gridStack.getX() && polygonGridZ != gridStack.getZ())
                         polygon.getLogger().warning("Polygon was in grid square [%d, %d], but its center was actually found in [%d, %d].", gridStack.getX(), gridStack.getZ(), polygonGridX, polygonGridZ);
 
                     // FFS uses the height of each polygon in a grid stack to determine the ordering.
                     // This ensures that such an assumption is valid.
                     float currentY = tempCenterOfPolygon.getY();
-                    if (currentY > lastY && !getParentFile().getFileDisplayName().equalsIgnoreCase("SWP5_WIN95.MAP")) // Remember that Frogger's "up" is negative. (So a negative number would technically represent a higher height than a positive number)
+                    if (currentY > lastY) // Remember that Frogger's "up" is negative. (So a negative number would technically represent a higher height than a positive number)
                         square.getLogger().warning("The grid square's height (%f) was lower than the previous square's height! (%f)", currentY, lastY);
 
                     lastY = currentY;
@@ -336,7 +324,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return gridX
      */
     public int getGridXFromWorldX(int worldX) {
-        return (worldX - getBaseGridX()) / GRID_STACK_WORLD_LENGTH;
+        return Math.floorDiv(worldX - getBaseGridX(), GRID_STACK_WORLD_LENGTH);
     }
 
     /**
@@ -354,7 +342,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return gridZ
      */
     public int getGridZFromWorldZ(int worldZ) {
-        return (worldZ - getBaseGridZ()) / GRID_STACK_WORLD_LENGTH;
+        return Math.floorDiv(worldZ - getBaseGridZ(), GRID_STACK_WORLD_LENGTH);
     }
 
     /**
@@ -585,6 +573,14 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
             SVector vertexPos = vertices.get(i);
             int testX = vertexPos.getX();
             int testZ = vertexPos.getZ();
+
+            // The original cliff heights match a nearby-vertex inclusion test before X/Z were truncated toward zero.
+            // Model the lost fraction as half a fixed-point unit away from zero. With floor-based grid
+            // conversion and integer thresholds, this is equivalent to subtracting one only for negatives.
+            if (testX < 0)
+                testX--;
+            if (testZ < 0)
+                testZ--;
 
             int gridX = getGridXFromWorldX(testX);
             int gridZ = getGridZFromWorldZ(testZ);

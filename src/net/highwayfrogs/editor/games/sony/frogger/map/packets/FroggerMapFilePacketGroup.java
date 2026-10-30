@@ -40,7 +40,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     private FroggerMapGroup[][] mapGroups;
     @Getter private final FroggerMapGroup invisibleMapGroup;
 
-    public static final int GRID_STACK_LENGTH = 3; // The length of
+    public static final int GRID_STACK_LENGTH = 3; // The length of a group (measured in grid stacks/squares).
     public static final int GROUP_WORLD_LENGTH = GRID_STACK_LENGTH * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH; // 768
     public static final int MAX_ALLOWED_GROUP_COUNT = 85;
     public static final int MIN_GROUP_TILE_POS = -(MAX_ALLOWED_GROUP_COUNT / 2);
@@ -160,8 +160,6 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
     @Override
     public void clear() {
-        this.groupXSize = 1;
-        this.groupZSize = 1;
         this.groupXSize = GROUP_WORLD_LENGTH;
         this.groupZSize = GROUP_WORLD_LENGTH;
         this.invisibleMapGroup.clear();
