@@ -65,7 +65,7 @@ public class FroggerFormGridData extends SCGameData<FroggerGameInstance> {
                 short gridSquareFlags = this.gridFlags[z][x] = reader.readShort();
                 FroggerMapFormSquareReaction reaction = FroggerMapFormSquareReaction.getReactionFromFlags(gridSquareFlags);
                 if (reaction == null)
-                    getLogger().warning("Grid Square[z=%d,x=%d] contains an unrecognized grid square flag reaction! (Value: 0x%08X)", z, x, DataUtils.shortToUnsignedInt(gridSquareFlags));
+                    getLogger().warning("Grid Square[z=%d,x=%d] contains an unrecognized grid square flag reaction! (Value: 0x%08X)", z, x, DataUtils.toUnsignedShort(gridSquareFlags));
             }
         }
 

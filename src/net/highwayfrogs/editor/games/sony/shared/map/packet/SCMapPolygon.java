@@ -365,7 +365,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         short red = (short) ((packedColor & 0x1F) << 3);
         short green = (short) (((packedColor >> 5) & 0x1F) << 3);
         short blue = (short) (((packedColor >> 10) & 0x1F) << 3);
-        int rgbColor = ColorUtils.toRGB(DataUtils.unsignedShortToByte(red), DataUtils.unsignedShortToByte(green), DataUtils.unsignedShortToByte(blue));
+        int rgbColor = ColorUtils.toRGB(DataUtils.toSignedByte(red), DataUtils.toSignedByte(green), DataUtils.toSignedByte(blue));
 
         // Calculate GPU code.
         byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;

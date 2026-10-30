@@ -122,7 +122,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
             FroggerMapPolygonType polygonType = FroggerMapPolygonType.values()[i];
             List<FroggerMapPolygon> typedPolygons = this.polygonsByType[i];
-            int polygonCount = DataUtils.shortToUnsignedInt(this.loadPolygonCounts[i]);
+            int polygonCount = DataUtils.toUnsignedShort(this.loadPolygonCounts[i]);
             int polygonPointerAddress = this.loadPolygonPointers[i];
             if (polygonPointerAddress < 0 || polygonCount < 0)
                 throw new RuntimeException("Cannot load polygon list with " + polygonCount + " from " + NumberUtils.toHexString(polygonPointerAddress) + ".");

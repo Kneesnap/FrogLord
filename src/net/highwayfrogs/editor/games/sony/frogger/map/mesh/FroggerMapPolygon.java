@@ -431,7 +431,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             if (textureRemap != null) {
                 int remapIndex = textureRemap.getRemapIndex(gameImage.getTextureId());
                 if (remapIndex >= 0)
-                    this.textureId = DataUtils.unsignedIntToShort(remapIndex);
+                    this.textureId = DataUtils.toSignedShort(remapIndex);
             }
         }
     }

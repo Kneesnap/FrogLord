@@ -314,6 +314,6 @@ public class ColorUtils {
         short blue = (short) Math.min(255, colorSrc.getBlue() + (int) ((colorTgt.getBlue() - colorSrc.getBlue()) * t));
         short alpha = (short) Math.min(255, colorSrc.getAlpha() + (int) ((colorTgt.getAlpha() - colorSrc.getAlpha()) * t));
 
-        return toARGB(DataUtils.unsignedShortToByte(red), DataUtils.unsignedShortToByte(green), DataUtils.unsignedShortToByte(blue), DataUtils.unsignedShortToByte(alpha));
+        return toARGB(DataUtils.toSignedByte(red), DataUtils.toSignedByte(green), DataUtils.toSignedByte(blue), DataUtils.toSignedByte(alpha));
     }
 }

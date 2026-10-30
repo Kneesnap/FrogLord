@@ -61,7 +61,7 @@ public class SVector implements IBinarySerializable, Vector {
      * Gets the padding unsigned.
      */
     public int getUnsignedPadding() {
-        return DataUtils.shortToUnsignedInt(this.padding);
+        return DataUtils.toUnsignedShort(this.padding);
     }
 
     /**

@@ -279,7 +279,7 @@ public class PSXClutColor implements IBinarySerializable {
         // [85, 169] 0x7F: (enableTransparency && stpBit) Works regardless of fullBlack.
         // [0, 84] 0x00: (fullBlack && !stpBit) Works regardless of enableTransparency.
 
-        short uAlpha = DataUtils.byteToUnsignedShort(alpha);
+        short uAlpha = DataUtils.toUnsignedByte(alpha);
         if (uAlpha >= 170 && uAlpha < 256) {
             if (enableTransparency) {
                 if (fullBlack) {

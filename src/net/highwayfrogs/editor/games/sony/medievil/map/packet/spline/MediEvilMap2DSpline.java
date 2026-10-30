@@ -111,17 +111,17 @@ public class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implem
 
 
         if (testDeadStartSubDivsEnabled()) {
-            editorGrid.addSignedShortField("Dead Start Subdivisions", DataUtils.byteToUnsignedShort(this.numDeadSubDivsStart),
+            editorGrid.addSignedShortField("Dead Start Subdivisions", DataUtils.toUnsignedByte(this.numDeadSubDivsStart),
                     testValue -> testValue >= 0 && testValue < this.subDivisions.size(), newValue -> {
-                this.numDeadSubDivsStart = DataUtils.unsignedShortToByte(newValue);
+                this.numDeadSubDivsStart = DataUtils.toSignedByte(newValue);
                 manager.updatePreview(this);
             });
         }
 
         if (testDeadEndSubDivsEnabled()) {
-            editorGrid.addSignedShortField("Dead End Subdivisions", DataUtils.byteToUnsignedShort(this.numDeadSubDivsEnd),
+            editorGrid.addSignedShortField("Dead End Subdivisions", DataUtils.toUnsignedByte(this.numDeadSubDivsEnd),
                     testValue -> testValue >= 0 && testValue < this.subDivisions.size(), newValue -> {
-                this.numDeadSubDivsEnd = DataUtils.unsignedShortToByte(newValue);
+                this.numDeadSubDivsEnd = DataUtils.toSignedByte(newValue);
                 manager.updatePreview(this);
             });
         }
@@ -272,9 +272,9 @@ public class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implem
         propertyList.addInteger("Unique ID", this.uniqueId);
         propertyList.addString("Flags", String.format("%02X", this.flags));
         if (testDeadStartSubDivsEnabled())
-            propertyList.addInteger("Number of dead sub-division starts", DataUtils.byteToUnsignedShort(this.numDeadSubDivsStart));
+            propertyList.addInteger("Number of dead sub-division starts", DataUtils.toUnsignedByte(this.numDeadSubDivsStart));
         if (testDeadEndSubDivsEnabled())
-            propertyList.addInteger("Number of dead sub-division ends", DataUtils.byteToUnsignedShort(this.numDeadSubDivsEnd));
+            propertyList.addInteger("Number of dead sub-division ends", DataUtils.toUnsignedByte(this.numDeadSubDivsEnd));
 
         propertyList.addString(this.pathChain, "Path Chain", this.pathChain != null ? "ID: " + this.pathChain.getId() : "None");
         propertyList.addString(this.cameraSpline, "Camera Spline", this.cameraSpline != null ? "ID: " + this.cameraSpline.getId() : "None");

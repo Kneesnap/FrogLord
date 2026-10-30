@@ -409,9 +409,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
-        return addUnsignedShortField(label, DataUtils.shortToUnsignedInt(number),
-                validityTest != null ? intValue -> validityTest.apply(DataUtils.unsignedIntToShort(intValue)) : null,
-                newValue -> setter.accept(DataUtils.unsignedIntToShort(newValue)));
+        return addUnsignedShortField(label, DataUtils.toUnsignedShort(number),
+                validityTest != null ? intValue -> validityTest.apply(DataUtils.toSignedShort(intValue)) : null,
+                newValue -> setter.accept(DataUtils.toSignedShort(newValue)));
     }
 
     /**
@@ -535,9 +535,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
-        return addUnsignedIntegerField(label, DataUtils.intToUnsignedLong(number),
-                validityTest != null ? longValue -> validityTest.apply(DataUtils.unsignedLongToInt(longValue)) : null,
-                newValue -> setter.accept(DataUtils.unsignedLongToInt(newValue)));
+        return addUnsignedIntegerField(label, DataUtils.toUnsignedInt(number),
+                validityTest != null ? longValue -> validityTest.apply(DataUtils.toSignedInt(longValue)) : null,
+                newValue -> setter.accept(DataUtils.toSignedInt(newValue)));
     }
 
     /**

@@ -125,7 +125,7 @@ public class CVector implements IBinarySerializable {
      * @return redAsShort
      */
     public short getRedShort() {
-        return DataUtils.byteToUnsignedShort(this.red);
+        return DataUtils.toUnsignedByte(this.red);
     }
 
     /**
@@ -133,7 +133,7 @@ public class CVector implements IBinarySerializable {
      * @param newRed the new value of red between 0 and 255.
      */
     public void setRedShort(short newRed) {
-        this.red = DataUtils.unsignedShortToByte(newRed);
+        this.red = DataUtils.toSignedByte(newRed);
     }
 
     /**
@@ -141,7 +141,7 @@ public class CVector implements IBinarySerializable {
      * @return greenAsShort
      */
     public short getGreenShort() {
-        return DataUtils.byteToUnsignedShort(this.green);
+        return DataUtils.toUnsignedByte(this.green);
     }
 
     /**
@@ -149,7 +149,7 @@ public class CVector implements IBinarySerializable {
      * @param newGreen the new value of green between 0 and 255.
      */
     public void setGreenShort(short newGreen) {
-        this.green = DataUtils.unsignedShortToByte(newGreen);
+        this.green = DataUtils.toSignedByte(newGreen);
     }
 
     /**
@@ -157,7 +157,7 @@ public class CVector implements IBinarySerializable {
      * @return blueShort
      */
     public short getBlueShort() {
-        return DataUtils.byteToUnsignedShort(this.blue);
+        return DataUtils.toUnsignedByte(this.blue);
     }
 
     /**
@@ -165,7 +165,7 @@ public class CVector implements IBinarySerializable {
      * @param newBlue the new value of blue between 0 and 255.
      */
     public void setBlueShort(short newBlue) {
-        this.blue = DataUtils.unsignedShortToByte(newBlue);
+        this.blue = DataUtils.toSignedByte(newBlue);
     }
 
     /**
@@ -248,12 +248,12 @@ public class CVector implements IBinarySerializable {
      */
     public void fromCRGB(int crgbValue) {
         fromRGB(crgbValue);
-        this.code = DataUtils.unsignedShortToByte((short) ((crgbValue >> 24) & 0xFF));
+        this.code = DataUtils.toSignedByte((short) ((crgbValue >> 24) & 0xFF));
     }
 
     @Override
     public String toString() {
-        return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + DataUtils.byteToUnsignedShort(this.code) + ">";
+        return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + DataUtils.toUnsignedByte(this.code) + ">";
     }
 
     /**

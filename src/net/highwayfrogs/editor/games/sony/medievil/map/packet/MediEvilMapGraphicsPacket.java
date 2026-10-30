@@ -270,7 +270,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
             int currentGridIndex = getVertexGridIndex(vertex);
 
             if (currentGridIndex > lastGridIndex) {
-                Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, currentGridIndex + 1, DataUtils.unsignedIntToShort(i));
+                Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, currentGridIndex + 1, DataUtils.toSignedShort(i));
                 lastGridIndex = currentGridIndex;
             } else if (currentGridIndex < lastGridIndex) {
                 throw new IllegalStateException("currentGridIndex (" + currentGridIndex + ") < lastGridIndex (" + lastGridIndex + "), this should not be possible!");
@@ -279,7 +279,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
             this.vertexGridLengthTable[currentGridIndex]++;
         }
 
-        Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, this.vertexGridOffsetTable.length, DataUtils.unsignedIntToShort(this.vertices.size()));
+        Arrays.fill(this.vertexGridOffsetTable, lastGridIndex + 1, this.vertexGridOffsetTable.length, DataUtils.toSignedShort(this.vertices.size()));
     }
 
     private int getVertexGridIndex(SVector vertex) {

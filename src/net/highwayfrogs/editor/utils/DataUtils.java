@@ -275,11 +275,10 @@ public class DataUtils {
 
     /**
      * Convert an unsigned byte into a short, which can be converted back into a byte.
-     * TODO: Rename this and similar methods. Idea: "toUnsignedByte()"
      * @param unsignedByte The byte to convert into a short.
      * @return unsignedShort
      */
-    public static short byteToUnsignedShort(byte unsignedByte) {
+    public static short toUnsignedByte(byte unsignedByte) {
         short num = unsignedByte;
         if (num < 0)
             num += 256;
@@ -291,7 +290,7 @@ public class DataUtils {
      * @param unsignedShort the short to turn back into a byte.
      * @return byte
      */
-    public static byte unsignedShortToByte(short unsignedShort) {
+    public static byte toSignedByte(short unsignedShort) {
         if (unsignedShort < 0 || unsignedShort > 0xFF)
             throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,255]. Value: " + unsignedShort);
         return (byte) unsignedShort;
@@ -302,7 +301,7 @@ public class DataUtils {
      * @param unsignedInt the short to turn back into a byte.
      * @return byte
      */
-    public static byte unsignedIntToByte(int unsignedInt) {
+    public static byte toSignedByte(int unsignedInt) {
         if (unsignedInt < 0 || unsignedInt > 0xFF)
             throw new RuntimeException("The provided int value is outside the range of an unsigned byte. [0,255]. Value: " + unsignedInt);
         return (byte) unsignedInt;
@@ -313,7 +312,7 @@ public class DataUtils {
      * @param unsignedShort The short to convert into an int.
      * @return unsignedShort
      */
-    public static int shortToUnsignedInt(short unsignedShort) {
+    public static int toUnsignedShort(short unsignedShort) {
         int num = unsignedShort;
         if (num < 0)
             num += 65536;
@@ -325,7 +324,7 @@ public class DataUtils {
      * @param unsignedInt the int to turn back into a short.
      * @return byte
      */
-    public static short unsignedIntToShort(int unsignedInt) {
+    public static short toSignedShort(int unsignedInt) {
         if (unsignedInt < 0 || unsignedInt > 0xFFFF)
             throw new RuntimeException("The provided int value is outside the range of an unsigned short. [0,65535]. Value: " + unsignedInt);
         return (short) unsignedInt;
@@ -336,12 +335,11 @@ public class DataUtils {
      * @param unsignedInt The int to convert into a long.
      * @return unsignedLong
      */
-    public static long intToUnsignedLong(int unsignedInt) {
+    public static long toUnsignedInt(int unsignedInt) {
         long num = unsignedInt;
-        if (num < 0) {
-            num += 0xFFFFFFFFL;
-            num++;
-        }
+        if (num < 0)
+            num += 0x100000000L;
+
         return num;
     }
 
@@ -350,7 +348,7 @@ public class DataUtils {
      * @param unsignedLong the long to turn back into an int.
      * @return int
      */
-    public static int unsignedLongToInt(long unsignedLong) {
+    public static int toSignedInt(long unsignedLong) {
         if (unsignedLong < 0 || unsignedLong > 0xFFFFFFFFL)
             throw new RuntimeException("The provided long value is outside the range of an unsigned integer. [0,0xFFFFFFFF]. Value: " + unsignedLong);
         return (int) unsignedLong;

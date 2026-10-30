@@ -140,7 +140,7 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
                 for (FroggerFormGridData formData : form.getFormDataEntries())
                     for (int z = 0; z < form.getZGridSquareCount(); z++)
                         for (int x = 0; x < form.getXGridSquareCount(); x++)
-                            formFlagTester.add(DataUtils.shortToUnsignedInt(formData.getGridSquareFlags(x, z)));
+                            formFlagTester.add(DataUtils.toUnsignedShort(formData.getGridSquareFlags(x, z)));
             }
         }
         formFlagTester.getLogger().info("Form Square Flags:");

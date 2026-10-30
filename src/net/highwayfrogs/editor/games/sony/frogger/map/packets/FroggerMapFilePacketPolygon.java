@@ -61,7 +61,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
             typedPolygons.clear();
 
             // Get information.
-            int polygonCount = DataUtils.shortToUnsignedInt(polygonCounts[i]);
+            int polygonCount = DataUtils.toUnsignedShort(polygonCounts[i]);
             int polygonBlockStartAddress = polygonOffsets[i];
 
             // Handle G2.

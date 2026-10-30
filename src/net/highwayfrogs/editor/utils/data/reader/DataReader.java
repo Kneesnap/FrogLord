@@ -118,7 +118,7 @@ public class DataReader {
      * @return unsignedByteShort.
      */
     public short readUnsignedByteAsShort() {
-        return DataUtils.byteToUnsignedShort(readByte());
+        return DataUtils.toUnsignedByte(readByte());
     }
 
     /**
@@ -127,7 +127,7 @@ public class DataReader {
      * @return unsignedShortInt.
      */
     public int readUnsignedShortAsInt() {
-        return DataUtils.shortToUnsignedInt(readShort());
+        return DataUtils.toUnsignedShort(readShort());
     }
 
     /**
@@ -135,7 +135,7 @@ public class DataReader {
      * @return unsignedIntLong
      */
     public long readUnsignedIntAsLong() {
-        return DataUtils.intToUnsignedLong(readInt());
+        return DataUtils.toUnsignedInt(readInt());
     }
 
     /**

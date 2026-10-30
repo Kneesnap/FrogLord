@@ -111,8 +111,8 @@ public class PP20Packer {
                 if (diff >= 0 && newVal < info.getWindowMax() / 2) {
                     if (diff >= info.getWindowLeft())
                         diff -= info.getWindowMax();
-                    info.getWindowArray()[info.getWindowOffset() + diff] = DataUtils.unsignedIntToShort(newVal);
-                    info.getWindowArray()[info.getWindowMax() + info.getWindowOffset() + diff] = DataUtils.unsignedIntToShort(newVal);
+                    info.getWindowArray()[info.getWindowOffset() + diff] = DataUtils.toSignedShort(newVal);
+                    info.getWindowArray()[info.getWindowMax() + info.getWindowOffset() + diff] = DataUtils.toSignedShort(newVal);
                 }
             }
 

@@ -199,7 +199,7 @@ public class DataWriter {
      * @param value the short to write.
      */
     public void writeUnsignedByte(short value) {
-        writeByte(DataUtils.unsignedShortToByte(value));
+        writeByte(DataUtils.toSignedByte(value));
     }
 
     /**
@@ -207,7 +207,7 @@ public class DataWriter {
      * @param value the int value to write.
      */
     public void writeUnsignedByte(int value) {
-        writeByte(DataUtils.unsignedIntToByte(value));
+        writeByte(DataUtils.toSignedByte(value));
     }
 
     /**
@@ -215,7 +215,7 @@ public class DataWriter {
      * @param value The int to write.
      */
     public void writeUnsignedShort(int value) {
-        writeShort(DataUtils.unsignedIntToShort(value));
+        writeShort(DataUtils.toSignedShort(value));
     }
 
     /**
@@ -223,7 +223,7 @@ public class DataWriter {
      * @param value The long to write.
      */
     public void writeUnsignedInt(long value) {
-        writeInt(DataUtils.unsignedLongToInt(value));
+        writeInt(DataUtils.toSignedInt(value));
     }
 
     /**

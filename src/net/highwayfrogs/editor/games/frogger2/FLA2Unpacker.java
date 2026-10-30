@@ -45,21 +45,21 @@ public class FLA2Unpacker {
         ByteArrayWrapper outputWrapper = new ByteArrayWrapper(resultSize);
 
         while (true) {
-            int tag = DataUtils.byteToUnsignedShort(data[readIndex++]);
+            int tag = DataUtils.toUnsignedByte(data[readIndex++]);
             for (int loop = 0; loop < Constants.BITS_PER_BYTE; loop++) {
                 if ((tag & FLAG_FINISHED) > 0) {
-                    short count = DataUtils.byteToUnsignedShort(data[readIndex++]);
+                    short count = DataUtils.toUnsignedByte(data[readIndex++]);
 
                     if (count == 0) {
                         Utils.verify(outputWrapper.size() == resultSize, "Invalid result size for decompression!");
                         return outputWrapper.toNewArray(); // Finished decompressing.
                     } else { // Copy from earlier.
-                        int offset = HISTORY_SIZE - (((MASK_UPPER & count) * SHIFT_UPPER) + DataUtils.byteToUnsignedShort(data[readIndex++]));
+                        int offset = HISTORY_SIZE - (((MASK_UPPER & count) * SHIFT_UPPER) + DataUtils.toUnsignedByte(data[readIndex++]));
 
                         count &= MASK_LOWER;
                         count += Constants.SHORT_SIZE;
                         while (count-- > 0) {
-                            byte toAdd = data[DataUtils.byteToUnsignedShort(lzHistory[(lzHistoryOff + offset) & MASK_HISTORY])];
+                            byte toAdd = data[DataUtils.toUnsignedByte(lzHistory[(lzHistoryOff + offset) & MASK_HISTORY])];
                             outputWrapper.add(toAdd);
                             lzHistory[lzHistoryOff] = toAdd;
                             lzHistoryOff = (lzHistoryOff + 1) & MASK_HISTORY;
