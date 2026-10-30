@@ -23,16 +23,6 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 /**
  * Represents PATH_ARC.
  * This is accurate, even though some Arc paths don't properly connect, such as in FOR2. These disconnected paths can be experienced in-game, and are thus accurate.
- * TODO: I figured out the issue with calculation mismatches.
- *  - The start position and center position form a circle where center is the center of the circle, and start position is a position on the edge of the circle.
- *  - The radius is correctly calculated by doing sqrt(x^2 + y^2 + z^2).
- *  - Consider the plane formed covering the described circle.
- *  - However, the angle is not correctly calculated. Most arc path segments are axis-aligned, meaning the angle base is 0 degrees.
- *  - However, when the start position on that plane shares neither coordinate with the center position, it means it must have some offset at the beginning.
- *  - To understand what I mean, check Path 21 & Path 23, Arc Segment ID 1, and compare the start position with the center position.
- *  - The angle is not calculated properly because the angle is missing an offset from the unit circle base position.
- *  - Our solution to this should is to auto-generate the base offset from the start & center & normal, and it to the expected angle on load/subtract on save.
- *  - The solution involves the cross-product of the normal & the (start - center) vector...?
  * TODO: Allow changing start positions of each segment type as always updating the end position of the previous one. For ones which can't update the previous one (which aren't null), don't allow changing it.
  *  - This should only occur if the start/end of the segments already match exactly. Pressing a checkbox should also allow separation if they match.
  * Created by Kneesnap on 9/16/2018.
@@ -89,8 +79,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
 
             // ALSO! This was sensible enough of an algorithm that I managed to figure it out BEFORE checking the PSX Sony Build, just by thinking about the problem.
             // So this leads double credibility to this being the correct algorithm.
-            float newAngle = getLength() / (2 * SCMath.MAPPY_PI_HALF16 * readRadius);
-            this.angle = Math.round(newAngle * 16F) / 16F; // Rounds to the nearest interval. This looks very good.
+            this.angle = readRadius != 0 ? getLength() / (2D * SCMath.MAPPY_PI_HALF16 * readRadius) : 0D;
         }
 
         // Radius warnings.
@@ -98,7 +87,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         int diff = readRadius - calculatedRadius;
         // There are only 17 occurrences with a value > 1 in psx-retail-usa. It seems like Mappy calculated the segment length with the wrong radius
         // The calculated radius if incorrect is greater than the original, because it seems there was an issue with Mappy which could cause the very end of a segment to be excluded
-        if (Math.abs(diff) >= 30)
+        if (Math.abs(diff) >= 30 && !getPath().getMapFile().isQB())  // QB.MAP is a very old map, and it's not worth the effort of solving this.
             getLogger().warning("calculateFixedRadius() was inaccurate! (Read: %d/%f, Calculated: %d/%f, Difference: %d/%f, Pitch: %d/%f, Length: %d/%f).",
                     readRadius, DataUtils.fixedPointIntToFloat4Bit(readRadius),
                     calculatedRadius, DataUtils.fixedPointIntToFloat4Bit(calculatedRadius),

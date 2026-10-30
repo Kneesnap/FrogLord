@@ -58,7 +58,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
         } else {
             int newLength = calculateFixedPointLength();
             int diffLength = newLength - this.length;
-            if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
+            if (Math.abs(diffLength) > getIncorrectLengthTolerance() && !getPath().getMapFile().isQB()) { // QB.MAP is a very old map, and it's not worth the effort of solving this.
                 String extraMessage = getCalculatedIncorrectLengthString();
                 getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: %d/%f, Calculated Length: %d/%f, Diff: %d/%f%s]",
                         this.length, DataUtils.fixedPointIntToFloat4Bit(this.length),
