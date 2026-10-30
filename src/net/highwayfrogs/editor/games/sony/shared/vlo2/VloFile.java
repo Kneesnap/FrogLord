@@ -283,7 +283,7 @@ public class VloFile extends SCSharedGameFile {
         }
     }
 
-    @SuppressWarnings("unused") // This is used to ensure we haven't broken VLO files in some way.
+    @SuppressWarnings("unused") // This can be used to ensure we haven't broken VLO files in some way. Call after loading image data.
     private void validateImageData() {
         int nonMatchingImages = 0;
         for (int i = 0; i < this.images.size(); i++) {

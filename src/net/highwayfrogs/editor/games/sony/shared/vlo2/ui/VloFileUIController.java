@@ -504,6 +504,9 @@ public class VloFileUIController extends SCFileEditorUIController<SCGameInstance
     private static class VloFileEditorComponent extends CollectionEditorComponent<SCGameInstance, VloImage> {
         private final VloFileUIController controller;
         private final MenuItem addImageItem = new MenuItem("Add Image");
+        private final MenuItem addImageItemBitDepth4 = new MenuItem("Add 4-Bit Image (16 Colors)");
+        private final MenuItem addImageItemBitDepth8 = new MenuItem("Add 8-Bit Image (256 Colors)");
+        private final MenuItem addImageItemBitDepth16 = new MenuItem("Add 16-Bit Image");
         private final MenuItem addFroggerTextImageItem = new MenuItem("Add Frogger Text Image");
 
         public VloFileEditorComponent(SCGameInstance instance, VloFileUIController controller, boolean padCollectionView) {
@@ -517,8 +520,18 @@ public class VloFileUIController extends SCFileEditorUIController<SCGameInstance
         }
 
         private void extendEditorUI() {
-            addMenuItemToAddButtonLogic(this.addImageItem);
             this.addImageItem.setOnAction(event -> promptUserAddImage(null));
+            this.addImageItemBitDepth4.setOnAction(event -> promptUserAddImage(PsxImageBitDepth.CLUT4));
+            this.addImageItemBitDepth8.setOnAction(event -> promptUserAddImage(PsxImageBitDepth.CLUT8));
+            this.addImageItemBitDepth16.setOnAction(event -> promptUserAddImage(PsxImageBitDepth.SBGR1555));
+
+            if (getGameInstance().isPC()) {
+                addMenuItemToAddButtonLogic(this.addImageItem);
+            } else if (getGameInstance().isPSX()) { // Bit depth options only need to exist in PSX builds.
+                addMenuItemToAddButtonLogic(this.addImageItemBitDepth4);
+                addMenuItemToAddButtonLogic(this.addImageItemBitDepth8);
+                addMenuItemToAddButtonLogic(this.addImageItemBitDepth16);
+            }
 
             // TODO: ADD text menu item if the game is frogger. (Maybe)
 

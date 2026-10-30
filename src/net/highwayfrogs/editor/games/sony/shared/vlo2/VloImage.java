@@ -1,7 +1,9 @@
 package net.highwayfrogs.editor.games.sony.shared.vlo2;
 
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
@@ -561,6 +563,51 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        // Allow the user to choose bit depth.
+        Menu setBitDepthMenu = new Menu("Set Image Quality");
+        CheckMenuItem setBitDepth4 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT4, "4-Bit (16 Colors)");
+        CheckMenuItem setBitDepth8 = createMenuItemSetBitDepth(PsxImageBitDepth.CLUT8, "8-Bit (256 Colors)");
+        CheckMenuItem setBitDepth16 = createMenuItemSetBitDepth(PsxImageBitDepth.SBGR1555, "16-Bit");
+        setBitDepthMenu.getItems().addAll(setBitDepth4, setBitDepth8, setBitDepth16);
+
+        setBitDepthMenu.setOnShowing(event -> {
+            switch (this.bitDepth) {
+                case CLUT4:
+                    setBitDepth4.setSelected(true);
+                    break;
+                case CLUT8:
+                    setBitDepth8.setSelected(true);
+                    break;
+                case SBGR1555:
+                    setBitDepth16.setSelected(true);
+                    break;
+            }
+        });
+
+        contextMenu.getItems().add(setBitDepthMenu);
+
+        // Import/export
+        MenuItem importItem = new MenuItem("Import / Replace");
+        contextMenu.getItems().add(importItem);
+        importItem.setOnAction(event -> {
+            BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
+            if (loadedImage != null) {
+                replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
+                getLogger().info("Imported image from file.");
+            }
+        });
+
+        MenuItem exportItem = new MenuItem("Export");
+        contextMenu.getItems().add(exportItem);
+        exportItem.setOnAction(event -> {
+            String name = getName();
+            BufferedImage image = this.toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
+            File resultFile = FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.textureId));
+            if (resultFile != null)
+                getLogger().info("Exported image to '%s'.", resultFile.getName());
+        });
+
+        // Find usages of the texture.
         MenuItem findTextureUsages = new MenuItem("Find Usages");
         contextMenu.getItems().add(findTextureUsages);
         findTextureUsages.setOnAction(event -> {
@@ -581,26 +628,27 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
             FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
         });
+    }
 
-        MenuItem exportItem = new MenuItem("Export");
-        contextMenu.getItems().add(exportItem);
-        exportItem.setOnAction(event -> {
-            String name = getName();
-            BufferedImage image = this.toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
-            File resultFile = FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.textureId));
-            if (resultFile != null)
-                getLogger().info("Exported image to '%s'.", resultFile.getName());
-        });
+    private CheckMenuItem createMenuItemSetBitDepth(PsxImageBitDepth bitDepth, String displayText) {
+        CheckMenuItem newItem = new CheckMenuItem(displayText);
+        newItem.setOnAction(event -> setBitDepth(bitDepth, ProblemResponse.CREATE_POPUP));
+        return newItem;
+    }
 
-        MenuItem importItem = new MenuItem("Import");
-        contextMenu.getItems().add(importItem);
-        importItem.setOnAction(event -> {
-            BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
-            if (loadedImage != null) {
-                replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
-                getLogger().info("Imported image from file.");
-            }
-        });
+    /**
+     * Changes the image's bit depth.
+     * @param bitDepth the bit depth to apply
+     * @param response how to handle problems if they arise
+     */
+    public void setBitDepth(PsxImageBitDepth bitDepth, ProblemResponse response) {
+        if (bitDepth == null)
+            throw new NullPointerException("bitDepth");
+        if (bitDepth == this.bitDepth)
+            return; // The bit depth already matches.
+
+        BufferedImage image = this.toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
+        replaceImage(image, bitDepth, -1, testFlag(FLAG_TRANSLUCENT), response);
     }
 
     private enum PaddingOperation {

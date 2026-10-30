@@ -74,7 +74,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
         if (getGameInstance().getVloTree() != null) {
-            addMenuItem(this.menuBarEdit, "Rebuild Vlos", () -> {
+            addMenuItem(this.menuBarEdit, "Rebuild Vlo Files", () -> {
                 ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Texture Placement", progressBar -> {
                     long startTime = System.currentTimeMillis();
                     getGameInstance().getVloTree().rebuildRecursive(progressBar);
