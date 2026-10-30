@@ -48,9 +48,9 @@ public class FroggerPickupData extends SCGameData<FroggerGameInstance> {
     public void load(DataReader reader) {
         if (isOldPickupFormat()) {
             // TODO: Properly support the format. (This doesn't work on PC... is the issue that the PC version doesn't properly identify pointers?)
-            long nextTexture = reader.readUnsignedIntAsLong();
+            long nextTexture = reader.readUnsignedInt();
             while (reader.hasMore() && !getGameInstance().getBmpTexturePointers().contains(nextTexture)) // This intends to skip the first texture.
-                nextTexture = reader.readUnsignedIntAsLong();
+                nextTexture = reader.readUnsignedInt();
 
             reader.setIndex(reader.getIndex() - Constants.INTEGER_SIZE);
         } else {
@@ -61,7 +61,7 @@ public class FroggerPickupData extends SCGameData<FroggerGameInstance> {
         // Read animation frames. (Image pointers)
         this.frames.clear();
         long imagePointer;
-        while (reader.hasMore() && (imagePointer = reader.readUnsignedIntAsLong()) != 0)
+        while (reader.hasMore() && (imagePointer = reader.readUnsignedInt()) != 0)
             if (!isOldPickupFormat() || getGameInstance().getBmpTexturePointers().contains(imagePointer))
                 this.frames.add(new PickupAnimationFrame(this, imagePointer));
     }

@@ -32,10 +32,10 @@ public class CaveLightEntityData extends MatrixEntityData<CaveLightDifficultyDat
 
         @Override
         public void load(DataReader reader) {
-            this.dieSpeed = reader.readUnsignedShortAsInt();
-            this.minRadius = reader.readUnsignedShortAsInt();
-            this.maxRadius = reader.readUnsignedShortAsInt();
-            this.fallOff = reader.readUnsignedShortAsInt();
+            this.dieSpeed = reader.readUnsignedShort();
+            this.minRadius = reader.readUnsignedShort();
+            this.maxRadius = reader.readUnsignedShort();
+            this.fallOff = reader.readUnsignedShort();
         }
 
         @Override

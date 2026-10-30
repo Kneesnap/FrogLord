@@ -93,10 +93,10 @@ public class OldFroggerMapAnimPacket extends OldFroggerMapPacket {
         public void load(DataReader reader) {
             this.vertexPointer = reader.readInt();
             this.vertexCount = reader.readInt();
-            this.deltaU = reader.readUnsignedByteAsShort();
-            this.deltaV = reader.readUnsignedByteAsShort();
-            this.target = reader.readUnsignedShortAsInt();
-            this.count = reader.readUnsignedShortAsInt();
+            this.deltaU = reader.readUnsignedByte();
+            this.deltaV = reader.readUnsignedByte();
+            this.target = reader.readUnsignedShort();
+            this.count = reader.readUnsignedShort();
             reader.alignRequireEmpty(4);
         }
 

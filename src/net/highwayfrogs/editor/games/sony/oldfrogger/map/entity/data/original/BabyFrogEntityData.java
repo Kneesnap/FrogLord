@@ -30,8 +30,8 @@ public class BabyFrogEntityData extends MatrixEntityData<BabyFrogDifficultyData>
 
         @Override
         public void load(DataReader reader) {
-            this.logUniqueId = reader.readUnsignedShortAsInt();
-            this.pointsValue = reader.readUnsignedShortAsInt();
+            this.logUniqueId = reader.readUnsignedShort();
+            this.pointsValue = reader.readUnsignedShort();
         }
 
         @Override

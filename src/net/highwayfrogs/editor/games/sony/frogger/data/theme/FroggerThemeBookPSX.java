@@ -31,7 +31,7 @@ public class FroggerThemeBookPSX extends FroggerThemeBook {
     @Override
     public void load(DataReader reader) {
         this.wadId = reader.readInt();
-        this.formLibraryPointer = reader.readUnsignedIntAsLong();
+        this.formLibraryPointer = reader.readUnsignedInt();
         this.vloId = reader.readInt();
         this.deathHeight = reader.readInt();
 

@@ -34,8 +34,8 @@ public class MediEvilMapGridInfo extends SCGameData<MediEvilGameInstance> implem
 
     @Override
     public void load(DataReader reader) {
-        int gridStorageIndex = reader.readUnsignedShortAsInt();
-        int nodeIndex = reader.readUnsignedShortAsInt();
+        int gridStorageIndex = reader.readUnsignedShort();
+        int nodeIndex = reader.readUnsignedShort();
 
         MediEvilMapFile mapFile = this.quadTree.getMapFile();
         this.gridSquare = mapFile.getGridPacket().getGridSquareByStorageIndex(gridStorageIndex);

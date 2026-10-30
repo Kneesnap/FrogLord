@@ -70,9 +70,9 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
     @Override
     public void load(DataReader reader) {
         for (int i = 0; i < this.vertices.length; i++)
-            this.vertices[i] = reader.readUnsignedShortAsInt();
-        this.textureId = reader.readUnsignedShortAsInt();
-        this.uvInfo = reader.readUnsignedShortAsInt();
+            this.vertices[i] = reader.readUnsignedShort();
+        this.textureId = reader.readUnsignedShort();
+        this.uvInfo = reader.readUnsignedShort();
         this.flags = reader.readInt();
     }
 

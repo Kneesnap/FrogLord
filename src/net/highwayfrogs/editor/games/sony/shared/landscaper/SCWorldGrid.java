@@ -44,8 +44,8 @@ public abstract class SCWorldGrid<TGridEntry extends IBinarySerializable> extend
     @Override
     public void load(DataReader reader) {
         this.originPosition.load(reader);
-        int xSquareCount = reader.readUnsignedShortAsInt();
-        int zSquareCount = reader.readUnsignedShortAsInt();
+        int xSquareCount = reader.readUnsignedShort();
+        int zSquareCount = reader.readUnsignedShort();
         resize(xSquareCount, zSquareCount);
         this.xSquareSize = reader.readFloat();
         this.zSquareSize = reader.readFloat();

@@ -48,7 +48,7 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
 
         int entryCount = reader.readInt();
         for (int i = 0; i < entryCount; i++) {
-            short identifierLength = reader.readUnsignedByteAsShort();
+            short identifierLength = reader.readUnsignedByte();
             if (identifierLength == NULL_CLASS_ENTRY_INDICATOR) {
                 this.entries.add(null);
                 this.idsByEntry.put(null, this.entries.size());
@@ -56,9 +56,9 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
             }
 
             // Read & lookup global class data.
-            String identifier = reader.readTerminatedString(identifierLength + 1);
-            int fullClassNameLength = reader.readUnsignedShortAsInt();
-            String fullClassName = reader.readTerminatedString(fullClassNameLength);
+            String identifier = reader.readStringOfLength(identifierLength + 1);
+            int fullClassNameLength = reader.readUnsignedShort();
+            String fullClassName = reader.readStringOfLength(fullClassNameLength);
             ClassEntry<TBase> classEntry = this.globalClassRegistry.getClassEntry(identifier, fullClassName);
             if (classEntry == null)
                 throw new RuntimeException("Failed to resolve class registry entry for identifier: '" + identifier + "', fullClassName: '" + fullClassName + "'.");
@@ -258,7 +258,7 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
         if (this.entries.size() > 0x10000) {
             classId = reader.readInt();
         } else if (this.entries.size() > 0x100) {
-            classId = reader.readUnsignedShortAsInt();
+            classId = reader.readUnsignedShort();
         } else {
             classId = reader.readUnsignedByte();
         }

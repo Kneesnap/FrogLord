@@ -30,8 +30,8 @@ public class BeaverEntityData extends PathEntityData<BeaverDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.delayBeforeFollowing = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.delayBeforeFollowing = reader.readUnsignedShort();
         }
 
         @Override

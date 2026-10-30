@@ -24,10 +24,10 @@ public class FroggerEntityDataSwayingBranch extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.swayAngle = reader.readUnsignedShortAsInt();
-        this.swayDuration = reader.readUnsignedShortAsInt();
+        this.swayAngle = reader.readUnsignedShort();
+        this.swayDuration = reader.readUnsignedShort();
         if (!getConfig().isAtOrBeforeBuild11() && !getConfig().isWindowsBeta())
-            this.onceOffDelay = reader.readUnsignedShortAsInt();
+            this.onceOffDelay = reader.readUnsignedShort();
     }
 
     @Override

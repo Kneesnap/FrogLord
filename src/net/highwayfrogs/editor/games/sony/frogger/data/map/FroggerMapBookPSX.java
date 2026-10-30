@@ -34,11 +34,11 @@ public class FroggerMapBookPSX extends FroggerMapBook {
     @Override
     public void load(DataReader reader) {
         this.mapId = reader.readInt();
-        this.tempRemapPointer = reader.readUnsignedIntAsLong();
+        this.tempRemapPointer = reader.readUnsignedInt();
         this.useCaveLights = (reader.readInt() == 1);
 
         if (!getConfig().isBeforeBuild1())
-            this.environmentTexturePointer = reader.readUnsignedIntAsLong();
+            this.environmentTexturePointer = reader.readUnsignedInt();
 
         if (hasPerLevelWadFiles())
             this.wadId = reader.readInt();

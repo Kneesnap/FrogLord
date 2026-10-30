@@ -36,10 +36,10 @@ public class TurtleEntityData extends PathEntityData<TurtleDifficultyData> {
         public void load(DataReader reader) {
             this.diveDelay = reader.readShort();
             this.riseDelay = reader.readShort();
-            this.diveSpeed = reader.readUnsignedShortAsInt();
-            this.riseSpeed = reader.readUnsignedShortAsInt();
-            this.speed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.diveSpeed = reader.readUnsignedShort();
+            this.riseSpeed = reader.readUnsignedShort();
+            this.speed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

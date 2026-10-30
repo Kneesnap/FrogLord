@@ -25,7 +25,7 @@ public class FroggerEntityDataBonusFly extends FroggerEntityDataMatrix implement
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.flyTypeId = reader.readUnsignedShortAsInt();
+        this.flyTypeId = reader.readUnsignedShort();
     }
 
     @Override

@@ -37,9 +37,9 @@ public class RatEntityData extends PathEntityData<RatDifficultyData> {
         @Override
         public void load(DataReader reader) {
             this.target.loadWithPadding(reader);
-            this.ratSpeed = reader.readUnsignedShortAsInt();
-            this.timeToTarget = reader.readUnsignedShortAsInt();
-            this.ratToFrogDistance = reader.readUnsignedShortAsInt();
+            this.ratSpeed = reader.readUnsignedShort();
+            this.timeToTarget = reader.readUnsignedShort();
+            this.ratToFrogDistance = reader.readUnsignedShort();
         }
 
         @Override

@@ -27,10 +27,10 @@ public class SwarmEntityData extends OldFroggerEntityData<SwarmDifficultyData> {
 
     @Override
     protected void loadMainEntityData(DataReader reader) {
-        this.unknown1 = reader.readUnsignedShortAsInt();
-        this.unknown2 = reader.readUnsignedShortAsInt();
-        this.unknown3 = reader.readUnsignedShortAsInt();
-        this.unknown4 = reader.readUnsignedShortAsInt();
+        this.unknown1 = reader.readUnsignedShort();
+        this.unknown2 = reader.readUnsignedShort();
+        this.unknown3 = reader.readUnsignedShort();
+        this.unknown4 = reader.readUnsignedShort();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class SwarmEntityData extends OldFroggerEntityData<SwarmDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
         }
 
         @Override

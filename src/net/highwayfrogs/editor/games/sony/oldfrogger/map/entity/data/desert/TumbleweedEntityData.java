@@ -32,10 +32,10 @@ public class TumbleweedEntityData extends PathEntityData<TumbleweedDifficultyDat
 
         @Override
         public void load(DataReader reader) {
-            this.splineSpeed = reader.readUnsignedShortAsInt();
-            this.windStartDelay = reader.readUnsignedShortAsInt();
-            this.windAccelerationTime = reader.readUnsignedShortAsInt();
-            this.windAcceleration = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
+            this.windStartDelay = reader.readUnsignedShort();
+            this.windAccelerationTime = reader.readUnsignedShort();
+            this.windAcceleration = reader.readUnsignedShort();
         }
 
         @Override

@@ -83,16 +83,16 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
 
         @Override
         public void load(DataReader reader) {
-            this.type = OldFroggerMapLightType.values()[reader.readUnsignedByteAsShort()];
-            this.priority = reader.readUnsignedByteAsShort();
-            this.parentId = reader.readUnsignedShortAsInt();
-            this.apiType = MRLightType.getType(reader.readUnsignedByteAsShort());
+            this.type = OldFroggerMapLightType.values()[reader.readUnsignedByte()];
+            this.priority = reader.readUnsignedByte();
+            this.parentId = reader.readUnsignedShort();
+            this.apiType = MRLightType.getType(reader.readUnsignedByte());
             reader.alignRequireEmpty(4);
             this.color.load(reader);
             this.position.loadWithPadding(reader);
             this.direction.loadWithPadding(reader);
-            this.attrib1 = reader.readUnsignedShortAsInt();
-            this.attrib2 = reader.readUnsignedShortAsInt();
+            this.attrib1 = reader.readUnsignedShort();
+            this.attrib2 = reader.readUnsignedShort();
             reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE * 2);
         }
 

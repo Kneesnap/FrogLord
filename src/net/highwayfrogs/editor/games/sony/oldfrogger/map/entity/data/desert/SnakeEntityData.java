@@ -30,8 +30,8 @@ public class SnakeEntityData extends PathEntityData<SnakeDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.splineSpeed = reader.readUnsignedShortAsInt();
-            this.distance = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
+            this.distance = reader.readUnsignedShort();
         }
 
         @Override

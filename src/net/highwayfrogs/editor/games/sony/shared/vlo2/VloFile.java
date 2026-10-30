@@ -82,7 +82,7 @@ public class VloFile extends SCSharedGameFile {
 
     @Override
     public void load(DataReader reader) {
-        String readSignature = reader.readTerminatedString(SIGNATURE_LENGTH);
+        String readSignature = reader.readStringOfLength(SIGNATURE_LENGTH);
         if (readSignature.equals(PSX_SIGNATURE)) {
             this.psxMode = true;
         } else {
@@ -171,11 +171,11 @@ public class VloFile extends SCSharedGameFile {
         if (version > CUSTOM_DATA_VERSION)
             getLogger().warning("Unsupported FrogLord texture data version %d found! (Supported Version: %d)", version, CUSTOM_DATA_VERSION);
 
-        int textureNameCount = reader.readUnsignedShortAsInt();
+        int textureNameCount = reader.readUnsignedShort();
         for (int i = 0; i < textureNameCount; i++) {
-            int index = reader.readUnsignedShortAsInt();
+            int index = reader.readUnsignedShort();
             int length = reader.readUnsignedByte();
-            String name = reader.readTerminatedString(length);
+            String name = reader.readStringOfLength(length);
             this.images.get(index).setCustomName(name);
         }
     }

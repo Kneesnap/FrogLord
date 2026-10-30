@@ -33,8 +33,8 @@ public class SwanEntityData extends PathEntityData<SwanDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
             this.swimmingTime = reader.readShort();
             this.thinkingTime = reader.readShort();
             this.flappingTime = reader.readShort();

@@ -26,7 +26,7 @@ public class MMSmoothnessAnglesBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.groupIndex = reader.readInt();
-        this.angle = reader.readUnsignedByteAsShort();
+        this.angle = reader.readUnsignedByte();
     }
 
     @Override

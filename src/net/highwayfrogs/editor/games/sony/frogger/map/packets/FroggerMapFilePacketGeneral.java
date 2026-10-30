@@ -62,8 +62,8 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        this.startGridCoordX = reader.readUnsignedShortAsInt();
-        this.startGridCoordZ = reader.readUnsignedShortAsInt();
+        this.startGridCoordX = reader.readUnsignedShort();
+        this.startGridCoordZ = reader.readUnsignedShort();
         this.startRotation = FroggerMapStartRotation.values()[reader.readShort()];
         if (isAprilFormat()) {
             // The early format is cut off extremely early.
@@ -76,7 +76,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         // The timer is duplicated once for each frog.
         // It seems at one point it was planned to have the timer change based on how many frogs have been collected.
         // However, the game is not coded to actually use this data, it's just redundant.
-        this.startingTimeLimit = reader.readUnsignedShortAsInt();
+        this.startingTimeLimit = reader.readUnsignedShort();
         reader.skipBytes((TOTAL_CHECKPOINT_TIMER_ENTRIES - 1) * Constants.SHORT_SIZE);
 
         // This value is unused.

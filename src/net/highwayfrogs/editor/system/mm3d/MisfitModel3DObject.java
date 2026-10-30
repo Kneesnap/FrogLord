@@ -55,10 +55,10 @@ public class MisfitModel3DObject implements IBinarySerializable {
     @Override
     public void load(DataReader reader) {
         reader.verifyString(SIGNATURE);
-        this.majorVersion = reader.readUnsignedByteAsShort();
-        this.minorVersion = reader.readUnsignedByteAsShort();
-        this.modelFlags = reader.readUnsignedByteAsShort();
-        short dataSegmentCount = reader.readUnsignedByteAsShort();
+        this.majorVersion = reader.readUnsignedByte();
+        this.minorVersion = reader.readUnsignedByte();
+        this.modelFlags = reader.readUnsignedByte();
+        short dataSegmentCount = reader.readUnsignedByte();
 
         Utils.verify(majorVersion == 1 && (minorVersion >= 4 && minorVersion <= 7), "Unsupported Version: (" + majorVersion + "." + minorVersion + ")");
 
@@ -73,7 +73,7 @@ public class MisfitModel3DObject implements IBinarySerializable {
 
     private void readRound(DataReader reader, int dataSegmentCount, boolean firstRound) {
         for (int i = 0; i < dataSegmentCount; i++) {
-            int offsetType = reader.readUnsignedShortAsInt();
+            int offsetType = reader.readUnsignedShort();
             OffsetType type = OffsetType.getOffsetType(offsetType);
             int offsetAddress = reader.readInt();
 

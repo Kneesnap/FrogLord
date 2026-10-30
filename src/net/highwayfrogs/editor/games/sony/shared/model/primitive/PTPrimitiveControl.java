@@ -32,10 +32,10 @@ public class PTPrimitiveControl extends SCSharedGameData implements IPTPrimitive
 
     @Override
     public void load(DataReader reader) {
-        this.controlType = PTPrimitiveControlType.values()[reader.readUnsignedShortAsInt()];
-        this.sourceVertexIndex = reader.readUnsignedShortAsInt();
-        this.targetTransformIndex = reader.readUnsignedShortAsInt();
-        this.vertexCount = reader.readUnsignedShortAsInt();
+        this.controlType = PTPrimitiveControlType.values()[reader.readUnsignedShort()];
+        this.sourceVertexIndex = reader.readUnsignedShort();
+        this.targetTransformIndex = reader.readUnsignedShort();
+        this.vertexCount = reader.readUnsignedShort();
     }
 
     @Override

@@ -54,9 +54,9 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
 
         int readRadius;
         if (getPath().isOldPathFormatEnabled()) {
-            readRadius = reader.readUnsignedShortAsInt();
+            readRadius = reader.readUnsignedShort();
             this.pitch = 0; // Doesn't support pitch.
-            this.angle = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 12);
+            this.angle = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShort(), 12);
         } else {
             // Calculate angle.
             // 'angle' was how this data was included in the "Frogger map export revision 18-04-97.doc" file.

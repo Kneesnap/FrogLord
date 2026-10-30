@@ -39,10 +39,10 @@ public class TornadoObjectEntityData extends PathEntityData<TornadoObjectDifficu
             this.maxAvX = reader.readInt();
             this.maxAvY = reader.readInt();
             this.maxAvZ = reader.readInt();
-            this.safeStartTime = reader.readUnsignedShortAsInt();
-            this.safeTime = reader.readUnsignedShortAsInt();
-            this.speed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.safeStartTime = reader.readUnsignedShort();
+            this.safeTime = reader.readUnsignedShort();
+            this.speed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

@@ -228,10 +228,10 @@ public class MediEvilPolygonGridFile extends SCGameFile<MediEvilGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        short gridXSquareCount = reader.readUnsignedByteAsShort();
-        short gridYSquareCount = reader.readUnsignedByteAsShort();
-        int gridSquareSize = reader.readUnsignedShortAsInt();
-        this.gridShift = reader.readUnsignedByteAsShort();
+        short gridXSquareCount = reader.readUnsignedByte();
+        short gridYSquareCount = reader.readUnsignedByte();
+        int gridSquareSize = reader.readUnsignedShort();
+        this.gridShift = reader.readUnsignedByte();
         reader.alignRequireEmpty(Constants.INTEGER_SIZE);
 
         int gridIdTablePtr = reader.readInt();

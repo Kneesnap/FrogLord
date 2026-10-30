@@ -193,8 +193,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
         }
 
-        short readU = reader.readUnsignedByteAsShort();
-        short readV = reader.readUnsignedByteAsShort();
+        short readU = reader.readUnsignedByte();
+        short readV = reader.readUnsignedByte();
         this.unpaddedWidth = getUnpaddedSize(reader.readByte());
         this.unpaddedHeight = getUnpaddedSize(reader.readByte());
 

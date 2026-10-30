@@ -55,15 +55,15 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         this.vabBankId = reader.readInt();
         int savedBodyHeaderSize = reader.readInt(); // Seems like it's the size of the VH + VB combined.
-        this.reserved0 = reader.readUnsignedShortAsInt();
-        this.programCount = reader.readUnsignedShortAsInt();
-        this.toneCount = reader.readUnsignedShortAsInt();
-        this.vagCount = reader.readUnsignedShortAsInt();
-        this.masterVolume = reader.readUnsignedByteAsShort();
-        this.panLevel = reader.readUnsignedByteAsShort();
-        this.attr1 = reader.readUnsignedByteAsShort();
-        this.attr2 = reader.readUnsignedByteAsShort();
-        this.reserved1 = reader.readUnsignedIntAsLong(); // Header size = 32 bytes.
+        this.reserved0 = reader.readUnsignedShort();
+        this.programCount = reader.readUnsignedShort();
+        this.toneCount = reader.readUnsignedShort();
+        this.vagCount = reader.readUnsignedShort();
+        this.masterVolume = reader.readUnsignedByte();
+        this.panLevel = reader.readUnsignedByte();
+        this.attr1 = reader.readUnsignedByte();
+        this.attr2 = reader.readUnsignedByte();
+        this.reserved1 = reader.readUnsignedInt(); // Header size = 32 bytes.
 
         // Read programs.
         for (int i = 0; i < this.programs.length; i++) {
@@ -81,7 +81,7 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         // Read Samples.
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
-            this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
+            this.loadedSampleAddresses[i] = (reader.readUnsignedShort() << 3);
 
         this.savedBodyTotalSize = savedBodyHeaderSize - (reader.getIndex() - headerStartIndex); // Get it to be just the size of the body.
         return true;
@@ -160,12 +160,12 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         @Override
         public void load(DataReader reader) {
-            this.toneCount = reader.readUnsignedByteAsShort();
-            this.volume = reader.readUnsignedByteAsShort();
-            this.priority = reader.readUnsignedByteAsShort();
-            this.mode = reader.readUnsignedByteAsShort();
-            this.panning = reader.readUnsignedByteAsShort();
-            this.reserved1 = reader.readUnsignedByteAsShort();
+            this.toneCount = reader.readUnsignedByte();
+            this.volume = reader.readUnsignedByte();
+            this.priority = reader.readUnsignedByte();
+            this.mode = reader.readUnsignedByte();
+            this.panning = reader.readUnsignedByte();
+            this.reserved1 = reader.readUnsignedByte();
             this.attribute = reader.readShort();
             this.reserved2 = reader.readInt();
             this.reserved3 = reader.readInt();
@@ -219,22 +219,22 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         @Override
         public void load(DataReader reader) {
-            this.priority = reader.readUnsignedByteAsShort();
-            this.mode = reader.readUnsignedByteAsShort();
-            this.volume = reader.readUnsignedByteAsShort();
-            this.panning = reader.readUnsignedByteAsShort();
-            this.centerNote = reader.readUnsignedByteAsShort();
-            this.pitchShift = reader.readUnsignedByteAsShort();
-            this.minNote = reader.readUnsignedByteAsShort();
-            this.maxNote = reader.readUnsignedByteAsShort();
-            this.vibratoWidth = reader.readUnsignedByteAsShort();
-            this.vibratoTime = reader.readUnsignedByteAsShort();
-            this.portamentoWidth = reader.readUnsignedByteAsShort();
-            this.portamentoTime = reader.readUnsignedByteAsShort();
-            this.pitchbendMin = reader.readUnsignedByteAsShort();
-            this.pitchbendMax = reader.readUnsignedByteAsShort();
-            this.reserved1 = reader.readUnsignedByteAsShort();
-            this.reserved2 = reader.readUnsignedByteAsShort();
+            this.priority = reader.readUnsignedByte();
+            this.mode = reader.readUnsignedByte();
+            this.volume = reader.readUnsignedByte();
+            this.panning = reader.readUnsignedByte();
+            this.centerNote = reader.readUnsignedByte();
+            this.pitchShift = reader.readUnsignedByte();
+            this.minNote = reader.readUnsignedByte();
+            this.maxNote = reader.readUnsignedByte();
+            this.vibratoWidth = reader.readUnsignedByte();
+            this.vibratoTime = reader.readUnsignedByte();
+            this.portamentoWidth = reader.readUnsignedByte();
+            this.portamentoTime = reader.readUnsignedByte();
+            this.pitchbendMin = reader.readUnsignedByte();
+            this.pitchbendMax = reader.readUnsignedByte();
+            this.reserved1 = reader.readUnsignedByte();
+            this.reserved2 = reader.readUnsignedByte();
             this.adsr1 = reader.readShort();
             this.adsr2 = reader.readShort();
             this.parentProgram = reader.readShort(); // Might be run-time only? Unsure.

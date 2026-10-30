@@ -33,7 +33,7 @@ public class SmallBirdEntityData extends PathEntityData<SmallBirdDifficultyData>
         public void load(DataReader reader) {
             this.fallRate = reader.readShort();
             this.speed = reader.readShort();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

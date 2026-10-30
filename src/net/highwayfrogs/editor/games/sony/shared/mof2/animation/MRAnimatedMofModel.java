@@ -75,15 +75,15 @@ public class MRAnimatedMofModel extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        int animationType = reader.readUnsignedShortAsInt();
+        int animationType = reader.readUnsignedShort();
         if (animationType != EXPECTED_ANIMATION_TYPE) // Never accessed by the game, and observed to always be one in game files.
             getLogger().severe("Invalid/unsupported MRMAnimatedMofModel animationType: %d (At %08X)", animationType, reader.getIndex() - Constants.SHORT_SIZE);
 
-        int flags = reader.readUnsignedShortAsInt();
+        int flags = reader.readUnsignedShort();
         warnAboutInvalidBitFlags(flags, FLAG_VALIDATION_MASK, "MRAnimatedMofModel");
 
-        this.tempPartCount = reader.readUnsignedShortAsInt(); // Appears to match the real part count.
-        int staticModelId = reader.readUnsignedShortAsInt();
+        this.tempPartCount = reader.readUnsignedShort(); // Appears to match the real part count.
+        int staticModelId = reader.readUnsignedShort();
         int expectedStaticModelId = getStaticModelID();
         if (staticModelId != expectedStaticModelId)
             getLogger().severe("Invalid MRAnimatedMofModel Static Model ID! (Got %d, but expected %d!)", staticModelId, expectedStaticModelId);

@@ -47,9 +47,9 @@ public class MRMofHilite extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        this.hiliteType = reader.readUnsignedByteAsShort();
-        this.attachType = HiliteAttachType.values()[reader.readUnsignedByteAsShort()];
-        this.tempAttachIndex = reader.readUnsignedShortAsInt();
+        this.hiliteType = reader.readUnsignedByte();
+        this.attachType = HiliteAttachType.values()[reader.readUnsignedByte()];
+        this.tempAttachIndex = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // Runtime. (Even for interpolation)
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // Runtime.
     }

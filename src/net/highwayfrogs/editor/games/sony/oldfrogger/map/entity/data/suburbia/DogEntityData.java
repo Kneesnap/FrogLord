@@ -33,11 +33,11 @@ public class DogEntityData extends PathEntityData<DogDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
-            this.headDelay = reader.readUnsignedShortAsInt();
-            this.walkSpeed = reader.readUnsignedShortAsInt();
-            this.runSpeed = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
+            this.headDelay = reader.readUnsignedShort();
+            this.walkSpeed = reader.readUnsignedShort();
+            this.runSpeed = reader.readUnsignedShort();
         }
 
         @Override

@@ -43,7 +43,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
             getLogger().warning("The file reported having a length of %d bytes, but it actually was %d bytes.", mapFileSize, reader.getSize());
 
         // Read version.
-        String versionString = reader.readTerminatedString(VERSION.length());
+        String versionString = reader.readStringOfLength(VERSION.length());
         if (!VERSION.equals(versionString))
             throw new RuntimeException("The file '" + getParentFile().getFileDisplayName() + "' reported an unsupported version of v" + versionString + ", whereas only v" + VERSION + " is supported!");
 

@@ -324,10 +324,10 @@ public class MediEvilMapGridPacket extends MediEvilMapPacket implements IPropert
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        short gridXSquareCount = reader.readUnsignedByteAsShort();
-        short gridYSquareCount = reader.readUnsignedByteAsShort();
-        int gridSquareSize = reader.readUnsignedShortAsInt();
-        this.gridShift = reader.readUnsignedByteAsShort();
+        short gridXSquareCount = reader.readUnsignedByte();
+        short gridYSquareCount = reader.readUnsignedByte();
+        int gridSquareSize = reader.readUnsignedShort();
+        this.gridShift = reader.readUnsignedByte();
         reader.alignRequireByte(Constants.INTEGER_SIZE, (byte) 0xFF);
         int gridIdTablePtr = reader.readInt();
         int gridDataBasePtr = reader.readInt();

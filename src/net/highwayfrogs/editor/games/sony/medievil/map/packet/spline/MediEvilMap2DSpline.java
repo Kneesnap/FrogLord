@@ -304,7 +304,7 @@ public class MediEvilMap2DSpline extends SCGameData<MediEvilGameInstance> implem
 
     @Override
     public void load(DataReader reader) {
-        short subDivCount = reader.readUnsignedByteAsShort();
+        short subDivCount = reader.readUnsignedByte();
         this.tempCameraSplineId = reader.readByte();
         this.tempParentChainId = reader.readByte();
         this.numDeadSubDivsStart = reader.readByte();

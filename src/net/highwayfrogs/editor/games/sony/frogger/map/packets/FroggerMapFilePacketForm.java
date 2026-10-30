@@ -38,7 +38,7 @@ public class FroggerMapFilePacketForm extends FroggerMapFilePacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         clear();
-        int formCount = reader.readUnsignedShortAsInt();
+        int formCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         int formPointerList = reader.getIndex();
         reader.setIndex(formPointerList + (formCount * Constants.POINTER_SIZE));

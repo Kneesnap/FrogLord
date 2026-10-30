@@ -92,7 +92,7 @@ public class MediEvilMap3DSpline extends SCGameData<MediEvilGameInstance> implem
 
     @Override
     public void load(DataReader reader) {
-        short subDivCount = reader.readUnsignedByteAsShort();
+        short subDivCount = reader.readUnsignedByte();
         this.tempParentChainId = reader.readByte();
         this.tempPathSplineId = reader.readByte();
         reader.skipBytes(3); // Garbage.

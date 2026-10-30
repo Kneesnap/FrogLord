@@ -29,7 +29,7 @@ public class CobwebEntityData extends MatrixEntityData<CobwebDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.entityId = reader.readUnsignedShortAsInt();
+            this.entityId = reader.readUnsignedShort();
         }
 
         @Override

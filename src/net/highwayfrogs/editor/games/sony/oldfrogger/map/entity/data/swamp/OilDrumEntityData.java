@@ -29,7 +29,7 @@ public class OilDrumEntityData extends PathEntityData<OilDrumDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.splineSpeed = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
         }
 
         @Override

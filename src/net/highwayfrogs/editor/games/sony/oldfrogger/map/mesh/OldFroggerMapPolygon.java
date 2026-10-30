@@ -62,11 +62,11 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
     @Override
     public void load(DataReader reader) {
         for (int i = 0; i < this.vertices.length; i++)
-            this.vertices[i] = reader.readUnsignedShortAsInt();
+            this.vertices[i] = reader.readUnsignedShort();
         for (int i = 0; i < this.colors.length; i++)
             this.colors[i].load(reader);
         if (this.polygonType.isTextured())
-            this.textureId = reader.readUnsignedIntAsLong();
+            this.textureId = reader.readUnsignedInt();
         for (int i = 0; i < this.textureUvs.length; i++)
             this.textureUvs[i].load(reader);
     }

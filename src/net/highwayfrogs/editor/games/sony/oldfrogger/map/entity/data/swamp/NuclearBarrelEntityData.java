@@ -32,7 +32,7 @@ public class NuclearBarrelEntityData extends PathEntityData<NuclearBarrelDifficu
         @Override
         public void load(DataReader reader) {
             this.target.loadWithPadding(reader);
-            this.splineSpeed = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
         }
 
         @Override

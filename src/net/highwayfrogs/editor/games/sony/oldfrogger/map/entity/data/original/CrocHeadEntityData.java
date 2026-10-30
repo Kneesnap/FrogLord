@@ -25,7 +25,7 @@ public class CrocHeadEntityData extends MatrixEntityData<CrocHeadDifficultyData>
     @Override
     public void loadMainEntityData(DataReader reader) {
         super.loadMainEntityData(reader);
-        this.triggerPoint = reader.readUnsignedShortAsInt();
+        this.triggerPoint = reader.readUnsignedShort();
     }
 
     @Override
@@ -51,8 +51,8 @@ public class CrocHeadEntityData extends MatrixEntityData<CrocHeadDifficultyData>
 
         @Override
         public void load(DataReader reader) {
-            this.showDelay = reader.readUnsignedShortAsInt();
-            this.showTime = reader.readUnsignedShortAsInt();
+            this.showDelay = reader.readUnsignedShort();
+            this.showTime = reader.readUnsignedShort();
         }
 
         @Override

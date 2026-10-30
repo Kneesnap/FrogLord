@@ -119,12 +119,12 @@ public class MRMofPolygonBlock {
             throw new NullPointerException("reader");
 
         // Read header.
-        int primitiveTypeInt = reader.readUnsignedShortAsInt();
+        int primitiveTypeInt = reader.readUnsignedShort();
         if (primitiveTypeInt < 0 || primitiveTypeInt >= MRMofPolygonType.values().length)
             throw new RuntimeException("Invalid MRMofPolygonType ID: " + primitiveTypeInt);
 
         MRMofPolygonType polygonType = MRMofPolygonType.values()[primitiveTypeInt];
-        int polygonCount = reader.readUnsignedShortAsInt();
+        int polygonCount = reader.readUnsignedShort();
 
         // Read polygons.
         List<MRMofPolygon> polygons = new ArrayList<>();

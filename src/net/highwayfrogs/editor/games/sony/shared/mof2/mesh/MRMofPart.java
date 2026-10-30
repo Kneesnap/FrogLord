@@ -497,11 +497,11 @@ public class MRMofPart extends SCSharedGameData {
             this.flags = reader.readShort();
             this.mofPart.warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK);
 
-            this.partCelCount = reader.readUnsignedShortAsInt();
-            this.vertexCount = reader.readUnsignedShortAsInt();
-            this.normalCount = reader.readUnsignedShortAsInt();
-            this.primitiveCount = reader.readUnsignedShortAsInt();
-            this.hiliteCount = reader.readUnsignedShortAsInt();
+            this.partCelCount = reader.readUnsignedShort();
+            this.vertexCount = reader.readUnsignedShort();
+            this.normalCount = reader.readUnsignedShort();
+            this.primitiveCount = reader.readUnsignedShort();
+            this.hiliteCount = reader.readUnsignedShort();
 
             this.partCelPointer = reader.readInt();
             this.primitivePointer = reader.readInt();

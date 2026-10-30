@@ -23,7 +23,7 @@ public class MediEvilEntityPointerTableEntry extends SCGameData<MediEvilGameInst
 
     @Override
     public void load(DataReader reader) {
-        this.entityDataPointer = reader.readUnsignedIntAsLong();
+        this.entityDataPointer = reader.readUnsignedInt();
         this.overlayId = reader.readInt();
     }
 

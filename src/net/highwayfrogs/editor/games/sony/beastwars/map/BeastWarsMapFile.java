@@ -256,14 +256,14 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         this.heightMap = new short[this.heightMapZLength][this.heightMapXLength];
         for (int z = 0; z < this.heightMapZLength; z++)
             for (int x = 0; x < this.heightMapXLength; x++)
-                this.heightMap[z][x] = reader.readUnsignedByteAsShort();
+                this.heightMap[z][x] = reader.readUnsignedByte();
     }
 
     private void readTextureMap(DataReader reader) {
         this.tileMap = new short[this.heightMapZLength][this.heightMapXLength];
         for (int z = 0; z < this.heightMapZLength; z++)
             for (int x = 0; x < this.heightMapXLength; x++)
-                this.tileMap[z][x] = reader.readUnsignedByteAsShort();
+                this.tileMap[z][x] = reader.readUnsignedByte();
     }
 
     private void readTextureInformation(DataReader reader) {
@@ -277,11 +277,11 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private void readSplines(DataReader reader) {
         this.splines.clear();
         int splineDataStart = reader.getIndex();
-        int splineCount = reader.readUnsignedShortAsInt();
+        int splineCount = reader.readUnsignedShort();
 
         int highestEndPos = reader.getIndex();
         for (int i = 0; i < splineCount; i++) {
-            int splineDataOffset = reader.readUnsignedShortAsInt();
+            int splineDataOffset = reader.readUnsignedShort();
 
             // Read spline.
             reader.jumpTemp(splineDataStart + splineDataOffset);
@@ -299,11 +299,11 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private void readZones(DataReader reader) {
         this.zones.clear();
         int zoneDataStart = reader.getIndex();
-        int zoneCount = reader.readUnsignedShortAsInt();
+        int zoneCount = reader.readUnsignedShort();
 
         int highestEndPos = reader.getIndex();
         for (int i = 0; i < zoneCount; i++) {
-            int zoneDataOffset = reader.readUnsignedShortAsInt();
+            int zoneDataOffset = reader.readUnsignedShort();
 
             // Read ZONE.
             reader.jumpTemp(zoneDataStart + zoneDataOffset);
@@ -321,12 +321,12 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private void readLines(DataReader reader) {
         this.lines.clear();
         int lineDataStart = reader.getIndex();
-        int lineCount = reader.readUnsignedShortAsInt();
+        int lineCount = reader.readUnsignedShort();
 
         // Read data.
         int highestEndPos = reader.getIndex();
         for (int i = 0; i < lineCount; i++) {
-            int lineDataOffset = reader.readUnsignedShortAsInt();
+            int lineDataOffset = reader.readUnsignedShort();
 
             // Read line.
             reader.jumpTemp(lineDataStart + lineDataOffset);

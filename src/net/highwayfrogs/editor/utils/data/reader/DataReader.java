@@ -106,27 +106,18 @@ public class DataReader {
     }
 
     /**
-     * Reads a single byte as an unsigned int.
-     * @return unsignedByte
-     */
-    public int readUnsignedByte() {
-        return Byte.toUnsignedInt(readByte());
-    }
-
-    /**
      * Reads a single byte as an unsigned byte, and returns it as a short. Since the java byte is -127 to 128, this allows us to read a byte as the appropriate value.
      * @return unsignedByteShort.
      */
-    public short readUnsignedByteAsShort() {
+    public short readUnsignedByte() {
         return DataUtils.toUnsignedByte(readByte());
     }
 
     /**
      * Reads a single short as an unsigned short, and returns it as a int. Since the java byte is -65534 to 65535, this allows us to read a short as the appropriate value.
-     * TODO: Sometime, rename this method (And other methods) to readUnsignedShort() (Drop the asInt()).
      * @return unsignedShortInt.
      */
-    public int readUnsignedShortAsInt() {
+    public int readUnsignedShort() {
         return DataUtils.toUnsignedShort(readShort());
     }
 
@@ -134,7 +125,7 @@ public class DataReader {
      * Reads a single integer as an unsigned integer, returning it as a long.
      * @return unsignedIntLong
      */
-    public long readUnsignedIntAsLong() {
+    public long readUnsignedInt() {
         return DataUtils.toUnsignedInt(readInt());
     }
 
@@ -182,21 +173,19 @@ public class DataReader {
 
     /**
      * Read a string of a pre-specified length.
-     * TODO: Rename to readString()
      * @param length The length of the string.
      * @return readStr
      */
-    public String readTerminatedString(int length) {
-        return readTerminatedString(length, StandardCharsets.US_ASCII);
+    public String readStringOfLength(int length) {
+        return readStringOfLength(length, StandardCharsets.US_ASCII);
     }
 
     /**
      * Read a string of a pre-specified length.
-     * TODO: Rename to readString()
      * @param length The length of the string.
      * @return readStr
      */
-    public String readTerminatedString(int length, Charset charset) {
+    public String readStringOfLength(int length, Charset charset) {
         return new String(readBytes(length), charset);
     }
 
@@ -205,7 +194,7 @@ public class DataReader {
      * @param verify The string to verify.
      */
     public void verifyString(String verify) {
-        String str = readTerminatedString(verify.getBytes(StandardCharsets.US_ASCII).length);
+        String str = readStringOfLength(verify.getBytes(StandardCharsets.US_ASCII).length);
         Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", str, verify);
     }
 

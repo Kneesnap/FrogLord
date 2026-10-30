@@ -67,7 +67,7 @@ public class PRS1Unpacker {
                     return outputBuffer;
 
                 compressedSize -= 2;
-                short readOffset = reader.hasMore() ? reader.readUnsignedByteAsShort() : 0;
+                short readOffset = reader.hasMore() ? reader.readUnsignedByte() : 0;
 
                 for (int i = 0; i <= (readOffset & 0x0F) + 2; i++) {
                     byte copy = compressionBuffer[(i + ((currentByte & 0xFF) | ((readOffset & 0xF0) << 4))) & 0xFFF];

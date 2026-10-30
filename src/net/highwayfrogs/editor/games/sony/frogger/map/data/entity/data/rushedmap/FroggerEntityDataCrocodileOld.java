@@ -22,7 +22,7 @@ public class FroggerEntityDataCrocodileOld extends FroggerEntityDataPathInfo {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.openMouthDelay = reader.readUnsignedShortAsInt();
+        this.openMouthDelay = reader.readUnsignedShort();
     }
 
     @Override

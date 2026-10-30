@@ -66,10 +66,10 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
         if (hasClut()) {
             int clutStartPos = reader.getIndex();
             int clutSize = reader.readInt();
-            this.clutX = reader.readUnsignedShortAsInt();
-            this.clutY = reader.readUnsignedShortAsInt();
-            int clutWidth = reader.readUnsignedShortAsInt();
-            int clutHeight = reader.readUnsignedShortAsInt();
+            this.clutX = reader.readUnsignedShort();
+            this.clutY = reader.readUnsignedShort();
+            int clutWidth = reader.readUnsignedShort();
+            int clutHeight = reader.readUnsignedShort();
             if (clutSize < HEADER_SIZE + (clutHeight * clutWidth) * PSXClutColor.SIZE_IN_BYTES) // 2 bytes per pixel.
                 throw new RuntimeException("Invalid CLUT Size Read [Size: " + clutSize + ", Width: " + clutWidth + ", Height: " + clutHeight + "]");
 
@@ -90,10 +90,10 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
 
         int imageStartPos = reader.getIndex();
         int imageSize = reader.readInt(); // Size of image data starting at this field
-        this.imageX = reader.readUnsignedShortAsInt(); // Frame buffer coordinates
-        this.imageY = reader.readUnsignedShortAsInt();
-        this.imageStride = reader.readUnsignedShortAsInt(); // Stride in units of 2 bytes
-        this.imageHeight = reader.readUnsignedShortAsInt();
+        this.imageX = reader.readUnsignedShort(); // Frame buffer coordinates
+        this.imageY = reader.readUnsignedShort();
+        this.imageStride = reader.readUnsignedShort(); // Stride in units of 2 bytes
+        this.imageHeight = reader.readUnsignedShort();
         if (imageSize < HEADER_SIZE + this.imageHeight * this.imageStride * 2)
             throw new RuntimeException("Invalid Image Size Read [Size: " + imageSize + ", Stride: " + this.imageStride + ", Height: " + this.imageHeight + "]");
 
@@ -208,7 +208,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private static void read4BppTexture(DataReader reader, BufferedImage image, boolean enableTransparency, PSXClutColor[] palette) {
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
-                short value = reader.readUnsignedByteAsShort();
+                short value = reader.readUnsignedByte();
                 int first = (value & 0x0F);
                 int second = value >> 4;
 
@@ -221,7 +221,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private static void read8BppTexture(DataReader reader, BufferedImage image, boolean enableTransparency, PSXClutColor[] palette) {
         for (int y = 0; y < image.getHeight(); y++)
             for (int x = 0; x < image.getWidth(); x++)
-                image.setRGB(x, y, palette[reader.readUnsignedByteAsShort()].toARGB(enableTransparency, null));
+                image.setRGB(x, y, palette[reader.readUnsignedByte()].toARGB(enableTransparency, null));
     }
 
     private static void read16BppTexture(DataReader reader, BufferedImage image, boolean enableTransparency) {

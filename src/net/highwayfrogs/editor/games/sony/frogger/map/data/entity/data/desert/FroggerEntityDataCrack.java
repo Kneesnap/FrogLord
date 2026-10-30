@@ -25,8 +25,8 @@ public class FroggerEntityDataCrack extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.fallDelay = reader.readUnsignedShortAsInt();
-        this.hopsBeforeBreak = reader.readUnsignedShortAsInt();
+        this.fallDelay = reader.readUnsignedShort();
+        this.hopsBeforeBreak = reader.readUnsignedShort();
     }
 
     @Override

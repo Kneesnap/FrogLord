@@ -57,12 +57,12 @@ public class FroggerLevelSelectEntry extends SCGameData<FroggerGameInstance> {
 
         this.localLevelId = reader.readInt();
         this.levelsInWorld = reader.readInt();
-        this.worldImageSelectablePointer = reader.readUnsignedIntAsLong();
-        this.worldImageVisitedPointer = reader.readUnsignedIntAsLong();
-        this.worldImageNotTriedPointer = reader.readUnsignedIntAsLong();
-        this.levelTexturePointer = reader.readUnsignedIntAsLong();
-        this.levelNameTexturePointer = reader.readUnsignedIntAsLong();
-        this.levelNameTextureInGamePointer = reader.readUnsignedIntAsLong();
+        this.worldImageSelectablePointer = reader.readUnsignedInt();
+        this.worldImageVisitedPointer = reader.readUnsignedInt();
+        this.worldImageNotTriedPointer = reader.readUnsignedInt();
+        this.levelTexturePointer = reader.readUnsignedInt();
+        this.levelNameTexturePointer = reader.readUnsignedInt();
+        this.levelNameTextureInGamePointer = reader.readUnsignedInt();
         reader.skipBytesRequireEmpty(RUNTIME_DATA_SIZE);
     }
 

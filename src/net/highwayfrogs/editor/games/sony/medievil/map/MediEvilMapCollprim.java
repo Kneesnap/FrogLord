@@ -68,11 +68,11 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
     @Override
     public void load(DataReader reader) {
         this.matrix.load(reader);
-        this.flags = reader.readUnsignedShortAsInt();
-        this.xLength = reader.readUnsignedShortAsInt();
-        this.yLength = reader.readUnsignedShortAsInt();
-        this.zLength = reader.readUnsignedShortAsInt();
-        this.radiusSq = reader.readUnsignedIntAsLong(); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
+        this.flags = reader.readUnsignedShort();
+        this.xLength = reader.readUnsignedShort();
+        this.yLength = reader.readUnsignedShort();
+        this.zLength = reader.readUnsignedShort();
+        this.radiusSq = reader.readUnsignedInt(); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
     }
 
     @Override

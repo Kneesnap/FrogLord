@@ -32,8 +32,8 @@ public class DefaultPathEntityData extends PathEntityData<OldFroggerDefaultPathD
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

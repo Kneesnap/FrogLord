@@ -212,7 +212,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         // Look for the data which comes after the remap table.
         if (next == null && isPSX() && value == 0x80) {
             reader.jumpTemp(reader.getIndex());
-            long nextData = reader.readUnsignedIntAsLong();
+            long nextData = reader.readUnsignedInt();
             reader.jumpReturn();
 
             if (nextData == 0x00100020L)
@@ -486,7 +486,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         reader.setIndex(this.getVersionConfig().getPickupDataAddress());
         for (int i = 0; i < this.pickupData.length; i++) {
-            long tempPointer = reader.readUnsignedIntAsLong();
+            long tempPointer = reader.readUnsignedInt();
             reader.jumpTemp((int) (tempPointer - getRamOffset()));
             FroggerPickupData pickupData = new FroggerPickupData(this, FroggerFlyScoreType.values()[i]);
             pickupData.load(reader);
@@ -615,7 +615,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         reader.setIndex(this.getVersionConfig().getScriptArrayAddress());
         for (int i = 0; i < this.getVersionConfig().getScriptBank().size(); i++) {
-            long address = reader.readUnsignedIntAsLong();
+            long address = reader.readUnsignedInt();
             if (address == 0) { // Default / null.
                 this.scripts.add(FroggerScript.EMPTY_SCRIPT);
                 continue;
@@ -641,7 +641,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         DataReader reader = getExecutableReader();
         reader.setIndex(this.getVersionConfig().getScriptArrayAddress());
         for (int i = 0; i < this.scripts.size(); i++) {
-            long address = reader.readUnsignedIntAsLong();
+            long address = reader.readUnsignedInt();
             if (address == 0) // Default / null.
                 continue;
 

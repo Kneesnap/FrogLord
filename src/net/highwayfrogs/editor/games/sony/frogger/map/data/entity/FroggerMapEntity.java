@@ -82,8 +82,8 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.formGridId = reader.readUnsignedShortAsInt();
-        this.uniqueId = reader.readUnsignedShortAsInt();
+        this.formGridId = reader.readUnsignedShort();
+        this.uniqueId = reader.readUnsignedShort();
 
         // Warn about invalid form grid IDs.
         if (this.formGridId < 0 || this.formGridId >= Math.max(getMapFile().getFormPacket().getOldForms().size(), getMapFile().getFormPacket().getForms().size()))
@@ -95,7 +95,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             this.flags = 0;
             reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Skip runtime pointers.
         } else {
-            formId = reader.readUnsignedShortAsInt();
+            formId = reader.readUnsignedShort();
             this.formEntry = getGameInstance().getMapFormEntry(this.mapFile.getMapTheme(), formId);
             this.flags = reader.readShort();
             warnAboutInvalidBitFlags(this.flags, FroggerMapEntityFlag.FLAG_VALIDATION_MASK);

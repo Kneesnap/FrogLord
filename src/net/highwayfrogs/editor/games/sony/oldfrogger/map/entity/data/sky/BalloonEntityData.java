@@ -58,7 +58,7 @@ public class BalloonEntityData extends PathEntityData<BalloonDifficultyData> {
         public void load(DataReader reader) {
             this.fallSpeed = reader.readShort();
             this.speed = reader.readShort();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

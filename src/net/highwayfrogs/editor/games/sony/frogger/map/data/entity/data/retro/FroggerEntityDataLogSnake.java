@@ -27,7 +27,7 @@ public class FroggerEntityDataLogSnake extends FroggerEntityDataMatrix {
     public void load(DataReader reader) {
         super.load(reader);
         this.logId = reader.readShort();
-        this.speed = reader.readUnsignedShortAsInt();
+        this.speed = reader.readUnsignedShort();
     }
 
     @Override

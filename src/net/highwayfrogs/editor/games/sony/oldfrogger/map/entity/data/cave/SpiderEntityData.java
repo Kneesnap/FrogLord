@@ -29,7 +29,7 @@ public class SpiderEntityData extends MatrixEntityData<SpiderDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
         }
 
         @Override

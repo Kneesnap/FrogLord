@@ -30,8 +30,8 @@ public class LogSnakeEntityData extends MatrixEntityData<LogSnakeDifficultyData>
 
         @Override
         public void load(DataReader reader) {
-            this.logUniqueId = reader.readUnsignedShortAsInt();
-            this.speed = reader.readUnsignedShortAsInt();
+            this.logUniqueId = reader.readUnsignedShort();
+            this.speed = reader.readUnsignedShort();
         }
 
         @Override

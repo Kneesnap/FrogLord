@@ -32,10 +32,10 @@ public class BiplaneBannerEntityData extends PathEntityData<BiplaneBannerDifficu
 
         @Override
         public void load(DataReader reader) {
-            this.twistDelay = reader.readUnsignedShortAsInt();
-            this.bannerLength = reader.readUnsignedShortAsInt();
-            this.biplaneSpeed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+            this.twistDelay = reader.readUnsignedShort();
+            this.bannerLength = reader.readUnsignedShort();
+            this.biplaneSpeed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

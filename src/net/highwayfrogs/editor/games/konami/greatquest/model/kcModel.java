@@ -127,7 +127,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         for (kcModelPrim prim : this.primitives) {
             short[] boneIds = new short[this.bonesPerPrimitive];
             for (int i = 0; i < boneIds.length; i++)
-                boneIds[i] = reader.readUnsignedByteAsShort();
+                boneIds[i] = reader.readUnsignedByte();
             prim.setBoneIds(boneIds);
         }
 

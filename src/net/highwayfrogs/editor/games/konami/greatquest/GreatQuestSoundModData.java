@@ -28,7 +28,7 @@ public class GreatQuestSoundModData extends GameData<GreatQuestInstance> {
     @Override
     public void load(DataReader reader) {
         reader.verifyString(SIGNATURE);
-        short version = reader.readUnsignedByteAsShort();
+        short version = reader.readUnsignedByte();
         if (version > CURRENT_VERSION)
             throw new RuntimeException("The version of FrogLord data included in the sound file (v" + version
                     + ") is not supported in this version of FrogLord! (v" + CURRENT_VERSION

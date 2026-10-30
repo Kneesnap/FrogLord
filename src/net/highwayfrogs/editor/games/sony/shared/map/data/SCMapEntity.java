@@ -54,17 +54,17 @@ public class SCMapEntity extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        this.linkIndex = reader.readUnsignedShortAsInt();
+        this.linkIndex = reader.readUnsignedShort();
         this.linkTarget = EntityLinkTargetType.values()[reader.readByte()];
         reader.skipBytesRequireEmpty(1);
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Skip two runtime pointers.
         this.entityId = reader.readInt();
         this.formId = reader.readInt();
-        this.subFormId = reader.readUnsignedByteAsShort();
+        this.subFormId = reader.readUnsignedByte();
 
-        this.rotationX = reader.readUnsignedByteAsShort();
-        this.rotationY = reader.readUnsignedByteAsShort();
-        this.rotationZ = reader.readUnsignedByteAsShort();
+        this.rotationX = reader.readUnsignedByte();
+        this.rotationY = reader.readUnsignedByte();
+        this.rotationZ = reader.readUnsignedByte();
 
         // Read positional data.
         this.position.loadWithPadding(reader);
@@ -75,9 +75,9 @@ public class SCMapEntity extends SCSharedGameData {
         // Read remaining data.
         this.initFlags = reader.readInt();
         this.destroyFlags = reader.readInt();
-        this.group = reader.readUnsignedByteAsShort();
-        this.scriptIndex = reader.readUnsignedByteAsShort();
-        this.species = reader.readUnsignedShortAsInt();
+        this.group = reader.readUnsignedByte();
+        this.scriptIndex = reader.readUnsignedByte();
+        this.species = reader.readUnsignedShort();
         for (int i = 0; i < this.genericData.length; i++)
             this.genericData[i] = reader.readInt();
     }

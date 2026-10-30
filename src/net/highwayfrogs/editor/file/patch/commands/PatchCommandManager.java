@@ -36,7 +36,7 @@ public class PatchCommandManager {
         addCommand(new PatchCommandWrite("writef", (writer, value) -> writer.writeFloat((float) value.getAsDecimal())));
         addCommand(new PatchCommandWrite("writecolor", (writer, value) -> writer.writeInt(ColorUtils.toRGB(value.getAsColor()))));
         addCommand(new PatchCommandIf());
-        addCommand(new PatchCommandRead("readb", (reader, value) -> value.setInteger(reader.readUnsignedByteAsShort())));
+        addCommand(new PatchCommandRead("readb", (reader, value) -> value.setInteger(reader.readUnsignedByte())));
         addCommand(new PatchCommandRead("reads", (reader, value) -> value.setInteger(reader.readShort())));
         addCommand(new PatchCommandRead("readi", (reader, value) -> value.setInteger(reader.readInt())));
         addCommand(new PatchCommandRead("readf", (reader, value) -> value.setDecimal(reader.readFloat())));

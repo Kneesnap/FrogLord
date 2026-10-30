@@ -29,7 +29,7 @@ public class SCMapEntityPacket<TGameInstance extends SCGameInstance> extends SCM
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int entityCount = reader.readUnsignedShortAsInt();
+        int entityCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
         int entityListPtr = reader.readInt();
         if (entityListPtr != reader.getIndex()) {

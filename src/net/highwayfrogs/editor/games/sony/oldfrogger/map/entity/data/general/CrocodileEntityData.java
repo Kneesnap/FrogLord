@@ -31,7 +31,7 @@ public class CrocodileEntityData extends PathEntityData<CrocodileDifficultyData>
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
             reader.alignRequireEmpty(4);
             this.openMouthDelay = reader.readShort();
             this.closeMouthDelay = reader.readShort();

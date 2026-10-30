@@ -35,7 +35,7 @@ public class FroggerThemeBookPC extends FroggerThemeBook {
     @Override
     public void load(DataReader reader) {
         this.highWadId = reader.readInt();
-        this.formLibraryPointer = reader.readUnsignedIntAsLong();
+        this.formLibraryPointer = reader.readUnsignedInt();
         this.highVloId = reader.readInt();
         this.deathHeight = reader.readInt();
         this.highMultiplayerWadId = reader.readInt();

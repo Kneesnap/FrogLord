@@ -22,10 +22,10 @@ public class kcScriptTOC implements IBinarySerializable {
 
     @Override
     public void load(DataReader reader) {
-        this.causeTypes = reader.readUnsignedIntAsLong();
-        this.causeStartIndex = reader.readUnsignedIntAsLong();
-        this.causeCount = reader.readUnsignedIntAsLong();
-        this.effectCount = reader.readUnsignedIntAsLong();
+        this.causeTypes = reader.readUnsignedInt();
+        this.causeStartIndex = reader.readUnsignedInt();
+        this.causeCount = reader.readUnsignedInt();
+        this.effectCount = reader.readUnsignedInt();
     }
 
     @Override

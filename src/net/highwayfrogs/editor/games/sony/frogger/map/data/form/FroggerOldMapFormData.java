@@ -35,9 +35,9 @@ public class FroggerOldMapFormData implements IBinarySerializable {
         this.xMax = reader.readShort();
         this.yMax = reader.readShort();
         this.zMax = reader.readShort();
-        this.reaction = reader.readUnsignedShortAsInt();
+        this.reaction = reader.readUnsignedShort();
         for (int i = 0; i < this.reactionData.length; i++)
-            this.reactionData[i] = reader.readUnsignedShortAsInt();
+            this.reactionData[i] = reader.readUnsignedShort();
 
         int numberOfHeights = reader.readInt();
         for (int i = 0; i < numberOfHeights; i++) {
@@ -83,9 +83,9 @@ public class FroggerOldMapFormData implements IBinarySerializable {
             this.zMax = reader.readShort();
             this.y = reader.readShort();
             reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
-            this.reaction = reader.readUnsignedShortAsInt();
+            this.reaction = reader.readUnsignedShort();
             for (int i = 0; i < this.reactionData.length; i++)
-                this.reactionData[i] = reader.readUnsignedShortAsInt();
+                this.reactionData[i] = reader.readUnsignedShort();
         }
 
         @Override

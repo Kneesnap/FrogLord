@@ -43,15 +43,15 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     protected void loadBody(DataReader reader, int endIndex) {
         this.type = OldFroggerGridType.values()[reader.readByte()];
         reader.skipBytesRequireEmpty(1);
-        int gridCount = reader.readUnsignedShortAsInt();
+        int gridCount = reader.readUnsignedShort();
         this.xSize = reader.readInt(); // Size of grids (x)
         this.zSize = reader.readInt(); // Size of grids (z)
-        this.xCount = reader.readUnsignedShortAsInt(); // Number of grids in X
-        this.zCount = reader.readUnsignedShortAsInt(); // Number of grids in Z
+        this.xCount = reader.readUnsignedShort(); // Number of grids in X
+        this.zCount = reader.readUnsignedShort(); // Number of grids in Z
         this.basePoint.loadWithPadding(reader);
         int gridDataStartAddress = reader.readInt(); // ptr to first of many grids
-        int quadCount = reader.readUnsignedShortAsInt();
-        int staticEntityCount = reader.readUnsignedShortAsInt();
+        int quadCount = reader.readUnsignedShort();
+        int staticEntityCount = reader.readUnsignedShort();
         int quadPointer = reader.readInt();
         int staticEntityPointer = reader.readInt();
 
@@ -217,17 +217,17 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
         @Override
         public void load(DataReader reader) {
-            short entityCount = reader.readUnsignedByteAsShort();
+            short entityCount = reader.readUnsignedByte();
             reader.skipBytesRequireEmpty(3);
 
-            int numFloorF4 = reader.readUnsignedByteAsShort();
-            int numFloorFT4 = reader.readUnsignedByteAsShort();
-            int numFloorG4 = reader.readUnsignedByteAsShort();
-            int numFloorGT4 = reader.readUnsignedByteAsShort();
-            int numCeilingF4 = reader.readUnsignedByteAsShort();
-            int numCeilingFT4 = reader.readUnsignedByteAsShort();
-            int numCeilingG4 = reader.readUnsignedByteAsShort();
-            int numCeilingGT4 = reader.readUnsignedByteAsShort();
+            int numFloorF4 = reader.readUnsignedByte();
+            int numFloorFT4 = reader.readUnsignedByte();
+            int numFloorG4 = reader.readUnsignedByte();
+            int numFloorGT4 = reader.readUnsignedByte();
+            int numCeilingF4 = reader.readUnsignedByte();
+            int numCeilingFT4 = reader.readUnsignedByte();
+            int numCeilingG4 = reader.readUnsignedByte();
+            int numCeilingGT4 = reader.readUnsignedByte();
 
             int ptrFloorF4 = reader.readInt();
             int ptrFloorFT4 = reader.readInt();

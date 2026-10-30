@@ -65,12 +65,12 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        int celCount = reader.readUnsignedShortAsInt(); // The number of unique animation frames.
-        this.staticMofPartCount = reader.readUnsignedShortAsInt(); // The number of mof parts in the static mof.
-        int virtualCelCount = reader.readUnsignedShortAsInt(); // The number of frames in the animation.
+        int celCount = reader.readUnsignedShort(); // The number of unique animation frames.
+        this.staticMofPartCount = reader.readUnsignedShort(); // The number of mof parts in the static mof.
+        int virtualCelCount = reader.readUnsignedShort(); // The number of frames in the animation.
 
         // Parse flags.
-        int flags = reader.readUnsignedShortAsInt();
+        int flags = reader.readUnsignedShort();
         switch (flags) {
             case FLAG_VIRTUAL_STANDARD:
                 this.interpolationEnabled = false;
@@ -134,7 +134,7 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
         requireReaderIndex(reader, this.tempCelNumberPointer, "Expected celNumbers");
         this.tempCelNumberPointer = -1;
         for (int i = 0; i < this.celNumbers.size(); i++)
-            this.celNumbers.set(i, reader.readUnsignedShortAsInt());
+            this.celNumbers.set(i, reader.readUnsignedShort());
         reader.align(Constants.INTEGER_SIZE); // There's garbage data here by the looks of it. [psx-usa-retail, MediEvil ECTS]
 
         requireReaderIndex(reader, this.tempTransformIdListPointer, "Expected transform indices");

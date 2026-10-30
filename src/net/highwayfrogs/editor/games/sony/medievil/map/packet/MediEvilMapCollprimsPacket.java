@@ -27,7 +27,7 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int collprimCount = reader.readUnsignedShortAsInt();
+        int collprimCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding
         int collprimListPtr = reader.readInt();
         reader.requireIndex(getLogger(), collprimListPtr, "Expected collprim list data");

@@ -23,7 +23,7 @@ public class MRMofTextureAnimationEntry implements IBinarySerializable {
     @Override
     public void load(DataReader reader) {
         this.globalImageId = reader.readShort();
-        this.duration = reader.readUnsignedShortAsInt();
+        this.duration = reader.readUnsignedShort();
     }
 
     @Override

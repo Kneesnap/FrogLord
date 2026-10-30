@@ -27,10 +27,10 @@ public class SlimeEntityData extends OldFroggerEntityData<OldFroggerNullDifficul
 
     @Override
     public void loadMainEntityData(DataReader reader) {
-        this.unknownValue1 = reader.readUnsignedShortAsInt();
-        this.unknownValue2 = reader.readUnsignedShortAsInt();
-        this.unknownValue3 = reader.readUnsignedShortAsInt();
-        this.unknownValue4 = reader.readUnsignedShortAsInt();
+        this.unknownValue1 = reader.readUnsignedShort();
+        this.unknownValue2 = reader.readUnsignedShort();
+        this.unknownValue3 = reader.readUnsignedShort();
+        this.unknownValue4 = reader.readUnsignedShort();
     }
 
     @Override

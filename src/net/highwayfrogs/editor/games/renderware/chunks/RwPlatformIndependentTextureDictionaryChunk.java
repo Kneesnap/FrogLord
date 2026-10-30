@@ -37,8 +37,8 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
     @Override
     public void loadChunkData(DataReader reader, int dataLength, int version) {
         // rtpitexdChunkPrefix
-        int numTextures = reader.readUnsignedShortAsInt(); // Might be number of textures, might be number of frames.
-        this.textureFormatVersion = reader.readUnsignedShortAsInt(); // Supported: 0, 1.
+        int numTextures = reader.readUnsignedShort(); // Might be number of textures, might be number of frames.
+        this.textureFormatVersion = reader.readUnsignedShort(); // Supported: 0, 1.
 
         this.entries.clear();
         if (this.textureFormatVersion == 0 || this.textureFormatVersion == 1) {

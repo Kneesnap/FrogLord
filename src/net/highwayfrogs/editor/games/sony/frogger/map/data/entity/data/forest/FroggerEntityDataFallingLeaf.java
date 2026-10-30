@@ -27,9 +27,9 @@ public class FroggerEntityDataFallingLeaf extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.fallSpeed = reader.readUnsignedShortAsInt();
-        this.swayDuration = reader.readUnsignedShortAsInt();
-        this.swayAngle = reader.readUnsignedShortAsInt();
+        this.fallSpeed = reader.readUnsignedShort();
+        this.swayDuration = reader.readUnsignedShort();
+        this.swayAngle = reader.readUnsignedShort();
     }
 
     @Override

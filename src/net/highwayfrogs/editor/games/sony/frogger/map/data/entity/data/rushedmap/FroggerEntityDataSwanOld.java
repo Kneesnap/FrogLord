@@ -25,7 +25,7 @@ public class FroggerEntityDataSwanOld extends FroggerEntityDataPathInfo {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.splineDelay = reader.readUnsignedShortAsInt();
+        this.splineDelay = reader.readUnsignedShort();
         this.swimmingTime = reader.readShort();
         this.flapThinkTime = reader.readShort();
         this.flappingTime = reader.readShort();

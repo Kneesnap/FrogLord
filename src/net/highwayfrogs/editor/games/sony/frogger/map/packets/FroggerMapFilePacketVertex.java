@@ -31,7 +31,7 @@ public class FroggerMapFilePacketVertex extends FroggerMapFilePacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         this.vertices.clear();
-        int vertexCount = reader.readUnsignedShortAsInt();
+        int vertexCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         for (int i = 0; i < vertexCount; i++)
             this.vertices.add(SVector.readWithPadding(reader));

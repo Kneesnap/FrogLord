@@ -56,12 +56,12 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.pathId = reader.readUnsignedShortAsInt(); // Validated in entity loading logic because we want to identify the entity who loads with this data.
-        this.segmentId = reader.readUnsignedShortAsInt();
-        this.segmentDistance = reader.readUnsignedShortAsInt();
-        this.motionType = reader.readUnsignedShortAsInt();
+        this.pathId = reader.readUnsignedShort(); // Validated in entity loading logic because we want to identify the entity who loads with this data.
+        this.segmentId = reader.readUnsignedShort();
+        this.segmentDistance = reader.readUnsignedShort();
+        this.motionType = reader.readUnsignedShort();
         warnAboutInvalidBitFlags(this.motionType, FroggerPathMotionType.FLAG_VALIDATION_MASK);
-        this.speed = reader.readUnsignedShortAsInt();
+        this.speed = reader.readUnsignedShort();
         reader.alignRequireEmpty(Constants.INTEGER_SIZE); // Padding.
     }
 

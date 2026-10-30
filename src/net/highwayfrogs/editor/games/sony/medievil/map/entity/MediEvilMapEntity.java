@@ -69,14 +69,14 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
     @Override
     public void load(DataReader reader) {
         this.entityId = reader.readInt();
-        this.formId = reader.readUnsignedShortAsInt();
-        this.subFormId = reader.readUnsignedByteAsShort();
-        this.baseGenericData = reader.readUnsignedByteAsShort();
+        this.formId = reader.readUnsignedShort();
+        this.subFormId = reader.readUnsignedByte();
+        this.baseGenericData = reader.readUnsignedByte();
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Skip two runtime pointers.
 
-        this.rotationX = reader.readUnsignedByteAsShort();
-        this.rotationY = reader.readUnsignedByteAsShort();
-        this.rotationZ = reader.readUnsignedByteAsShort();
+        this.rotationX = reader.readUnsignedByte();
+        this.rotationY = reader.readUnsignedByte();
+        this.rotationZ = reader.readUnsignedByte();
         reader.skipBytes(1); // Padding (1 Byte?)
 
         // Read positional data.
@@ -86,7 +86,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
             getLogger().warning("Entity had a different 'runtimePosition' from initialPosition. (Initial: %s, Runtime: %s)", this.position, runtimePosition);
 
         // Read remaining data.
-        this.triggerData = reader.readUnsignedIntAsLong();
+        this.triggerData = reader.readUnsignedInt();
         this.initFlags = reader.readInt();
         this.destroyFlags = reader.readInt();
         for (int i = 0; i < this.genericData.length; i++)

@@ -27,7 +27,7 @@ public class BeastWarsMapSpline extends SCGameData<BeastWarsInstance> {
 
     @Override
     public void load(DataReader reader) {
-        int bezierCurveCount = reader.readUnsignedShortAsInt();
+        int bezierCurveCount = reader.readUnsignedShort();
 
         this.bezierCurves.clear();
         for (int i = 0; i < bezierCurveCount; i++) {

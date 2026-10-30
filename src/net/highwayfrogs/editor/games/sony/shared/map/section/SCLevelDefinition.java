@@ -69,15 +69,15 @@ public class SCLevelDefinition extends SCSharedGameData implements ISCLevelTable
     @Override
     public void load(DataReader reader) {
         int dataReadStartIndex = reader.getIndex();
-        this.relocNamePointer = reader.readUnsignedIntAsLong();
+        this.relocNamePointer = reader.readUnsignedInt();
         this.vloResourceId = reader.readShort();
         this.wadResourceId = reader.readShort();
         this.timResourceId = reader.readShort(); // TODO: Figure out what this is in C-12 Final Resistance.
         this.levelNameId = reader.readShort();
         this.unknown1 = reader.readShort();
-        this.unknown2 = reader.readUnsignedByteAsShort();
-        short sectionCount = reader.readUnsignedByteAsShort();
-        this.sectionDefinitionsPointer = reader.readUnsignedIntAsLong();
+        this.unknown2 = reader.readUnsignedByte();
+        short sectionCount = reader.readUnsignedByte();
+        this.sectionDefinitionsPointer = reader.readUnsignedInt();
         this.unknownData = reader.readBytes(getExpectedSizeInBytes() - (reader.getIndex() - dataReadStartIndex)); // TODO: Figure this data out later.
 
         // Read level name.

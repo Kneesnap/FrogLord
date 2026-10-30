@@ -36,10 +36,10 @@ public class FroggerMapBookPC extends FroggerMapBook {
     public void load(DataReader reader) {
         this.highMapId = reader.readInt();
         this.lowMapId = reader.readInt();
-        this.highRemapPointer = reader.readUnsignedIntAsLong();
-        this.lowRemapPointer = reader.readUnsignedIntAsLong();
+        this.highRemapPointer = reader.readUnsignedInt();
+        this.lowRemapPointer = reader.readUnsignedInt();
         this.useCaveLights = (reader.readInt() == 1);
-        this.environmentTexturePointer = reader.readUnsignedIntAsLong();
+        this.environmentTexturePointer = reader.readUnsignedInt();
         this.highWadId = reader.readInt();
         this.lowWadId = reader.readInt();
         this.paletteId = reader.readInt();

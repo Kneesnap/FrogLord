@@ -31,9 +31,9 @@ public class BisonEntityData extends PathEntityData<BisonDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.cloudGap = reader.readUnsignedShortAsInt();
-            this.cloudDuration = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.cloudGap = reader.readUnsignedShort();
+            this.cloudDuration = reader.readUnsignedShort();
 
         }
 

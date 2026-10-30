@@ -35,7 +35,7 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
     public void load(DataReader reader) {
         this.materialId = reader.readInt();
         this.primitiveType = kcPrimitiveType.values()[reader.readInt()];
-        this.loadedVertexCount = reader.readUnsignedIntAsLong();
+        this.loadedVertexCount = reader.readUnsignedInt();
     }
 
     @Override

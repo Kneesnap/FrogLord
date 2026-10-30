@@ -25,7 +25,7 @@ public class FlyEntityData extends MatrixEntityData<FlyDifficultyData> {
     @Override
     public void loadMainEntityData(DataReader reader) {
         super.loadMainEntityData(reader);
-        this.triggerPoint = reader.readUnsignedShortAsInt();
+        this.triggerPoint = reader.readUnsignedShort();
     }
 
     @Override
@@ -53,10 +53,10 @@ public class FlyEntityData extends MatrixEntityData<FlyDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.value = reader.readUnsignedShortAsInt();
-            this.blank = reader.readUnsignedShortAsInt();
-            this.showDelay = reader.readUnsignedShortAsInt();
-            this.showTime = reader.readUnsignedShortAsInt();
+            this.value = reader.readUnsignedShort();
+            this.blank = reader.readUnsignedShort();
+            this.showDelay = reader.readUnsignedShort();
+            this.showTime = reader.readUnsignedShort();
         }
 
         @Override

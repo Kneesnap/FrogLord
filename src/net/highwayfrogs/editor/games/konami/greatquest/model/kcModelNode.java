@@ -30,7 +30,7 @@ public class kcModelNode extends GameData<GreatQuestInstance> {
     @Override
     public void load(DataReader reader) {
         this.nodeId = reader.readInt();
-        long primitiveCount = reader.readUnsignedIntAsLong();
+        long primitiveCount = reader.readUnsignedInt();
 
         // Populate primitives list for reading.
         this.primitives.clear();

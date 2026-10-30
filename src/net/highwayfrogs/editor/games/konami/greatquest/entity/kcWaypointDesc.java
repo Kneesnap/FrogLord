@@ -53,8 +53,8 @@ public class kcWaypointDesc extends kcEntity3DDesc implements ILateResourceResol
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        int type = reader.readUnsignedShortAsInt();
-        int subType = reader.readUnsignedShortAsInt();
+        int type = reader.readUnsignedShort();
+        int subType = reader.readUnsignedShort();
         this.type = kcWaypointType.getWaypointType(type, subType);
         int prevEntityHash = reader.readInt();
         int nextEntityHash = reader.readInt();

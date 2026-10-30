@@ -24,7 +24,7 @@ public class FroggerEntityDataCheckpoint extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.id = reader.readUnsignedShortAsInt();
+        this.id = reader.readUnsignedShort();
     }
 
     @Override

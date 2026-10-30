@@ -56,7 +56,7 @@ public class PTStaticFile extends SCSharedGameFile {
         reader.verifyString(IDENTIFIER_STRING);
         this.flags = reader.readShort();
         warnAboutInvalidBitFlags(this.flags, FLAG_MASK);
-        int partCount = reader.readUnsignedShortAsInt();
+        int partCount = reader.readUnsignedShort();
         int partDataStartAddress = reader.readInt();
         int collprimAddress = reader.readInt();
 

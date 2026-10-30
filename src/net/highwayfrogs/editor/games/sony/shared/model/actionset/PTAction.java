@@ -31,13 +31,13 @@ public class PTAction extends SCSharedGameData {
     @Override
     public void load(DataReader reader) {
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // This value seems to be calculated by the anim file load function.
-        int actionIndex = reader.readUnsignedShortAsInt();
+        int actionIndex = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.POINTER_SIZE); // Runtime pointer.
-        this.rootTransformIndex = reader.readUnsignedShortAsInt();
-        int transformCount = reader.readUnsignedShortAsInt();
-        int keyFrameCount = reader.readUnsignedShortAsInt();
+        this.rootTransformIndex = reader.readUnsignedShort();
+        int transformCount = reader.readUnsignedShort();
+        int keyFrameCount = reader.readUnsignedShort();
         this.transformationIndices = new short[transformCount][keyFrameCount];
-        this.virtualFrames = new int[reader.readUnsignedShortAsInt()];
+        this.virtualFrames = new int[reader.readUnsignedShort()];
         this.keyFrameIndexListPointer = reader.readInt();
         this.transformIndexListPointer = reader.readInt(); // List of transform indices for each keyframe of each transform.
 

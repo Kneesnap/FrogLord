@@ -42,8 +42,8 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
         for (int i = 0; i < this.targets.length; i++)
             this.targets[i].load(reader);
 
-        this.delay = reader.readUnsignedShortAsInt();
-        this.bounceCount = reader.readUnsignedByteAsShort();
+        this.delay = reader.readUnsignedShort();
+        this.bounceCount = reader.readUnsignedByte();
         reader.skipBytesRequireEmpty(1); // Padding
         this.flags = reader.readInt();
         if (!getConfig().isAtOrBeforeBuild38()) // At/before build 38 it does seem there's stuff written. No idea what it means though.
@@ -107,7 +107,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
         @Override
         public void load(DataReader reader) {
             this.target.loadWithPadding(reader);
-            this.time = reader.readUnsignedShortAsInt();
+            this.time = reader.readUnsignedShort();
             reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         }
 

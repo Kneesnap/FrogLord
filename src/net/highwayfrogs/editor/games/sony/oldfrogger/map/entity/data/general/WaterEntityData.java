@@ -25,7 +25,7 @@ public class WaterEntityData extends MatrixEntityData<OldFroggerNullDifficultyDa
     @Override
     protected void loadMainEntityData(DataReader reader) {
         super.loadMainEntityData(reader);
-        this.zone = reader.readUnsignedShortAsInt();
+        this.zone = reader.readUnsignedShort();
         reader.alignRequireEmpty(4);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // Padding
     }

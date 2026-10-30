@@ -39,12 +39,12 @@ public class PTStaticPart extends SCSharedGameData {
     public void load(DataReader reader) {
         this.flags = reader.readInt();
         warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK);
-        int partCelCount = reader.readUnsignedShortAsInt();
-        this.transformId = reader.readUnsignedByteAsShort();
-        this.connectedTransformId = reader.readUnsignedByteAsShort();
-        this.mimeVectors = reader.readUnsignedShortAsInt();
-        this.mimeSkinVectors = reader.readUnsignedShortAsInt();
-        this.mimeSkinVertices = reader.readUnsignedShortAsInt();
+        int partCelCount = reader.readUnsignedShort();
+        this.transformId = reader.readUnsignedByte();
+        this.connectedTransformId = reader.readUnsignedByte();
+        this.mimeVectors = reader.readUnsignedShort();
+        this.mimeSkinVectors = reader.readUnsignedShort();
+        this.mimeSkinVertices = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         this.partCelStartAddress = reader.readInt();
 

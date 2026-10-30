@@ -32,10 +32,10 @@ public class HiveEntityData extends MatrixEntityData<HiveDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.criticalDistance = reader.readUnsignedShortAsInt();
-            this.frogDelay = reader.readUnsignedShortAsInt();
-            this.swarmSpeed = reader.readUnsignedShortAsInt();
-            this.interestTime = reader.readUnsignedShortAsInt();
+            this.criticalDistance = reader.readUnsignedShort();
+            this.frogDelay = reader.readUnsignedShort();
+            this.swarmSpeed = reader.readUnsignedShort();
+            this.interestTime = reader.readUnsignedShort();
         }
 
         @Override

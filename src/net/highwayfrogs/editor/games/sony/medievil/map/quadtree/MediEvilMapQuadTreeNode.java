@@ -261,7 +261,7 @@ public class MediEvilMapQuadTreeNode extends SCGameData<MediEvilGameInstance> im
 
         List<MediEvilMapPolygon> mapPolygons = this.quadTree.getMapFile().getGraphicsPacket().getPolygons();
         for (int i = 0; i < this.polygons.size(); i++) {
-            int polygonIndex = reader.readUnsignedShortAsInt();
+            int polygonIndex = reader.readUnsignedShort();
             if (polygonIndex < 0 || polygonIndex >= mapPolygons.size())
                 throw new IllegalArgumentException("Invalid polygonIndex: " + polygonIndex);
 

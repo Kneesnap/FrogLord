@@ -27,7 +27,7 @@ public class MediEvilMapEntitiesPacket extends MediEvilMapPacket implements IPro
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int entityCount = reader.readUnsignedShortAsInt();
+        int entityCount = reader.readUnsignedShort();
         reader.skipBytesRequire((byte) 0xFF, Constants.SHORT_SIZE); // Padding
         int entityListPtr = reader.readInt();
 

@@ -31,7 +31,7 @@ public class SinkingBoxEntityData extends PathEntityData<SinkingBoxDifficultyDat
         @Override
         public void load(DataReader reader) {
             this.sinkRate = reader.readShort();
-            this.splineSpeed = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
         }
 
         @Override

@@ -88,11 +88,11 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         long offset = this.overlay != null ? this.overlay.getOverlayStartPointer() : getGameInstance().getRamOffset();
 
         // Read the entity name.
-        long entityNamePtr = reader.readUnsignedIntAsLong();
+        long entityNamePtr = reader.readUnsignedInt();
         reader.jumpTemp((int) (entityNamePtr - offset));
         this.name = reader.readNullTerminatedString();
         reader.jumpReturn();
-        this.subtypeCount = reader.readUnsignedShortAsInt();
+        this.subtypeCount = reader.readUnsignedShort();
 
         // ECTS Pre-Alpha entities
         if (getGameInstance().getVersionConfig().getEntityTableSize() <= 111) {
@@ -138,9 +138,9 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
 
         @Override
         public void load(DataReader reader) {
-            this.mofIndex = reader.readUnsignedShortAsInt();
-            this.modelSet = reader.readUnsignedShortAsInt();
-            this.model = reader.readUnsignedShortAsInt();
+            this.mofIndex = reader.readUnsignedShort();
+            this.modelSet = reader.readUnsignedShort();
+            this.model = reader.readUnsignedShort();
             reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
         }
 

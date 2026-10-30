@@ -26,10 +26,10 @@ public class FroggerEntityDataHedgehog extends FroggerEntityDataPathInfo {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.runTime = reader.readUnsignedShortAsInt();
-        this.rollTime = reader.readUnsignedShortAsInt();
-        this.runSpeed = reader.readUnsignedShortAsInt();
-        this.rollSpeed = reader.readUnsignedShortAsInt();
+        this.runTime = reader.readUnsignedShort();
+        this.rollTime = reader.readUnsignedShort();
+        this.runSpeed = reader.readUnsignedShort();
+        this.rollSpeed = reader.readUnsignedShort();
     }
 
     @Override

@@ -35,11 +35,11 @@ public class OldFroggerMapLevelSpecificPacket extends OldFroggerMapPacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         this.froggerStartPosition.load(reader);
-        this.defaultReactionType = OldFroggerReactionType.values()[reader.readUnsignedShortAsInt()];
+        this.defaultReactionType = OldFroggerReactionType.values()[reader.readUnsignedShort()];
         for (int i = 0; i < this.defaultReactionData.length; i++)
-            this.defaultReactionData[i] = reader.readUnsignedShortAsInt();
+            this.defaultReactionData[i] = reader.readUnsignedShort();
         for (int i = 0; i < this.levelTimers.length; i++)
-            this.levelTimers[i] = reader.readUnsignedShortAsInt();
+            this.levelTimers[i] = reader.readUnsignedShort();
         this.preCalculatedLowestLandscapeHeight = reader.readShort();
         reader.skipShort(); // Padding
         for (int i = 0; i < this.genericLevelData.length; i++)

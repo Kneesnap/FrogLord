@@ -42,7 +42,7 @@ public class PTActionSetFile extends SCSharedGameFile {
         reader.verifyString(IDENTIFIER_STRING);
         this.flags = reader.readInt();
         warnAboutInvalidBitFlags(this.flags, 0);
-        int actionSetCount = reader.readUnsignedShortAsInt();
+        int actionSetCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         int actionSetListPointer = reader.readInt();
 

@@ -58,8 +58,8 @@ public class MRAnimatedMof extends MRBaseModelData {
         this.startAtFrameZero = forceFrameZero || (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO); // '1'
         this.transformType = MRAnimatedMofTransformType.getTypeFromOpcode(signature[1]);
 
-        int modelSetCount = reader.readUnsignedShortAsInt();
-        int staticMofCount = reader.readUnsignedShortAsInt();
+        int modelSetCount = reader.readUnsignedShort();
+        int staticMofCount = reader.readUnsignedShort();
         int modelSetPointer = reader.readInt();   // Right after header.
         int commonDataPointer = reader.readInt(); // Right after model set data.
         int staticMofTablePointer = reader.readInt(); // End of file.

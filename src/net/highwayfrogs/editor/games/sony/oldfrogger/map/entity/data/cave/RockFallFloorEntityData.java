@@ -29,7 +29,7 @@ public class RockFallFloorEntityData extends MatrixEntityData<RockFallFloorDiffi
 
         @Override
         public void load(DataReader reader) {
-            this.time = reader.readUnsignedShortAsInt();
+            this.time = reader.readUnsignedShort();
         }
 
         @Override

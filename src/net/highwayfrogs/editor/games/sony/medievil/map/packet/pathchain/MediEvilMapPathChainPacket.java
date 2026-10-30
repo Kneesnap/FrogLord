@@ -82,7 +82,7 @@ public class MediEvilMapPathChainPacket extends MediEvilMapPacket implements IPr
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Runtime values probably.
-        short chainCount = reader.readUnsignedByteAsShort();
+        short chainCount = reader.readUnsignedByte();
         reader.skipByte(); // Padding (garbage)
         int chainDataStartAddress = reader.readInt();
 

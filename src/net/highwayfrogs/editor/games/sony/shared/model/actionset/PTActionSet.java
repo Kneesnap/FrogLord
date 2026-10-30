@@ -40,11 +40,11 @@ public class PTActionSet extends SCSharedGameData {
     public void load(DataReader reader) {
         this.flags = reader.readInt();
         warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK);
-        int rotationCount = reader.readUnsignedShortAsInt();
-        int rotationTranslationCount = reader.readUnsignedShortAsInt();
+        int rotationCount = reader.readUnsignedShort();
+        int rotationTranslationCount = reader.readUnsignedShort();
         this.rotationDataPointer = reader.readInt();
         this.rotationTranslationDataPointer = reader.readInt();
-        int actionCount = reader.readUnsignedShortAsInt();
+        int actionCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Seems to be set to zero on load, and I can't find any time when it isn't 0 to start with. Probably padding.
         this.actionListAddress = reader.readInt();
 

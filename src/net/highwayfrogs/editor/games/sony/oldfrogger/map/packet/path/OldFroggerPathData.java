@@ -35,11 +35,11 @@ public class OldFroggerPathData extends SCGameData<OldFroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.pathId = reader.readUnsignedShortAsInt();
-        this.splineId = reader.readUnsignedShortAsInt();
-        this.splinePosition = reader.readUnsignedShortAsInt();
+        this.pathId = reader.readUnsignedShort();
+        this.splineId = reader.readUnsignedShort();
+        this.splinePosition = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(1); // Padding
-        this.motionType = MotionType.values()[reader.readUnsignedByteAsShort()];
+        this.motionType = MotionType.values()[reader.readUnsignedByte()];
     }
 
     @Override

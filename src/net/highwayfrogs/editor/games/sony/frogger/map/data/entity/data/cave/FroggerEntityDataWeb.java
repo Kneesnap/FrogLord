@@ -22,7 +22,7 @@ public class FroggerEntityDataWeb extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.spiderId = reader.readUnsignedShortAsInt();
+        this.spiderId = reader.readUnsignedShort();
     }
 
     @Override

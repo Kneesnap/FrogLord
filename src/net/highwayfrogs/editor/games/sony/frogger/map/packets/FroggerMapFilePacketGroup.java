@@ -56,10 +56,10 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     protected void loadBody(DataReader reader, int endIndex) {
         this.basePoint.loadWithPadding(reader);
         Utils.verify(this.basePoint.getY() == 0, "Base-Point Y is not zero!");
-        this.groupXCount = reader.readUnsignedShortAsInt();
-        this.groupZCount = reader.readUnsignedShortAsInt();
-        this.groupXSize = reader.readUnsignedShortAsInt();
-        this.groupZSize = reader.readUnsignedShortAsInt();
+        this.groupXCount = reader.readUnsignedShort();
+        this.groupZCount = reader.readUnsignedShort();
+        this.groupXSize = reader.readUnsignedShort();
+        this.groupZSize = reader.readUnsignedShort();
 
         // Validate size as the expected value.
         if (this.groupXSize != GROUP_WORLD_LENGTH || this.groupZSize != GROUP_WORLD_LENGTH)

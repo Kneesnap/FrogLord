@@ -29,7 +29,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        long pathPointer = reader.readUnsignedIntAsLong();
+        long pathPointer = reader.readUnsignedInt();
         if (getGameInstance().isValidLookingPointer(pathPointer)) {
             reader.jumpTemp((int) (pathPointer - getGameInstance().getRamOffset()));
             this.filePath = reader.readNullTerminatedString();
@@ -38,11 +38,11 @@ public class SCOverlayTableEntry extends SCSharedGameData {
             this.filePath = null;
         }
 
-        long overlayPointer = reader.readUnsignedIntAsLong();
+        long overlayPointer = reader.readUnsignedInt();
         if (getGameInstance().isValidLookingPointer(overlayPointer)) {
             this.overlayDoublePointer = overlayPointer;
             reader.jumpTemp((int) (overlayPointer - getGameInstance().getRamOffset()));
-            this.overlayStartPointer = reader.readUnsignedIntAsLong();
+            this.overlayStartPointer = reader.readUnsignedInt();
             reader.jumpReturn();
         } else {
             this.overlayDoublePointer = 0;

@@ -151,7 +151,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                     setPixel(this.image, bytePos, stride, bitDepth, palette.getRGB(value & 0x0F), value & 0xFF);
                     break;
                 case 8:
-                    short value2 = reader.readUnsignedByteAsShort();
+                    short value2 = reader.readUnsignedByte();
                     setPixel(this.image, bytePos, stride, bitDepth, palette.getRGB(value2), value2);
                     break;
                 case 32:

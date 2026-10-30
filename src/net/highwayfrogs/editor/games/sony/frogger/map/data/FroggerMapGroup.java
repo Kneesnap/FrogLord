@@ -75,7 +75,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         // Read polygon counts.
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
             FroggerMapPolygonType type = FroggerMapPolygonType.values()[i];
-            this.loadPolygonCounts[i] = (g2Supported || type != FroggerMapPolygonType.G2) ? reader.readUnsignedByteAsShort() : 0;
+            this.loadPolygonCounts[i] = (g2Supported || type != FroggerMapPolygonType.G2) ? reader.readUnsignedByte() : 0;
         }
         reader.alignRequireEmpty(Constants.INTEGER_SIZE); // Padding.
 

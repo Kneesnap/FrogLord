@@ -29,7 +29,7 @@ public class FroggerEntityDataFatFireFly extends FroggerEntityDataMatrix impleme
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.flyType = FroggerFlyScoreType.values()[reader.readUnsignedShortAsInt()];
+        this.flyType = FroggerFlyScoreType.values()[reader.readUnsignedShort()];
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
         this.target.loadWithPadding(reader);
     }

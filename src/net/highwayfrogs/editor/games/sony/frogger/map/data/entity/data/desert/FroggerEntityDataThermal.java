@@ -22,7 +22,7 @@ public class FroggerEntityDataThermal extends FroggerEntityDataPathInfo {
 
     @Override
     public void load(DataReader reader) {
-        this.rotateTime = reader.readUnsignedShortAsInt();
+        this.rotateTime = reader.readUnsignedShort();
     }
 
     @Override

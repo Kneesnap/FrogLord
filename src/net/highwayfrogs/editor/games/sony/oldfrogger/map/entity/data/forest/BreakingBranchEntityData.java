@@ -30,8 +30,8 @@ public class BreakingBranchEntityData extends MatrixEntityData<BreakingBranchDif
 
         @Override
         public void load(DataReader reader) {
-            this.breakingDelay = reader.readUnsignedShortAsInt();
-            this.fallingSpeed = reader.readUnsignedShortAsInt();
+            this.breakingDelay = reader.readUnsignedShort();
+            this.fallingSpeed = reader.readUnsignedShort();
         }
 
         @Override

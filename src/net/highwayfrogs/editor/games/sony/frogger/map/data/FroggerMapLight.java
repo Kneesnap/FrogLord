@@ -83,19 +83,19 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        short lightType = reader.readUnsignedByteAsShort();
+        short lightType = reader.readUnsignedByte();
         if (lightType != 1) // These other types have never been seen in any build, and do nothing in the game code.
             throw new RuntimeException("The FroggerMapLight type was not LIGHT_TYPE_STATIC (1), instead it was " + lightType + ".");
 
-        short priority = reader.readUnsignedByteAsShort();
-        this.parentId = reader.readUnsignedShortAsInt();
-        this.lightType = MRLightType.getType(reader.readUnsignedByteAsShort());
+        short priority = reader.readUnsignedByte();
+        this.parentId = reader.readUnsignedShort();
+        this.lightType = MRLightType.getType(reader.readUnsignedByte());
         reader.alignRequireEmpty(Constants.INTEGER_SIZE); // Padding
         this.color = reader.readInt();
         this.position.loadWithPadding(reader);
         this.direction.loadWithPadding(reader);
-        this.attribute0 = reader.readUnsignedShortAsInt();
-        this.attribute1 = reader.readUnsignedShortAsInt();
+        this.attribute0 = reader.readUnsignedShort();
+        this.attribute1 = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Runtime pointers.
 
         // Validate priority.

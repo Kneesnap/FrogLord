@@ -35,7 +35,7 @@ public class MRAnimatedMofCelSet extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        int animationCount = reader.readUnsignedShortAsInt();
+        int animationCount = reader.readUnsignedShort();
         this.padding = reader.readShort(); // Can be non-zero.
         int dataPointer = reader.readInt(); // Points to literally the exact index after reading.
 

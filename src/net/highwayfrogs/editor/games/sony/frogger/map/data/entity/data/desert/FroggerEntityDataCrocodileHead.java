@@ -28,12 +28,12 @@ public class FroggerEntityDataCrocodileHead extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.riseHeight = reader.readUnsignedShortAsInt();
-        this.riseSpeed = reader.readUnsignedShortAsInt();
-        this.snapDelay = reader.readUnsignedShortAsInt();
-        this.pauseDelay = reader.readUnsignedShortAsInt();
-        int snapOrNot = reader.readUnsignedShortAsInt();
-        this.submergedDelay = reader.readUnsignedShortAsInt();
+        this.riseHeight = reader.readUnsignedShort();
+        this.riseSpeed = reader.readUnsignedShort();
+        this.snapDelay = reader.readUnsignedShort();
+        this.pauseDelay = reader.readUnsignedShort();
+        int snapOrNot = reader.readUnsignedShort();
+        this.submergedDelay = reader.readUnsignedShort();
 
         // Parse snap or not.
         this.shouldSnap = (snapOrNot == 1);

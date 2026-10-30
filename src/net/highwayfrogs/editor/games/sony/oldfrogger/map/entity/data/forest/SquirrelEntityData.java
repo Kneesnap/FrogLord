@@ -30,8 +30,8 @@ public class SquirrelEntityData extends PathEntityData<SquirrelDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.turnDuration = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.turnDuration = reader.readUnsignedShort();
         }
 
         @Override

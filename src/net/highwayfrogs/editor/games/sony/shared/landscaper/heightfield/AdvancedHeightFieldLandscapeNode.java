@@ -32,7 +32,7 @@ public abstract class AdvancedHeightFieldLandscapeNode<TVertex extends AdvancedH
                 if (column == null)
                     continue;
 
-                short vertexCount = reader.readUnsignedByteAsShort();
+                short vertexCount = reader.readUnsignedByte();
                 for (int j = 0; j < vertexCount; j++) {
                     TVertex nextVertex = createNextVertex(reader, column);
                     nextVertex.load(reader);

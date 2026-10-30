@@ -42,7 +42,7 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
         for (int i = 0; i < triangleCount; i++)
             triangleIndices.add(reader.readInt());
 
-        this.smoothness = reader.readUnsignedByteAsShort();
+        this.smoothness = reader.readUnsignedByte();
         this.material = reader.readInt();
     }
 

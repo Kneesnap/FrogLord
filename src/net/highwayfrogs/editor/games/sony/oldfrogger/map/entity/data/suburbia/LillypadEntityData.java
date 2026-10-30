@@ -32,10 +32,10 @@ public class LillypadEntityData extends PathEntityData<LillypadDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.rotation = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.rotation = reader.readUnsignedShort();
 
-            int directionValue = reader.readUnsignedShortAsInt();
+            int directionValue = reader.readUnsignedShort();
             this.direction = directionValue != 0 ? RotateDirection.values()[directionValue - 1] : null;
         }
 

@@ -82,7 +82,7 @@ public abstract class LandscapePolygon extends SCSharedGameData implements ILand
 
     @Override
     public void load(DataReader reader) {
-        PSXPolygonType polygonType = PSXPolygonType.values()[reader.readUnsignedByteAsShort()];
+        PSXPolygonType polygonType = PSXPolygonType.values()[reader.readUnsignedByte()];
         invalidateArrays(polygonType);
 
         // 1) Read vertices.

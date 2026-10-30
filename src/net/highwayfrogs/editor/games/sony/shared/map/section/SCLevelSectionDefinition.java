@@ -62,7 +62,7 @@ public class SCLevelSectionDefinition extends SCGameData<SCGameInstance> impleme
         int dataReadStartIndex = reader.getIndex();
         this.mapResourceId = reader.readShort();
         this.vloResourceId = reader.readShort();
-        this.textureRemapPointer = reader.readUnsignedIntAsLong();
+        this.textureRemapPointer = reader.readUnsignedInt();
         this.unknownData = reader.readBytes(getExpectedSizeInBytes() - (reader.getIndex() - dataReadStartIndex)); // TODO: Figure this data out later.
     }
 

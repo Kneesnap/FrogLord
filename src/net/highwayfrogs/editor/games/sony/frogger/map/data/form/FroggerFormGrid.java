@@ -59,7 +59,7 @@ public class FroggerFormGrid extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        int formDataEntryCount = reader.readUnsignedShortAsInt();
+        int formDataEntryCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Max Y, Runtime variable.
         this.xGridSquareCount = reader.readShort();
         this.zGridSquareCount = reader.readShort();

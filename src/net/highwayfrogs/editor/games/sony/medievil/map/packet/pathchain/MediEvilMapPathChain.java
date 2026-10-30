@@ -94,11 +94,11 @@ public class MediEvilMapPathChain extends SCGameData<MediEvilGameInstance> imple
 
     @Override
     public void load(DataReader reader) {
-        short previousNumber = reader.readUnsignedByteAsShort();
-        short nextNumber = reader.readUnsignedByteAsShort();
-        short splineCount = reader.readUnsignedByteAsShort();
+        short previousNumber = reader.readUnsignedByte();
+        short nextNumber = reader.readUnsignedByte();
+        short splineCount = reader.readUnsignedByte();
         if (isGroupTypeSupported()) {
-            this.groupType = MediEvilMapPathGroupType.values()[reader.readUnsignedByteAsShort()];
+            this.groupType = MediEvilMapPathGroupType.values()[reader.readUnsignedByte()];
         } else {
             reader.skipByte(); // Garbage data.
         }

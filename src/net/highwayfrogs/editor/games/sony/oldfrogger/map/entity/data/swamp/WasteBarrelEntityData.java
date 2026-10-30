@@ -33,7 +33,7 @@ public class WasteBarrelEntityData extends PathEntityData<WasteBarrelDifficultyD
 
         @Override
         public void load(DataReader reader) {
-            this.splineSpeed = reader.readUnsignedShortAsInt();
+            this.splineSpeed = reader.readUnsignedShort();
             this.floatTime = reader.readShort();
             this.sunkTime = reader.readShort();
             this.spinAcceleration = reader.readInt();

@@ -39,13 +39,13 @@ public class JetEntityData extends PathEntityData<JetDifficultyData> {
         @Override
         public void load(DataReader reader) {
             for (int i = 0; i < this.cloudForms.length; i++)
-                this.cloudForms[i] = reader.readUnsignedShortAsInt();
+                this.cloudForms[i] = reader.readUnsignedShort();
             for (int i = 0; i < this.cloudDelays.length; i++)
-                this.cloudDelays[i] = reader.readUnsignedShortAsInt();
-            this.cloudDuration = reader.readUnsignedShortAsInt();
-            this.numberOfClouds = reader.readUnsignedShortAsInt();
-            this.jetSpeed = reader.readUnsignedShortAsInt();
-            this.splineDelay = reader.readUnsignedShortAsInt();
+                this.cloudDelays[i] = reader.readUnsignedShort();
+            this.cloudDuration = reader.readUnsignedShort();
+            this.numberOfClouds = reader.readUnsignedShort();
+            this.jetSpeed = reader.readUnsignedShort();
+            this.splineDelay = reader.readUnsignedShort();
         }
 
         @Override

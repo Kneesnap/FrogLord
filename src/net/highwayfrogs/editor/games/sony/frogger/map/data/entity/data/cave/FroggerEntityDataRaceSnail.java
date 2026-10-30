@@ -24,8 +24,8 @@ public class FroggerEntityDataRaceSnail extends FroggerEntityDataPathInfo {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.forwardDistance = reader.readUnsignedShortAsInt();
-        this.backwardDistance = reader.readUnsignedShortAsInt();
+        this.forwardDistance = reader.readUnsignedShort();
+        this.backwardDistance = reader.readUnsignedShort();
     }
 
     @Override

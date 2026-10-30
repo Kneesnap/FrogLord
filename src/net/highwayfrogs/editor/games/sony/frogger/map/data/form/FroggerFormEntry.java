@@ -66,12 +66,12 @@ public class FroggerFormEntry extends SCGameData<FroggerGameInstance> implements
         this.id = reader.readInt();
         this.scriptId = reader.readInt();
         this.flags = reader.readInt();
-        this.collisionReactFunction = reader.readUnsignedIntAsLong();
+        this.collisionReactFunction = reader.readUnsignedInt();
         this.radiusSquared = reader.readInt();
         int deathTypeId = reader.readInt();
         this.deathType = deathTypeId >= 0 && deathTypeId < FroggerFormDeathType.values().length ? FroggerFormDeathType.values()[deathTypeId] : null;
         if (!getConfig().isAtOrBeforeBuild4())
-            this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
+            this.bonusCallbackFunction = reader.readUnsignedInt();
     }
 
     @Override

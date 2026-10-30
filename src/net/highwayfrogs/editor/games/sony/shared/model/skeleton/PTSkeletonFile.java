@@ -42,7 +42,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
         reader.verifyString(IDENTIFIER_STRING);
         this.flags = reader.readShort();
         warnAboutInvalidBitFlags(this.flags, 0);
-        int boneCount = reader.readUnsignedShortAsInt();
+        int boneCount = reader.readUnsignedShort();
         int boneDataStartAddress = reader.readInt();
 
         // Read bones.

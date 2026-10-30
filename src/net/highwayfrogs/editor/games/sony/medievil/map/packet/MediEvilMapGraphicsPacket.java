@@ -53,12 +53,12 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int g3PolyCount = reader.readUnsignedShortAsInt();
-        int g4PolyCount = reader.readUnsignedShortAsInt();
-        int gt3PolyCount = reader.readUnsignedShortAsInt();
-        int gt4PolyCount = reader.readUnsignedShortAsInt();
-        int vertexCount = reader.readUnsignedShortAsInt();
-        this.vertexGridResolution = reader.readUnsignedByteAsShort(); // Dimensions of vertex grid.
+        int g3PolyCount = reader.readUnsignedShort();
+        int g4PolyCount = reader.readUnsignedShort();
+        int gt3PolyCount = reader.readUnsignedShort();
+        int gt4PolyCount = reader.readUnsignedShort();
+        int vertexCount = reader.readUnsignedShort();
+        this.vertexGridResolution = reader.readUnsignedByte(); // Dimensions of vertex grid.
         this.vertexGridShift = calculateVertexGridShift(this.vertexGridResolution);
         reader.skipBytesRequireEmpty(Constants.BYTE_SIZE);
 

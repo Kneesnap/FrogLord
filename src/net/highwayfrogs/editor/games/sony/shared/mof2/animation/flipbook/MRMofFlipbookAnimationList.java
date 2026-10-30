@@ -18,12 +18,12 @@ public class MRMofFlipbookAnimationList implements IBinarySerializable {
 
     @Override
     public void load(DataReader reader) {
-        int flags = reader.readUnsignedShortAsInt();
+        int flags = reader.readUnsignedShort();
         if (flags != 0)
             throw new RuntimeException("Flipbook Flags were not zero! (" + flags + ").");
 
         this.animations.clear();
-        int actionCount = reader.readUnsignedShortAsInt();
+        int actionCount = reader.readUnsignedShort();
         for (int i = 0; i < actionCount; i++) {
             MRMofFlipbookAnimation newFrame = new MRMofFlipbookAnimation();
             newFrame.load(reader);

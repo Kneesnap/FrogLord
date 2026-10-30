@@ -383,7 +383,7 @@ public abstract class SCGameInstance extends GameInstance {
         // Look a pointer beyond the end of the remap table.
         if (next == null && isPSX()) {
             reader.jumpTemp(reader.getIndex());
-            long nextValue = reader.readUnsignedIntAsLong();
+            long nextValue = reader.readUnsignedInt();
             reader.jumpReturn();
 
             return isValidLookingPointer(nextValue); // If the next value is a pointer, abort!
@@ -864,7 +864,7 @@ public abstract class SCGameInstance extends GameInstance {
         reader.setIndex(this.getVersionConfig().getBmpPointerAddress());
 
         long nextPossiblePtr;
-        while (reader.hasMore() && isValidLookingPointer(nextPossiblePtr = reader.readUnsignedIntAsLong()))
+        while (reader.hasMore() && isValidLookingPointer(nextPossiblePtr = reader.readUnsignedInt()))
             this.bmpTexturePointers.add(nextPossiblePtr);
     }
 

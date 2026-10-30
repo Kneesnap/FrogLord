@@ -672,7 +672,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -702,7 +702,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -732,7 +732,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.value = reader.readUnsignedIntAsLong();
+            this.value = reader.readUnsignedInt();
         }
 
         @Override
@@ -764,8 +764,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.event = reader.readUnsignedIntAsLong();
-            this.value = reader.readUnsignedIntAsLong();
+            this.event = reader.readUnsignedInt();
+            this.value = reader.readUnsignedInt();
         }
 
         @Override
@@ -847,8 +847,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.entGid = reader.readUnsignedIntAsLong();
-            this.colpGid = reader.readUnsignedIntAsLong();
+            this.entGid = reader.readUnsignedInt();
+            this.colpGid = reader.readUnsignedInt();
         }
 
         @Override
@@ -881,8 +881,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.entGid = reader.readUnsignedIntAsLong();
-            this.colpGid = reader.readUnsignedIntAsLong();
+            this.entGid = reader.readUnsignedInt();
+            this.colpGid = reader.readUnsignedInt();
         }
 
         @Override
@@ -935,14 +935,14 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            long numGids = reader.readUnsignedIntAsLong();
+            long numGids = reader.readUnsignedInt();
             this.colprimType = reader.readInt();
             if (this.colprimType != MM_COLP_TYPE_CAMERA && this.colprimType != MM_COLP_TYPE_COLANDEVENT && this.colprimType != MM_COLP_TYPE_WARP)
                 throw new RuntimeException("Invalid colprim type '" + this.colprimType + "'.");
 
             this.gids.clear();
             for (int i = 0; i < numGids; i++)
-                this.gids.add(reader.readUnsignedIntAsLong());
+                this.gids.add(reader.readUnsignedInt());
         }
 
         @Override
@@ -998,7 +998,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            long numGids = reader.readUnsignedIntAsLong();
+            long numGids = reader.readUnsignedInt();
             this.colprimType = reader.readInt();
             if (this.colprimType != MM_COLP_TYPE_CAMERA && this.colprimType != MM_COLP_TYPE_COLANDEVENT && this.colprimType != MM_COLP_TYPE_WARP) {
                 throw new RuntimeException("Invalid colprim type '" + this.colprimType + "'.");
@@ -1006,7 +1006,7 @@ public class MediEvilScripter {
                 this.gids.clear();
 
                 for (int i = 0; i < numGids; i++)
-                    this.gids.add(reader.readUnsignedIntAsLong());
+                    this.gids.add(reader.readUnsignedInt());
             }
         }
 
@@ -1052,12 +1052,12 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            long numGids = reader.readUnsignedIntAsLong();
+            long numGids = reader.readUnsignedInt();
             reader.skipInt();
             this.gids.clear();
 
             for (int i = 0; i < numGids; i++)
-                this.gids.add(reader.readUnsignedIntAsLong());
+                this.gids.add(reader.readUnsignedInt());
         }
 
         @Override
@@ -1102,12 +1102,12 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            long numGids = reader.readUnsignedIntAsLong();
+            long numGids = reader.readUnsignedInt();
             reader.skipInt();
             this.gids.clear();
 
             for (int i = 0; i < numGids; i++)
-                this.gids.add(reader.readUnsignedIntAsLong());
+                this.gids.add(reader.readUnsignedInt());
         }
 
         @Override
@@ -1141,7 +1141,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
             reader.skipInt();
         }
 
@@ -1173,7 +1173,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
             reader.skipInt();
         }
 
@@ -1208,8 +1208,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
-            this.behaviour = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
+            this.behaviour = reader.readUnsignedInt();
         }
 
         @Override
@@ -1248,7 +1248,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
             this.x = reader.readShort();
             this.y = reader.readShort();
             this.z = reader.readShort();
@@ -1294,7 +1294,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
             this.x = reader.readShort();
             this.y = reader.readShort();
             this.z = reader.readShort();
@@ -1334,7 +1334,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -1364,7 +1364,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -1394,7 +1394,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.gid = reader.readUnsignedIntAsLong();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -1443,9 +1443,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.species = reader.readUnsignedShortAsInt();
-            this.subSpecies = reader.readUnsignedByteAsShort();
-            this.behaviour = reader.readUnsignedByteAsShort();
+            this.species = reader.readUnsignedShort();
+            this.subSpecies = reader.readUnsignedByte();
+            this.behaviour = reader.readUnsignedByte();
             this.x = reader.readShort();
             this.y = reader.readShort();
             this.z = reader.readShort();
@@ -1496,8 +1496,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.functionAddress = reader.readUnsignedIntAsLong();
-            this.parameter = reader.readUnsignedIntAsLong();
+            this.functionAddress = reader.readUnsignedInt();
+            this.parameter = reader.readUnsignedInt();
         }
 
         @Override
@@ -1576,7 +1576,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
         }
 
         @Override
@@ -1605,7 +1605,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
         }
 
         @Override
@@ -1634,7 +1634,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
         }
 
         @Override
@@ -1663,7 +1663,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
         }
 
         @Override
@@ -1694,8 +1694,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.warpZone = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.warpZone = reader.readUnsignedInt();
         }
 
         @Override
@@ -1727,8 +1727,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -1760,8 +1760,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
         }
 
         @Override
@@ -1796,9 +1796,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.functionAddress = reader.readUnsignedIntAsLong();
-            this.parameter = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.functionAddress = reader.readUnsignedInt();
+            this.parameter = reader.readUnsignedInt();
         }
 
         @Override
@@ -1833,9 +1833,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
-            this.mode = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
+            this.mode = reader.readUnsignedInt();
         }
 
         @Override
@@ -1870,9 +1870,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
-            this.zone = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
+            this.zone = reader.readUnsignedInt();
         }
 
         @Override
@@ -1907,9 +1907,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
-            this.zone = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
+            this.zone = reader.readUnsignedInt();
         }
 
         @Override
@@ -1947,7 +1947,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
             this.x = reader.readShort();
             this.y = reader.readShort();
             this.z = reader.readShort();
@@ -1991,7 +1991,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
             this.x = reader.readShort();
             this.y = reader.readShort();
             this.z = reader.readShort();
@@ -2032,9 +2032,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
-            this.radius = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
+            this.radius = reader.readUnsignedInt();
         }
 
         @Override
@@ -2069,9 +2069,9 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.gid = reader.readUnsignedIntAsLong();
-            this.radius = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.gid = reader.readUnsignedInt();
+            this.radius = reader.readUnsignedInt();
         }
 
         @Override
@@ -2104,8 +2104,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.zone = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.zone = reader.readUnsignedInt();
         }
 
         @Override
@@ -2137,8 +2137,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.zone = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.zone = reader.readUnsignedInt();
         }
 
         @Override
@@ -2172,7 +2172,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
             this.index = reader.readShort();
             this.value = reader.readShort();
         }
@@ -2209,7 +2209,7 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
             this.item = reader.readInt();
             this.quantity = reader.readInt();
         }
@@ -2244,8 +2244,8 @@ public class MediEvilScripter {
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.commandAddress = reader.readUnsignedIntAsLong();
-            this.eventId = reader.readUnsignedIntAsLong();
+            this.commandAddress = reader.readUnsignedInt();
+            this.eventId = reader.readUnsignedInt();
         }
 
         @Override
@@ -2407,8 +2407,8 @@ public class MediEvilScripter {
 
         @Override
         public void load(DataReader reader) {
-            this.branchLevel = reader.readUnsignedByteAsShort();
-            this.size = reader.readUnsignedByteAsShort();
+            this.branchLevel = reader.readUnsignedByte();
+            this.size = reader.readUnsignedByte();
             this.flags = reader.readInt();
             
             boolean isCommand = this instanceof CommandStandard || this instanceof EventConditionEndCommandList;

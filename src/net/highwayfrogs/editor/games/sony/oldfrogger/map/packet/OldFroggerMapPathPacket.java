@@ -28,8 +28,8 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int pathCount = reader.readUnsignedShortAsInt();
-        int totalSplineCount = reader.readUnsignedShortAsInt();
+        int pathCount = reader.readUnsignedShort();
+        int totalSplineCount = reader.readUnsignedShort();
 
         // Read paths.
         this.paths.clear();
@@ -88,8 +88,8 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
 
         @Override
         public void load(DataReader reader) {
-            this.pathId = reader.readUnsignedShortAsInt();
-            int splineCount = reader.readUnsignedShortAsInt();
+            this.pathId = reader.readUnsignedShort();
+            int splineCount = reader.readUnsignedShort();
             int splineAddress = reader.readInt();
 
             // Read splines.

@@ -104,7 +104,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
         exeReader.setIndex(this.getVersionConfig().getRemapTableAddress());
         Map<Long, TextureRemapArray> remapsByPointer = new HashMap<>();
         for (int i = 0; i < this.getVersionConfig().getRemapTableCount(); i++) {
-            long remapPointer = exeReader.readUnsignedIntAsLong();
+            long remapPointer = exeReader.readUnsignedInt();
 
             // Find remap which has already been read.
             TextureRemapArray remap = remapsByPointer.get(remapPointer);

@@ -26,8 +26,8 @@ public class FroggerEntityDataBreakingBranch extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.breakDelay = reader.readUnsignedShortAsInt();
-        this.fallSpeed = reader.readUnsignedShortAsInt();
+        this.breakDelay = reader.readUnsignedShort();
+        this.fallSpeed = reader.readUnsignedShort();
     }
 
     @Override

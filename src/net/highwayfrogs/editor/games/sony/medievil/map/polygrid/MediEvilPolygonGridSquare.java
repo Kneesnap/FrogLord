@@ -106,7 +106,7 @@ public class MediEvilPolygonGridSquare extends SCGameData<MediEvilGameInstance> 
 
         List<MediEvilMapPolygon> polygons = getMap().getGraphicsPacket().getPolygons();
         for (int i = 0; i < this.polygons.size(); i++) {
-            int polygonId = reader.readUnsignedShortAsInt();
+            int polygonId = reader.readUnsignedShort();
             if (polygonId >= polygons.size()) {
                 getLogger().severe("Skipping reference to invalid polygon (ID: %d)!", polygonId);
                 this.polygons.remove(i--);

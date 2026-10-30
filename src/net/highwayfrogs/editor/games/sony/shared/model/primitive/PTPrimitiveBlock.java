@@ -30,10 +30,10 @@ public class PTPrimitiveBlock extends SCSharedGameData {
     public void load(DataReader reader) {
         int readStartIndex = reader.getIndex();
 
-        this.primitiveType = PTPrimitiveType.values()[reader.readUnsignedShortAsInt()];
-        int primitiveCount = reader.readUnsignedShortAsInt();
+        this.primitiveType = PTPrimitiveType.values()[reader.readUnsignedShort()];
+        int primitiveCount = reader.readUnsignedShort();
         this.flags = reader.readShort();
-        int blockSize = reader.readUnsignedShortAsInt();
+        int blockSize = reader.readUnsignedShort();
 
         // Read primitives.
         this.primitives.clear();

@@ -77,9 +77,9 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @return the position we expect the next grid stack to read squares from
      */
     public int load(DataReader reader, int expectedSquareIndex) {
-        this.loadSquareCount = reader.readUnsignedByteAsShort();
+        this.loadSquareCount = reader.readUnsignedByte();
         this.rawCliffHeightValue = reader.readByte();
-        int realSquareIndex = reader.readUnsignedShortAsInt();
+        int realSquareIndex = reader.readUnsignedShort();
         if (realSquareIndex != expectedSquareIndex)
             throw new RuntimeException("The expected grid square index (" + expectedSquareIndex + ") did not match the grid square index in the game data (" + realSquareIndex + ").");
 

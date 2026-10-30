@@ -45,7 +45,7 @@ public class AdvancedHeightFieldVertexColumn extends SCSharedGameData {
         this.rootVertex = rootVertexId >= 0 ? getLandscape().getVertices().get(rootVertexId) : null;
 
         this.sortedVertices.clear();
-        short vertexCount = reader.readUnsignedByteAsShort(); // Due to the limitation of how many polygons can be in a group, most likely this is
+        short vertexCount = reader.readUnsignedByte(); // Due to the limitation of how many polygons can be in a group, most likely this is
         for (int i = 0; i < vertexCount; i++) {
             int vertexId = reader.readInt();
             LandscapeVertex vertex = getLandscape().getVertices().get(vertexId);

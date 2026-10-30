@@ -51,7 +51,7 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
             return;
         }
 
-        int entityCount = reader.readUnsignedShortAsInt();
+        int entityCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
 
         // Read entities.

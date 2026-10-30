@@ -28,8 +28,8 @@ public class MRMofFlipbookAnimation implements IBinarySerializable {
 
     @Override
     public void load(DataReader reader) {
-        this.partCelCount = reader.readUnsignedShortAsInt();
-        this.partCelIndex = reader.readUnsignedShortAsInt();
+        this.partCelCount = reader.readUnsignedShort();
+        this.partCelIndex = reader.readUnsignedShort();
     }
 
     @Override

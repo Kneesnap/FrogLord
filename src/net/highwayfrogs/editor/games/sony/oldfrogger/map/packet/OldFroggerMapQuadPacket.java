@@ -62,12 +62,12 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket implements IPro
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        this.xSize = reader.readUnsignedShortAsInt();
-        this.zSize = reader.readUnsignedShortAsInt();
-        this.xCount = reader.readUnsignedShortAsInt();
-        this.zCount = reader.readUnsignedShortAsInt();
+        this.xSize = reader.readUnsignedShort();
+        this.zSize = reader.readUnsignedShort();
+        this.xCount = reader.readUnsignedShort();
+        this.zCount = reader.readUnsignedShort();
         reader.skipShort(); // ushort quadCount?
-        this.textureCount = reader.readUnsignedShortAsInt();
+        this.textureCount = reader.readUnsignedShort();
         int quadDataStartAddress = reader.readInt();
 
         if (quadDataStartAddress != reader.getIndex())

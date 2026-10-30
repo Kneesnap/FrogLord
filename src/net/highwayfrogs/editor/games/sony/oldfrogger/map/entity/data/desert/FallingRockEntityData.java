@@ -37,14 +37,14 @@ public class FallingRockEntityData extends MatrixEntityData<FallingRockDifficult
 
         @Override
         public void load(DataReader reader) {
-            this.moveDelay = reader.readUnsignedShortAsInt();
+            this.moveDelay = reader.readUnsignedShort();
             this.positionOne.loadWithPadding(reader);
-            this.timeToPositionOne = reader.readUnsignedShortAsInt();
+            this.timeToPositionOne = reader.readUnsignedShort();
             this.positionTwo.loadWithPadding(reader);
-            this.timeToPositionTwo = reader.readUnsignedShortAsInt();
+            this.timeToPositionTwo = reader.readUnsignedShort();
             this.positionThree.loadWithPadding(reader);
-            this.timeToPositionThree = reader.readUnsignedShortAsInt();
-            this.bounceCount = reader.readUnsignedByteAsShort();
+            this.timeToPositionThree = reader.readUnsignedShort();
+            this.bounceCount = reader.readUnsignedByte();
         }
 
         @Override

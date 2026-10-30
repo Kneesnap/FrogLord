@@ -42,8 +42,8 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.formTypeId = reader.readUnsignedShortAsInt();
-        this.difficulty = reader.readUnsignedShortAsInt();
+        this.formTypeId = reader.readUnsignedShort();
+        this.difficulty = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(2); // Padding
         this.entityId = reader.readShort();
 

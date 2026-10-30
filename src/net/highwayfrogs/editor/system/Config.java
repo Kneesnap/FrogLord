@@ -131,11 +131,11 @@ public class Config implements IBinarySerializable {
             loadSettings.setHeaderPending(false);
         }
 
-        short sectionNameLength = reader.readUnsignedByteAsShort();
-        this.sectionName = reader.readTerminatedString(sectionNameLength);
+        short sectionNameLength = reader.readUnsignedByte();
+        this.sectionName = reader.readStringOfLength(sectionNameLength);
         if (loadSettings.isReadingCommentsEnabled()) {
             int sectionCommentLength = reader.readInt();
-            this.sectionComment = reader.readTerminatedString(sectionCommentLength);
+            this.sectionComment = reader.readStringOfLength(sectionCommentLength);
         }
 
         this.originalLineNumber = reader.readInt();
@@ -144,8 +144,8 @@ public class Config implements IBinarySerializable {
         String rootName = getRootNode().getSectionName();
         int keyValueCount = reader.readInt();
         for (int i = 0; i < keyValueCount; i++) {
-            short keyLength = reader.readUnsignedByteAsShort();
-            String key = reader.readTerminatedString(keyLength);
+            short keyLength = reader.readUnsignedByte();
+            String key = reader.readStringOfLength(keyLength);
             ConfigValueNode node = new ConfigValueNode();
             node.loadFromReader(reader, loadSettings, rootName);
             if (this.keyValuePairs.put(key, node) == null)
@@ -1080,14 +1080,14 @@ public class Config implements IBinarySerializable {
          * @param configSettings the settings to load with
          */
         public void loadFromReader(DataReader reader, ConfigSettings configSettings, String rootName) {
-            int valueLength = reader.readUnsignedShortAsInt();
-            this.value = reader.readTerminatedString(valueLength);
+            int valueLength = reader.readUnsignedShort();
+            this.value = reader.readStringOfLength(valueLength);
             this.originalLineNumber = reader.readInt();
             this.originalFileName = rootName;
             this.surroundByQuotes = reader.readByte() == 1;
             if (configSettings.isReadingCommentsEnabled()) {
-                int commentLength = reader.readUnsignedShortAsInt();
-                this.comment = reader.readTerminatedString(commentLength);
+                int commentLength = reader.readUnsignedShort();
+                this.comment = reader.readStringOfLength(commentLength);
             }
         }
 

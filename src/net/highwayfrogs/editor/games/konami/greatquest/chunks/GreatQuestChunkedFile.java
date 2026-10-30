@@ -78,7 +78,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         Map<kcCResource, byte[]> cachedRawDataMap = new HashMap<>();
         kcCResourceTableOfContents lastTableOfContents = null;
         while (reader.hasMore()) {
-            String identifier = reader.readTerminatedString(4);
+            String identifier = reader.readStringOfLength(4);
             int length = reader.readInt() + kcCResource.NAME_SIZE; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
             byte[] readBytes = reader.readBytes(Math.min(reader.getRemaining(), length));
 

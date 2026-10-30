@@ -42,9 +42,9 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int polygonCount = reader.readUnsignedShortAsInt();
-        int vertexCount = reader.readUnsignedShortAsInt();
-        int uvCount = reader.readUnsignedShortAsInt();
+        int polygonCount = reader.readUnsignedShort();
+        int vertexCount = reader.readUnsignedShort();
+        int uvCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
 
         int polygonDataStartIndex = reader.readInt();

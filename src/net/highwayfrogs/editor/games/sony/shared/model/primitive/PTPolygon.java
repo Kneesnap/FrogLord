@@ -66,22 +66,22 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
         // Read texture data.
         if (getPolygonType().isTextured()) {
             this.textureUvs[0].load(reader);
-            this.clutIndex = reader.readUnsignedShortAsInt();
+            this.clutIndex = reader.readUnsignedShort();
             this.textureUvs[1].load(reader);
-            this.texturePage = reader.readUnsignedShortAsInt();
+            this.texturePage = reader.readUnsignedShort();
             this.textureUvs[2].load(reader);
-            this.imageId = reader.readUnsignedShortAsInt();
+            this.imageId = reader.readUnsignedShort();
             if (this.textureUvs.length > 3)
                 this.textureUvs[3].load(reader);
         }
 
         // Read normals.
         for (int i = 0; i < this.normals.length; i++)
-            this.normals[i] = reader.readUnsignedShortAsInt();
+            this.normals[i] = reader.readUnsignedShort();
 
         // Read environment normals.
         for (int i = 0; i < this.environmentNormals.length; i++)
-            this.environmentNormals[i] = reader.readUnsignedShortAsInt();
+            this.environmentNormals[i] = reader.readUnsignedShort();
 
         // Align to end.
         reader.alignRequireEmpty(Constants.INTEGER_SIZE);

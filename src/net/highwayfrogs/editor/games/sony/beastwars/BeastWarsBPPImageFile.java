@@ -38,8 +38,8 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
     @Override
     public void load(DataReader reader) {
         int imageDataPointer = reader.readInt();
-        int imageWidth = reader.readUnsignedShortAsInt();
-        int imageHeight = reader.readUnsignedShortAsInt();
+        int imageWidth = reader.readUnsignedShort();
+        int imageHeight = reader.readUnsignedShort();
         int clutDataPointer = reader.readInt();
         requireReaderIndex(reader, imageDataPointer, "Expected BPP Image Data");
 
@@ -57,7 +57,7 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
         this.image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_BYTE_INDEXED, colorPalette);
         for (int y = 0; y < imageHeight; y++) {
             for (int x = 0; x < imageWidth; x++) {
-                short pixelIndex = reader.readUnsignedByteAsShort();
+                short pixelIndex = reader.readUnsignedByte();
                 this.image.setRGB(x, y, colorPalette.getRGB(pixelIndex));
             }
         }

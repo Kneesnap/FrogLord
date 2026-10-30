@@ -39,9 +39,9 @@ public class FroggerOldMapForm extends SCGameData<FroggerGameInstance> implement
 
     @Override
     public void load(DataReader reader) {
-        this.entityTypeId = reader.readUnsignedShortAsInt();
-        this.mofId = reader.readUnsignedShortAsInt();
-        int formDataEntryCount = reader.readUnsignedShortAsInt();
+        this.entityTypeId = reader.readUnsignedShort();
+        this.mofId = reader.readUnsignedShort();
+        int formDataEntryCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding.
 
         // Skip pointer table.

@@ -92,7 +92,7 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
     public void load(DataReader reader) {
         // Read objects.
         this.entries.clear();
-        long numObjects = reader.readUnsignedIntAsLong();
+        long numObjects = reader.readUnsignedInt();
         for (int i = 0; i < numObjects; i++) {
             kcScriptTOC toc = new kcScriptTOC();
             toc.load(reader);

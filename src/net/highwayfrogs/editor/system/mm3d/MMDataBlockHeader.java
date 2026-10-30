@@ -30,7 +30,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> implements IBinarySeri
     @Override
     public void load(DataReader reader) {
         reader.skipShort();
-        long elementCount = reader.readUnsignedIntAsLong();
+        long elementCount = reader.readUnsignedInt();
 
         if (getOffsetType().isTypeA()) {
             for (int i = 0; i < elementCount; i++) {

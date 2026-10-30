@@ -127,8 +127,8 @@ public class MediEvilMapQuadTree extends SCGameFile<MediEvilGameInstance> {
     public void load(DataReader reader) {
         reader.verifyString(SIGNATURE);
         int polygonCount = reader.readInt();
-        int gridSquareCount = reader.readUnsignedShortAsInt();
-        int nodeCount = reader.readUnsignedShortAsInt();
+        int gridSquareCount = reader.readUnsignedShort();
+        int nodeCount = reader.readUnsignedShort();
 
         MediEvilMapFile mapFile = getMapFile();
         int mapGridSquareCount = mapFile.getGridPacket().getGridSquares().size();

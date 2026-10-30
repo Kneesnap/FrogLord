@@ -23,7 +23,7 @@ public class FroggerEntityScriptDataButterfly extends FroggerEntityScriptData im
 
     @Override
     public void load(DataReader reader) {
-        this.flyTypeId = reader.readUnsignedShortAsInt(); // JUN1.MAP has corrupted data here in certain mwds. This just makes it not crash from it.
+        this.flyTypeId = reader.readUnsignedShort(); // JUN1.MAP has corrupted data here in certain mwds. This just makes it not crash from it.
     }
 
     @Override

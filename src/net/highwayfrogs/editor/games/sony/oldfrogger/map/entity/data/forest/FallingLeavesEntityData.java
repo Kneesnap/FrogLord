@@ -31,9 +31,9 @@ public class FallingLeavesEntityData extends PathEntityData<FallingLeavesDifficu
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.swayDuration = reader.readUnsignedShortAsInt();
-            this.swayAngle = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.swayDuration = reader.readUnsignedShort();
+            this.swayAngle = reader.readUnsignedShort();
         }
 
         @Override

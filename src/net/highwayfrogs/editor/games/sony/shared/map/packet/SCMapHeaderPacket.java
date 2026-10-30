@@ -31,9 +31,9 @@ public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCM
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        long fileLengthInBytes = reader.readUnsignedIntAsLong();
-        int packetCount = reader.readUnsignedShortAsInt();
-        int versionCode = reader.readUnsignedShortAsInt();
+        long fileLengthInBytes = reader.readUnsignedInt();
+        int packetCount = reader.readUnsignedShort();
+        int versionCode = reader.readUnsignedShort();
         this.sectionId = reader.readInt();
 
         // Read header identifiers.

@@ -29,7 +29,7 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
     public void load(DataReader reader) {
         int headerAddress = reader.getIndex();
         reader.verifyString(SIGNATURE);
-        short version = reader.readUnsignedByteAsShort();
+        short version = reader.readUnsignedByte();
         if (version > CURRENT_VERSION)
             throw new RuntimeException("The version of FrogLord data included in this bin file (v" + version
                     + ") is not supported in this version of FrogLord! (v" + CURRENT_VERSION
@@ -70,8 +70,8 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
         int entryCount = reader.readInt();
         for (int i = 0; i < entryCount; i++) {
             int id = reader.readInt();
-            int strLength = reader.readUnsignedShortAsInt();
-            String value = reader.readTerminatedString(strLength, StandardCharsets.US_ASCII);
+            int strLength = reader.readUnsignedShort();
+            String value = reader.readStringOfLength(strLength, StandardCharsets.US_ASCII);
             results.put(id, value);
         }
 

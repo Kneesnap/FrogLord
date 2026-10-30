@@ -121,7 +121,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
             BufferedImage newImage = new BufferedImage(TEXTURE_DIMENSION, TEXTURE_DIMENSION, BufferedImage.TYPE_INT_ARGB);
             for (int y = 0; y < TEXTURE_DIMENSION; y++) {
                 for (int x = 0; x < TEXTURE_DIMENSION; x++) {
-                    short value = reader.readUnsignedByteAsShort();
+                    short value = reader.readUnsignedByte();
                     int palIndex1 = (value & 0x0F);
                     int palIndex2 = (value >> 4);
                     newImage.setRGB(x++, y, palette[palIndex1].toARGB());

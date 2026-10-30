@@ -29,8 +29,8 @@ public class OldFroggerMapFormInstancePacket extends OldFroggerMapPacket {
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        this.formTableSize = reader.readUnsignedShortAsInt();
-        int activeFormCount = reader.readUnsignedShortAsInt();
+        this.formTableSize = reader.readUnsignedShort();
+        int activeFormCount = reader.readUnsignedShort();
 
         int lastFormTypeId = Integer.MIN_VALUE;
         int endPosition = reader.getIndex();

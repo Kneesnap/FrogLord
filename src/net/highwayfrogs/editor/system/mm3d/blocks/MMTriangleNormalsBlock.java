@@ -25,7 +25,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.unusedFlags = reader.readUnsignedShortAsInt();
+        this.unusedFlags = reader.readUnsignedShort();
         this.triangleIndex = reader.readInt();
         readFloatArray(reader, this.v1Normals);
         readFloatArray(reader, this.v2Normals);

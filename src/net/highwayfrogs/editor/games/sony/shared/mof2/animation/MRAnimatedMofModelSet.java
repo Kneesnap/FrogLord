@@ -56,9 +56,9 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
         if (type != EXPECTED_TYPE)
             throw new RuntimeException("Unsupported MRAnimatedMofModelSet type ID: " + type);
 
-        this.tempModelCount = reader.readUnsignedByteAsShort();
-        this.tempCelSetCount = reader.readUnsignedByteAsShort();
-        this.tempBboxSetCount = reader.readUnsignedByteAsShort(); // Always zero in Frogger. Non-zero in MediEvil.
+        this.tempModelCount = reader.readUnsignedByte();
+        this.tempCelSetCount = reader.readUnsignedByte();
+        this.tempBboxSetCount = reader.readUnsignedByte(); // Always zero in Frogger. Non-zero in MediEvil.
         this.unknownPaddingValue = reader.readByte();
 
         // Each model set is written together with its model data.

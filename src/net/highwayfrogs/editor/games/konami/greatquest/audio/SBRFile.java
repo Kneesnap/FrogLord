@@ -856,8 +856,8 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public void load(DataReader reader) {
-            this.flags = reader.readUnsignedByteAsShort();
-            this.priority = reader.readUnsignedByteAsShort();
+            this.flags = reader.readUnsignedByte();
+            this.priority = reader.readUnsignedByte();
             warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK);
         }
 
@@ -1072,10 +1072,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.instanceLimit = reader.readUnsignedByteAsShort();
-            this.volume = reader.readUnsignedByteAsShort();
-            this.pan = reader.readUnsignedByteAsShort();
-            this.pitch = reader.readUnsignedShortAsInt();
+            this.instanceLimit = reader.readUnsignedByte();
+            this.volume = reader.readUnsignedByte();
+            this.pan = reader.readUnsignedByte();
+            this.pitch = reader.readUnsignedShort();
             this.waveIndex = reader.readInt();
         }
 
@@ -1258,7 +1258,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public void load(DataReader reader) {
             super.load(reader);
-            this.volume = reader.readUnsignedByteAsShort();
+            this.volume = reader.readUnsignedByte();
         }
 
         @Override

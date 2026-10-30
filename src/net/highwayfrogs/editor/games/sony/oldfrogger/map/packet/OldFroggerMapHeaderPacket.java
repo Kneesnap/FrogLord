@@ -28,20 +28,20 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        long fileLengthInBytes = reader.readUnsignedIntAsLong();
-        int packetCount = reader.readUnsignedShortAsInt();
+        long fileLengthInBytes = reader.readUnsignedInt();
+        int packetCount = reader.readUnsignedShort();
         reader.skipShort(); // Padding
         reader.verifyString(VERSION);
         this.comment = reader.readNullTerminatedFixedSizeString(COMMENT_LENGTH);
 
         // Read header pointers.
-        long levelSpecificAddr = reader.readUnsignedIntAsLong();
-        long graphicalAddr = reader.readUnsignedIntAsLong();
+        long levelSpecificAddr = reader.readUnsignedInt();
+        long graphicalAddr = reader.readUnsignedInt();
         int mofsAddr = reader.readInt(); // This should be uint32, but it seems we have an issue with this.
-        long formsAddr = reader.readUnsignedIntAsLong();
-        long entitiesAddr = reader.readUnsignedIntAsLong();
-        long zonesAddr = reader.readUnsignedIntAsLong();
-        long splinesAddr = reader.readUnsignedIntAsLong();
+        long formsAddr = reader.readUnsignedInt();
+        long entitiesAddr = reader.readUnsignedInt();
+        long zonesAddr = reader.readUnsignedInt();
+        long splinesAddr = reader.readUnsignedInt();
 
         // Verify data
         if (fileLengthInBytes != reader.getSize())

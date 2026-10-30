@@ -35,7 +35,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int zoneCount = reader.readUnsignedShortAsInt();
+        int zoneCount = reader.readUnsignedShort();
         reader.alignRequireEmpty(4);
 
         this.zones.clear();
@@ -109,13 +109,13 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             this.objBoundAX2 = reader.readInt();
             this.objBoundAZ2 = reader.readInt();
 
-            short regionCount = reader.readUnsignedByteAsShort();
+            short regionCount = reader.readUnsignedByte();
             reader.alignRequireEmpty(4);
-            this.difficulty = reader.readUnsignedShortAsInt();
-            this.zoneType = OldFroggerMapZoneType.values()[reader.readUnsignedShortAsInt()];
-            this.reactionType = OldFroggerReactionType.values()[reader.readUnsignedShortAsInt()];
+            this.difficulty = reader.readUnsignedShort();
+            this.zoneType = OldFroggerMapZoneType.values()[reader.readUnsignedShort()];
+            this.reactionType = OldFroggerReactionType.values()[reader.readUnsignedShort()];
             for (int i = 0; i < this.reactionData.length; i++)
-                this.reactionData[i] = reader.readUnsignedShortAsInt();
+                this.reactionData[i] = reader.readUnsignedShort();
 
             // Read regions.
             this.regions.clear();

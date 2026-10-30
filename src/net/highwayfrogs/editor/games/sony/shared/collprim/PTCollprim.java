@@ -50,9 +50,9 @@ public abstract class PTCollprim extends SCSharedGameData implements ICollprim {
     public void load(DataReader reader) {
         this.type = CollprimType.values()[reader.readInt()];
         this.flags = reader.readShort();
-        this.xLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.yLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.zLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.xLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShort(), 4);
+        this.yLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShort(), 4);
+        this.zLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShort(), 4);
         this.radiusSquared = DataUtils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
         this.offset.loadWithPadding(reader);
         setRawMatrixValue(reader, reader.readInt());

@@ -26,7 +26,7 @@ public class OldFroggerMapVertexPacket extends OldFroggerMapPacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         // Read header.
-        int vertexCount = reader.readUnsignedShortAsInt();
+        int vertexCount = reader.readUnsignedShort();
         reader.skipShort(); // Padding
 
         // Read vertices.

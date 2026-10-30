@@ -22,7 +22,7 @@ public class FroggerEntityDataRetroCrocodileHead extends FroggerEntityDataMatrix
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = CrocodileHeadState.values()[reader.readUnsignedShortAsInt()];
+        this.type = CrocodileHeadState.values()[reader.readUnsignedShort()];
     }
 
     @Override

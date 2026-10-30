@@ -26,7 +26,7 @@ public class HoleEntityData extends MatrixEntityData<HoleDifficultyData> {
     protected void loadMainEntityData(DataReader reader) {
         super.loadMainEntityData(reader);
         for (int i = 0; i < this.zones.length; i++)
-            this.zones[i] = reader.readUnsignedShortAsInt();
+            this.zones[i] = reader.readUnsignedShort();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class HoleEntityData extends MatrixEntityData<HoleDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.triggerDelay = reader.readUnsignedShortAsInt();
+            this.triggerDelay = reader.readUnsignedShort();
         }
 
         @Override

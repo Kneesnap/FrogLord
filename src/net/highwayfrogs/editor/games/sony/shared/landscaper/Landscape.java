@@ -71,7 +71,7 @@ public abstract class Landscape extends LandscapeBase<LandscapeVertex, Landscape
 
     @Override
     public void load(DataReader reader) {
-        this.landscapeFormatVersion = reader.readUnsignedShortAsInt();
+        this.landscapeFormatVersion = reader.readUnsignedShort();
         if (this.landscapeFormatVersion > CURRENT_LANDSCAPE_FORMAT_VERSION)
             throw new RuntimeException("FrogLord " + Constants.VERSION + " supports up to landscape format " + CURRENT_LANDSCAPE_FORMAT_VERSION + ", but landscape format we're trying to read is " + this.landscapeFormatVersion + ".");
 

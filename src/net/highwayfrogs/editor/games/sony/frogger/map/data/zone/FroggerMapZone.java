@@ -40,7 +40,7 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        int regionCount = reader.readUnsignedShortAsInt();
+        int regionCount = reader.readUnsignedShort();
         this.boundingRegion.load(reader);
         int regionDataStartAddress = reader.readInt();
 

@@ -98,8 +98,8 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
         this.tempColPrimIdPointer = reader.readInt();
         reader.skipBytesRequireEmpty(Constants.POINTER_SIZE); // Seems to be set to null during map load.
         this.tempSplinePointer = reader.readInt();
-        short colPrimCount = reader.readUnsignedByteAsShort();
-        short splineCount = reader.readUnsignedByteAsShort();
+        short colPrimCount = reader.readUnsignedByte();
+        short splineCount = reader.readUnsignedByte();
         reader.skipShort(); // Unknown garbage. Thought it was polygon count, but maybe not.
 
         // 2 Runtime pointer fields.
@@ -148,7 +148,7 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
 
         MediEvilMapCollprimsPacket collprimsPacket = getMap().getCollprimsPacket();
         for (int i = 0; i < this.collprims.size(); i++) {
-            int colPrimId = reader.readUnsignedShortAsInt();
+            int colPrimId = reader.readUnsignedShort();
             if (colPrimId >= collprimsPacket.getCollprims().size()) {
                 getLogger().severe("Skipping reference to invalid colPrim (ID: %d)!", colPrimId);
                 this.collprims.remove(i--);
@@ -197,7 +197,7 @@ public class MediEvilMapGridSquare extends SCGameData<MediEvilGameInstance> impl
 
         List<MediEvilMap2DSpline> splines = this.gridPacket.getParentFile().getSpline2DPacket().getSplines();
         for (int i = 0; i < this.splines.size(); i++) {
-            int splineIndex = reader.readUnsignedByteAsShort();
+            int splineIndex = reader.readUnsignedByte();
             if (splineIndex >= splines.size())
                 throw new IllegalArgumentException("Invalid splineIndex: " + splineIndex);
 

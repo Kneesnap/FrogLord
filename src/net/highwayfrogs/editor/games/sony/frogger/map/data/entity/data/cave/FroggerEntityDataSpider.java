@@ -23,7 +23,7 @@ public class FroggerEntityDataSpider extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.speed = reader.readUnsignedShortAsInt();
+        this.speed = reader.readUnsignedShort();
     }
 
     @Override

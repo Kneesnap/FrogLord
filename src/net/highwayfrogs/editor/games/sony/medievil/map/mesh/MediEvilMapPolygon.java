@@ -75,9 +75,9 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     @Override
     public void load(DataReader reader) {
         for (int i = 0; i < this.vertices.length; i++)
-            this.vertices[i] = reader.readUnsignedShortAsInt();
-        this.textureId = reader.readUnsignedShortAsInt();
-        this.flags = reader.readUnsignedShortAsInt();
+            this.vertices[i] = reader.readUnsignedShort();
+        this.textureId = reader.readUnsignedShort();
+        this.flags = reader.readUnsignedShort();
         for (int i = 0; i < this.textureUvs.length; i++)
             this.textureUvs[i].load(reader);
 

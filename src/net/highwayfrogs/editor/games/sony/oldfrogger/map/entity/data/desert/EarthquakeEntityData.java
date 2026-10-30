@@ -35,14 +35,14 @@ public class EarthquakeEntityData extends MatrixEntityData<EarthquakeDifficultyD
 
         @Override
         public void load(DataReader reader) {
-            this.unitFlag = reader.readUnsignedShortAsInt();
-            this.rampUp = reader.readUnsignedShortAsInt();
-            this.maxExtent = reader.readUnsignedShortAsInt();
-            this.extentSpeed = reader.readUnsignedShortAsInt();
-            this.contantRun = reader.readUnsignedShortAsInt();
-            this.rampDown = reader.readUnsignedShortAsInt();
+            this.unitFlag = reader.readUnsignedShort();
+            this.rampUp = reader.readUnsignedShort();
+            this.maxExtent = reader.readUnsignedShort();
+            this.extentSpeed = reader.readUnsignedShort();
+            this.contantRun = reader.readUnsignedShort();
+            this.rampDown = reader.readUnsignedShort();
             for (int i = 0; i < this.entities.length; i++)
-                this.entities[i] = reader.readUnsignedShortAsInt();
+                this.entities[i] = reader.readUnsignedShort();
         }
 
         @Override

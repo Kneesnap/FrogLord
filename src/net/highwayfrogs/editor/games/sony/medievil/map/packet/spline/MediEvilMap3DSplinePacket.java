@@ -31,7 +31,7 @@ public class MediEvilMap3DSplinePacket extends MediEvilMapPacket implements IPro
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        short splineCount = reader.readUnsignedByteAsShort();
+        short splineCount = reader.readUnsignedByte();
         reader.align(Constants.INTEGER_SIZE); // There seems to be garbage data here.
         int splineDataStartIndex = reader.readInt();
 

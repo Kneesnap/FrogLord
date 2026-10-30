@@ -29,7 +29,7 @@ public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, 
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        int entityCount = reader.readUnsignedShortAsInt();
+        int entityCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
         int entityDataStartPointer = reader.readInt();
         if (reader.getIndex() != entityDataStartPointer)

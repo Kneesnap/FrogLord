@@ -67,17 +67,17 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     public void load(DataReader reader) {
         this.deltaU = reader.readByte();
         this.deltaV = reader.readByte();
-        this.uvFrameCount = reader.readUnsignedShortAsInt();
+        this.uvFrameCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // Runtime.
 
         // Texture information.
-        int celCount = reader.readUnsignedShortAsInt();
+        int celCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Runtime.
         this.textureIdListPointerAddress = reader.readInt();
-        this.framesPerTexture = reader.readUnsignedShortAsInt();
+        this.framesPerTexture = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Runtime.
-        this.type = FroggerMapAnimationType.getType(reader.readUnsignedShortAsInt());
-        int polygonCount = reader.readUnsignedShortAsInt();
+        this.type = FroggerMapAnimationType.getType(reader.readUnsignedShort());
+        int polygonCount = reader.readUnsignedShort();
         reader.skipBytesRequireEmpty(Constants.POINTER_SIZE); // Runtime texture pointer.
         this.targetPolygonListPointerAddress = reader.readInt();
 

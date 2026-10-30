@@ -36,8 +36,8 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = FroggerEntityColorTriggerType.values()[reader.readUnsignedShortAsInt()];
-        this.color = VolcanoTriggerColor.values()[reader.readUnsignedShortAsInt()];
+        this.type = FroggerEntityColorTriggerType.values()[reader.readUnsignedShort()];
+        this.color = VolcanoTriggerColor.values()[reader.readUnsignedShort()];
         for (int i = 0; i < this.uniqueIds.length; i++)
             this.uniqueIds[i] = reader.readShort();
     }

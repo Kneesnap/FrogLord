@@ -30,8 +30,8 @@ public class LightBugEntityData extends PathEntityData<LightBugDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.lightValue = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.lightValue = reader.readUnsignedShort();
         }
 
         @Override

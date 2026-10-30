@@ -55,11 +55,11 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.formType = reader.readUnsignedShortAsInt();
-        this.mofId = reader.readUnsignedShortAsInt();
+        this.formType = reader.readUnsignedShort();
+        this.mofId = reader.readUnsignedShort();
 
         // The number of form data entries associated with this form! When we have multiple actions per (animated) mof, we have multiple forms too, one per action.
-        int formEntryCount = reader.readUnsignedShortAsInt();
+        int formEntryCount = reader.readUnsignedShort();
         short padding = reader.readShort();
         if (padding != 0)
             throw new RuntimeException("Form Padding short was not zero! (Was: " + padding + ")");
@@ -270,11 +270,11 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
 
         @Override
         public void load(DataReader reader) {
-            this.reaction = OldFroggerReactionType.values()[reader.readUnsignedShortAsInt()];
+            this.reaction = OldFroggerReactionType.values()[reader.readUnsignedShort()];
             for (int i = 0; i < this.reactionData.length; i++)
-                this.reactionData[i] = reader.readUnsignedShortAsInt();
+                this.reactionData[i] = reader.readUnsignedShort();
 
-            this.numberOfHeights = reader.readUnsignedByteAsShort();
+            this.numberOfHeights = reader.readUnsignedByte();
             reader.alignRequireEmpty(4);
         }
 

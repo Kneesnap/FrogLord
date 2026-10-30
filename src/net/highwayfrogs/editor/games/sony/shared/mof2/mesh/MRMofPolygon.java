@@ -306,13 +306,13 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
 
     private static void readSwappedArray(DataReader reader, int[] array) {
         if (array.length == 4) {
-            array[0] = reader.readUnsignedShortAsInt();
-            array[1] = reader.readUnsignedShortAsInt();
-            array[3] = reader.readUnsignedShortAsInt();
-            array[2] = reader.readUnsignedShortAsInt();
+            array[0] = reader.readUnsignedShort();
+            array[1] = reader.readUnsignedShort();
+            array[3] = reader.readUnsignedShort();
+            array[2] = reader.readUnsignedShort();
         } else {
             for (int i = 0; i < array.length; i++)
-                array[i] = reader.readUnsignedShortAsInt();
+                array[i] = reader.readUnsignedShort();
         }
     }
 

@@ -35,9 +35,9 @@ public class SnailEntityData extends PathEntityData<SnailDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.speed = reader.readUnsignedShortAsInt();
-            this.slimeDelay = reader.readUnsignedShortAsInt();
-            this.slimeDecay = reader.readUnsignedShortAsInt();
+            this.speed = reader.readUnsignedShort();
+            this.slimeDelay = reader.readUnsignedShort();
+            this.slimeDecay = reader.readUnsignedShort();
         }
 
         @Override

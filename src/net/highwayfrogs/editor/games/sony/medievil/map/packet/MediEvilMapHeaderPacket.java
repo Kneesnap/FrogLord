@@ -37,9 +37,9 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         reader.verifyString(FILE_TYPE);
-        long fileLengthInBytes = reader.readUnsignedIntAsLong();
-        int packetCount = reader.readUnsignedShortAsInt();
-        int versionCode = reader.readUnsignedShortAsInt();
+        long fileLengthInBytes = reader.readUnsignedInt();
+        int packetCount = reader.readUnsignedShort();
+        int versionCode = reader.readUnsignedShort();
         this.levelString = reader.readNullTerminatedFixedSizeString(LEVEL_STRING_LENGTH);
 
         // Read header identifiers.

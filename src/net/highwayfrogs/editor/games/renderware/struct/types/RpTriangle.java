@@ -46,12 +46,12 @@ public class RpTriangle extends RwStruct {
     public void load(DataReader reader, int version, int byteLength) {
         if (RwVersion.isAtLeast(version, RwVersion.VERSION_3602)) {
             for (int i = 0; i < this.vertexIndices.length; i++)
-                this.vertexIndices[i] = reader.readUnsignedShortAsInt();
-            this.materialIndex = reader.readUnsignedShortAsInt();
+                this.vertexIndices[i] = reader.readUnsignedShort();
+            this.materialIndex = reader.readUnsignedShort();
         } else {
-            this.materialIndex = reader.readUnsignedShortAsInt();
+            this.materialIndex = reader.readUnsignedShort();
             for (int i = 0; i < this.vertexIndices.length; i++)
-                this.vertexIndices[i] = reader.readUnsignedShortAsInt();
+                this.vertexIndices[i] = reader.readUnsignedShort();
         }
     }
 
@@ -60,10 +60,10 @@ public class RpTriangle extends RwStruct {
      * @param reader the reader to read the data from
      */
     public void loadGeometryFormat(DataReader reader) {
-        this.vertexIndices[1] = reader.readUnsignedShortAsInt();
-        this.vertexIndices[0] = reader.readUnsignedShortAsInt();
-        this.materialIndex = reader.readUnsignedShortAsInt();
-        this.vertexIndices[2] = reader.readUnsignedShortAsInt();
+        this.vertexIndices[1] = reader.readUnsignedShort();
+        this.vertexIndices[0] = reader.readUnsignedShort();
+        this.materialIndex = reader.readUnsignedShort();
+        this.vertexIndices[2] = reader.readUnsignedShort();
     }
 
     @Override

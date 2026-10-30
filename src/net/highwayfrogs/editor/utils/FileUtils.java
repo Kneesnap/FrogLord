@@ -1109,7 +1109,7 @@ public class FileUtils {
         reader.jumpTemp(0);
         reader.verifyString(PSX_EXECUTABLE_SIGNATURE); // Ensure it's a PSX executable.
         reader.skipBytes(16);
-        long baseMemoryAddress = reader.readUnsignedIntAsLong();
+        long baseMemoryAddress = reader.readUnsignedInt();
         reader.jumpReturn();
 
         return baseMemoryAddress;

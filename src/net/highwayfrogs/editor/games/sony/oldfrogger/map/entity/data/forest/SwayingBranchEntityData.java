@@ -31,7 +31,7 @@ public class SwayingBranchEntityData extends MatrixEntityData<SwayingBranchDiffi
         @Override
         public void load(DataReader reader) {
             this.animAngle = reader.readShort();
-            this.swayDuration = reader.readUnsignedShortAsInt();
+            this.swayDuration = reader.readUnsignedShort();
         }
 
         @Override

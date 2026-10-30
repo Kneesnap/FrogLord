@@ -33,11 +33,11 @@ public class HedgehogEntityData extends PathEntityData<HedgehogDifficultyData> {
 
         @Override
         public void load(DataReader reader) {
-            this.splineDelay = reader.readUnsignedShortAsInt();
-            this.walkDelay = reader.readUnsignedShortAsInt();
-            this.walkSpeed = reader.readUnsignedShortAsInt();
-            this.rollSpeed = reader.readUnsignedShortAsInt();
-            this.rollAcceleration = reader.readUnsignedShortAsInt();
+            this.splineDelay = reader.readUnsignedShort();
+            this.walkDelay = reader.readUnsignedShort();
+            this.walkSpeed = reader.readUnsignedShort();
+            this.rollSpeed = reader.readUnsignedShort();
+            this.rollAcceleration = reader.readUnsignedShort();
         }
 
         @Override

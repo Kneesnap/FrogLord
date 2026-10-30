@@ -49,8 +49,8 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.xLength = reader.readUnsignedShortAsInt();
-        this.yLength = reader.readUnsignedShortAsInt();
+        this.xLength = reader.readUnsignedShort();
+        this.yLength = reader.readUnsignedShort();
         this.tileMap = new SkyLandTile[this.yLength][this.xLength];
         for (int y = 0; y < this.yLength; y++)
             for (int x = 0; x < this.xLength; x++)

@@ -370,8 +370,8 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         @Override
         public void load(DataReader reader, int version, int byteLength) {
             this.cType = reader.readByte();
-            this.vertexIndex = reader.readUnsignedByteAsShort();
-            this.startPolygon = reader.readUnsignedByteAsShort();
+            this.vertexIndex = reader.readUnsignedByte();
+            this.startPolygon = reader.readUnsignedByte();
         }
 
         @Override
