@@ -256,9 +256,10 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             }
 
             onUpdate(pathPreview);
-            frogController.getPathManager().updateEditor();
+            // Apply before updateEditor so the display is correct
             if (onFinish != null)
                 onFinish.run();
+            frogController.getPathManager().updateEditor();
         }, null);
     }
 
