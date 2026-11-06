@@ -122,6 +122,7 @@ Do not share `data.bin` file directly, this would be copyright infringement.
 Instead, compress the mod folder into a `.zip` file, before renaming it to `.mod` instead.  
 Make sure the `.zip` file contains the mod files directly in the root folder — not in a sub-folder. Afterward, rename the `.zip` to be a `.mod` file instead.  
 Ensure installation of the `.mod` file succeeds using FrogLord, and then you're able to share the mod wherever! (It is recommended to share it with [Highway Frogs](https://highwayfrogs.net/) of course!)  
+Frogger (1997) mods are shared differently: FrogLord exports them as mod packages, described in [Sharing Frogger mods](../sonycambridge/frogger-mods.md).  
 
 ## A note for developers (Optional)
 Frogger: The Great Quest's PS2 builds contain exhaustive debug symbols (DWARFv1) for everything except the skeletal animation library.  

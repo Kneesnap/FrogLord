@@ -44,7 +44,8 @@ The profile is the whole grammar; a reader does not need FrogLord's parser.
   `[[[Grandchild]]]` to the most recent layer-2 section, and so on. A section may not skip a layer.
   Child sections of one parent are ordered.
 - **Keys:** inside a section, `key=value` lines come first. A line is a key line when it contains `=` and no space
-  appears before the first `=`. Keys match `[A-Za-z0-9][A-Za-z0-9_.-]*` and are case-sensitive.
+  appears before the first `=`. Keys match `[A-Za-z0-9][A-Za-z0-9_.-]*` and are case-sensitive, so a key may start
+  with a digit (the demo-table rows in `[Demos]` use numeric keys).
   A key may appear only once per section; a duplicate key is an error.
 - **Text lines:** any other line inside a section is a text line. Text lines follow the keys of their section.
   The profile uses text lines only for the description in `[Mod]` and for the file list in `[Files]`.
@@ -137,6 +138,16 @@ patch; a port of the game reads the key directly.
 | `jungleSwap` | boolean, default `true` | `false` keeps `JUN1` in place after the jungle level instead of swapping in `JUN2`. |
 | `frameRate` | integer | The game's tick rate. PC only. |
 
+FrogLord implements the keys with bundled patches: `initialLevels` and `visibleLevels` with `initial-levels.patch`,
+`jungleSwap=false` with `jungle-swap.patch` and `frameRate` with `fps.patch`. When exporting, it reads the values back
+from the executable, which has two consequences for writers comparing a round trip:
+
+- `jungleSwap=false` is exported when the patch's `applied` variable, set by its read-back code, reports that all three
+  sites hold the patched bytes. Sites that changed in some other way are reported, and the key is left out.
+- `fps.patch` stores the frame delay `1000/(fps*2)` as a single byte, and reads it back as `1000/delay/2` with integer
+  division, so `frameRate=30` is written as a delay of 16 and reads back as 31. Exporting a game installed with
+  `frameRate=30` gives `frameRate=31`; installing either value writes the same byte.
+
 New keys arrive with new format versions. An unknown key in `[Gameplay]` is an error for an installer,
 because it cannot honour the setting, and a warning for a port.
 
@@ -204,6 +215,11 @@ models=CAV_VAMP_BAT.XMR,CAV_FROGGER.XMR
 archive hold exactly these, taking each model's bytes from `[Models]` when the package ships it and otherwise from
 wherever the base build holds that name. (FrogLord also keeps the entries the game requires in every level.)
 
+A model copied into a level's model archive carries the model's own resource id, so any program can find it by id as
+well as by bytes. FrogLord's older WAD-copy tool (`copyWadEntry`, used by earlier mod scripts) kept the `NULL`
+placeholder id in the copied slot; FrogLord's exporter recognises such placeholder copies by their bytes and names
+them after the model they match.
+
 A remap file lists image names, one per line, in slot order. `#` comments and blank lines are allowed.
 The number of names must equal the number of slots in the base build's remap, because remaps cannot grow.
 
@@ -231,7 +247,7 @@ One child per texture bank, holding one child per replaced image, named by image
 | `file` | path | The PNG. Its size is the padded size the bank stores, at most 256×256. |
 | `blackIsTransparent` | boolean | Black pixels are transparent. |
 | `translucent` | boolean | The image is drawn translucent. |
-| `inGameWidth`, `inGameHeight` | integer | The visible size inside the padding. Absent means the full size. |
+| `inGameWidth`, `inGameHeight` | integer | The visible size inside the padding. Absent keeps the base image's current padding. |
 | `bitDepth` | `4`, `8` or `16` | The stored bit depth. Absent keeps the base image's. |
 
 ```
@@ -251,6 +267,9 @@ inGameHeight=38
 ```
 
 An absent flag keeps the base image's value; FrogLord always writes both flags for a replaced image.
+FrogLord's exporter writes `inGameWidth` and `inGameHeight` whenever the in-game size differs from the PNG's padded size.
+When the keys are absent, the installer keeps the padding the base image has now and takes the in-game size as the PNG's
+size minus that padding, so a hand-written manifest that replaces a padded image without the keys keeps its padding.
 Flags apply to that bank's copy of the image only. An image present in two banks is two entries.
 VRAM placement is never recorded: FrogLord recomputes it when saving, and other programs do not need it.
 
@@ -343,6 +362,10 @@ zip path. Fields are separated by single spaces; the path is the rest of the lin
 
 The key `contentHash` is the SHA-1 of the lines in the order they appear, each written in canonical form
 (lower-case hex, one space, decimal size, one space, path), encoded as UTF-8 and followed by a single LF.
+Every line, the last one included, ends in the LF; an empty list hashes the empty string.
+A reader canonicalises each line before hashing: surrounding whitespace is removed, the SHA-1 is lower-cased and the
+size is rewritten as a plain decimal number (so `007` becomes `7`). Writers sort by path in plain character order,
+which for the ASCII paths of a package is byte order.
 A reader can detect truncation and tampering with it, and can use it as a cache key for the package.
 
 ```
@@ -361,9 +384,10 @@ A package without `[Files]` can still be read; its contents cannot be verified.
 3. **Images** are `(bank, name)`. Names are the base build's image-list names or names a FrogLord user assigned; both
    resolve to one texture per build. Image names differ between the PC and PlayStation image lists, so a package for
    both either uses names present in both lists or overrides per target.
-4. **Models** are archive names (`ORG_SNAKE.XMR`). Their slot in a level's model archive is never stored: every level
-   of a theme shares one slot layout, so the installer takes the slot the name occupies in the base build's archive
-   for that theme.
+4. **Models** are archive names (`ORG_SNAKE.XMR`). Their slot in a level's model archive is never stored. The model
+   archives of the same theme, the same detail role (high-poly, or the PC's `_WIN95` low-poly) and the same slot count
+   share one slot layout, so the installer takes the slot the name occupies in a base-build archive of that layout.
+   A high-poly model name never resolves into a `_WIN95` archive.
 5. **Demos** and other replaced files are archive names.
 6. **Themes** and **worlds** are theme and level-select world names (`DESERT`, `ORIGINAL`).
 7. **Gameplay settings** are the `[Gameplay]` keys; how a program achieves them is its own business.
@@ -484,7 +508,6 @@ aliases=pc-retail-v3.0e-vogons
 initialLevels=ORG1,SUB1,FOR1,VOL3,CAV1,SKY1,SWP1,DES1,JUN1
 visibleLevels=SUB3,SUB4,SUB5,FOR2,VOL2
 jungleSwap=false
-frameRate=30
 
 [LevelSelect]
 arcade=ORG1,SUB1,FOR1,VOL3,CAV1,SKY1,SWP1,DES1,JUN1
