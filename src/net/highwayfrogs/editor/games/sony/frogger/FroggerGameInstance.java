@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
+import net.highwayfrogs.editor.games.shared.mods.ModInstallResult;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
 import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectWorldID;
@@ -35,7 +36,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
+import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerBaseDifference;
+import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerBaseFingerprint;
 import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerModSupport;
+import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerModUtils;
+import net.highwayfrogs.editor.games.sony.frogger.mods.ModExportResult;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
@@ -280,6 +285,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
                 FroggerUtils.class, FroggerMapFilePacketEntity.class, FroggerMusicTrack.class,
                 FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class,
                 FroggerMapFilePacketGeneral.class);
+        engine.addWrapperTemplates(FroggerModUtils.class, ModExportResult.class, ModInstallResult.class, FroggerBaseDifference.class, FroggerBaseFingerprint.class);
     }
 
     @Override
