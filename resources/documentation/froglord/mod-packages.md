@@ -257,6 +257,8 @@ One child per texture bank, holding one child per replaced image, named by image
 file=images/LS_ALL/cav1pic.png
 blackIsTransparent=false
 translucent=false
+inGameWidth=126
+inGameHeight=126
 [[ORG_VRAM]]
 [[[org_rivbed1]]]
 file=images/ORG_VRAM/org_rivbed1.png
@@ -267,9 +269,10 @@ inGameHeight=38
 ```
 
 An absent flag keeps the base image's value; FrogLord always writes both flags for a replaced image.
-FrogLord's exporter writes `inGameWidth` and `inGameHeight` whenever the in-game size differs from the PNG's padded size.
+FrogLord's exporter always writes `inGameWidth` and `inGameHeight`, also for an image without padding.
 When the keys are absent, the installer keeps the padding the base image has now and takes the in-game size as the PNG's
 size minus that padding, so a hand-written manifest that replaces a padded image without the keys keeps its padding.
+On PC the installer keeps the PNG's padding pixels as packaged; on PSX it regenerates the padding from the in-game pixels.
 Flags apply to that bank's copy of the image only. An image present in two banks is two entries.
 VRAM placement is never recorded: FrogLord recomputes it when saving, and other programs do not need it.
 
@@ -546,15 +549,23 @@ models=ORG_SNAKE.XMR,...
 [[STARTNTSC]]
 [[[froglogo]]]
 file=images/STARTNTSC/froglogo.png
+blackIsTransparent=false
+translucent=false
+inGameWidth=256
+inGameHeight=189
 [[LS_ALL]]
 [[[cav1pic]]]
 file=images/LS_ALL/cav1pic.png
 blackIsTransparent=false
 translucent=false
+inGameWidth=126
+inGameHeight=126
 [[[cav1name]]]
 file=images/LS_ALL/cav1name.png
 blackIsTransparent=true
 translucent=true
+inGameWidth=168
+inGameHeight=14
 # ... the other pictures and names ...
 [[[org3name]]]
 file=images/LS_ALL/org3name.png

@@ -481,10 +481,8 @@ public class FroggerModExporter {
             imageEntry.setBlackIsTransparent(image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT));
             imageEntry.setTranslucent(image.testFlag(VloImage.FLAG_TRANSLUCENT));
 
-            if (image.getInternalUnpaddedWidth() != image.getPaddedWidth() || image.getInternalUnpaddedHeight() != image.getPaddedHeight()) {
-                imageEntry.setInGameWidth(image.getInternalUnpaddedWidth());
-                imageEntry.setInGameHeight(image.getInternalUnpaddedHeight());
-            }
+            imageEntry.setInGameWidth(image.getInternalUnpaddedWidth());
+            imageEntry.setInGameHeight(image.getInternalUnpaddedHeight());
 
             VloImage baseImage = this.baseResolver != null ? this.baseResolver.findImage(ref.bankName, image.getOriginalName() != null ? image.getOriginalName() : name) : null;
             if (baseImage != null) {
