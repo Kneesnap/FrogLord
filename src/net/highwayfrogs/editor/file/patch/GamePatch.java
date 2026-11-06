@@ -13,6 +13,7 @@ import java.util.*;
  */
 @Getter
 public class GamePatch {
+    private String id;
     private String name;
     private String description;
     private String author;
@@ -28,6 +29,16 @@ public class GamePatch {
      * @param config The config to read from.
      */
     public void loadPatchFromConfig(Config config) {
+        loadPatchFromConfig(null, config);
+    }
+
+    /**
+     * Loads patch data from the config.
+     * @param id The patch identifier, the stem of the patch file name, or null if unknown.
+     * @param config The config to read from.
+     */
+    public void loadPatchFromConfig(String id, Config config) {
+        this.id = id;
         this.name = config.getString("Name");
         this.description = config.getString("Description", null);
         this.author = config.getString("Author", null);

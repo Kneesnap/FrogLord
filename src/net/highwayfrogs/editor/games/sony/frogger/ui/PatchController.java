@@ -14,22 +14,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import lombok.Getter;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.patch.GamePatch;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
-import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerPatchLibrary;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,8 +44,6 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
 
     private PatchRuntime selectedPatchRuntime;
 
-    @Getter private static final List<GamePatch> patches = new ArrayList<>();
-
     public PatchController(FroggerGameInstance instance) {
         super(instance);
         this.baseHeight = 100;
@@ -61,8 +54,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
         // Setup Selector.
         this.patchSelector.setConverter(new AbstractStringConverter<>(GamePatch::getName));
 
-        List<GamePatch> compatiblePatches = new ArrayList<>(getPatches());
-        compatiblePatches.removeIf(patch -> !patch.isCompatibleWithVersion(getConfig().getInternalName()));
+        List<GamePatch> compatiblePatches = FroggerPatchLibrary.getPatchesForVersion(getConfig().getInternalName());
         this.patchSelector.setItems(FXCollections.observableArrayList(compatiblePatches));
         this.patchSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
             this.selectedPatchRuntime = newValue != null ? new PatchRuntime(getGameInstance(), newValue) : null;
@@ -91,8 +83,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
 
             this.patchSelector.getSelectionModel().clearSelection();
 
-            GamePatch loadPatch = new GamePatch();
-            loadPatch.loadPatchFromConfig(new Config(FileUtils.readLinesFromFile(patchFile)));
+            GamePatch loadPatch = FroggerPatchLibrary.loadExternalPatch(patchFile);
             this.selectedPatchRuntime = new PatchRuntime(getGameInstance(), loadPatch);
             if (this.selectedPatchRuntime.runSetup()) { // Setup success.
                 updatePatchDisplay();
@@ -201,28 +192,6 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
      * Opens the Patch Menu.
      */
     public static void openMenu(FroggerGameInstance instance) {
-        if (getPatches().isEmpty())
-            loadPatches(instance.getGameType());
-
         FXUtils.createWindowFromFXMLTemplate("window-patch-menu", new PatchController(instance), "Patch Menu", true);
-    }
-
-    /**
-     * Loads built-in patches.
-     */
-    public static void loadPatches(IGameType gameType) {
-        getPatches().clear();
-
-        for (URL patchLocation : FileUtils.getInternalResourceFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
-            try {
-                Config config = new Config(patchLocation.openStream());
-                GamePatch loadPatch = new GamePatch();
-                loadPatch.loadPatchFromConfig(config);
-                getPatches().add(loadPatch);
-            } catch (Throwable th) {
-                System.err.println("Failed to load '" + patchLocation + "'.");
-                th.printStackTrace();
-            }
-        }
     }
 }

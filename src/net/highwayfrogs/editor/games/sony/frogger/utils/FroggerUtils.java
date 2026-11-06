@@ -19,7 +19,9 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.image.ImageUtils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -337,13 +339,44 @@ public class FroggerUtils {
      * The font has been provided by StarmanUltra, thank you.
      */
     public static Font getFroggerFont() {
+        return getFroggerFont(ProblemResponse.CREATE_POPUP);
+    }
+
+    /**
+     * Gets the font used to create text.
+     * The font has been provided by StarmanUltra, thank you.
+     * If the font cannot be loaded, the problem is reported with the given response and a system font is used, unless the response throws.
+     * @param response how to report a failure to load the font
+     * @return froggerFont
+     */
+    public static Font getFroggerFont(ProblemResponse response) {
+        if (response == null)
+            throw new NullPointerException("response");
         if (froggerFont != null)
             return froggerFont;
 
         try (InputStream fontStream = SCGameType.FROGGER.getEmbeddedResourceStream("font-main-text.otf")) {
+            if (fontStream == null)
+                throw new IOException("The font resource 'font-main-text.otf' was not found.");
             froggerFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
         } catch (FontFormatException | IOException ex) {
-            Utils.handleError(null, ex, true, "Failed to load Frogger font. Using system default...");
+            String message = "Failed to load Frogger font. Using system default...";
+            switch (response) {
+                case THROW_EXCEPTION:
+                    throw new RuntimeException("Failed to load Frogger font.", ex);
+                case PRINT_MESSAGE:
+                    ClassNameLogger.getLogger(null, FroggerUtils.class).warning("%s (%s)", message, ex.getMessage());
+                    break;
+                case PRINT_STACK_TRACE:
+                    Utils.handleError(null, ex, false, message);
+                    break;
+                case CREATE_POPUP:
+                case PRINT_STACK_TRACE_WITH_POPUP:
+                default:
+                    Utils.handleError(null, ex, true, message);
+                    break;
+            }
+
             froggerFont = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()[0];
         }
 
