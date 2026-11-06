@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+            prefHeight="680.0" prefWidth="780.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox spacing="6.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+              AnchorPane.topAnchor="0.0">
+            <padding>
+                <Insets bottom="10.0" left="12.0" right="12.0" top="10.0"/>
+            </padding>
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Label text="Package:"/>
+                        <TextField fx:id="packagePathField" promptText="Path to a .mod file" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="browseButton" mnemonicParsing="false" text="Browse..."/>
+                        <Button fx:id="loadButton" mnemonicParsing="false" text="Load"/>
+                    </children>
+                </HBox>
+                <Label text="Package summary and checks"/>
+                <TextArea fx:id="summaryTextArea" editable="false" prefHeight="270.0" wrapText="true" VBox.vgrow="ALWAYS"/>
+                <Label fx:id="statusLabel" maxWidth="1.7976931348623157E308" textFill="RED" wrapText="true"/>
+                <CheckBox fx:id="installAnywayCheckBox" mnemonicParsing="false"
+                          text="Install anyway onto the already modified game"/>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Button fx:id="installButton" mnemonicParsing="false" text="Install"/>
+                        <Button fx:id="saveButton" mnemonicParsing="false" text="Save now"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="closeButton" mnemonicParsing="false" text="Close"/>
+                    </children>
+                </HBox>
+                <Label text="Install result"/>
+                <TextArea fx:id="resultTextArea" editable="false" prefHeight="230.0" wrapText="true" VBox.vgrow="ALWAYS"/>
+                <Label fx:id="saveWarningLabel" maxWidth="1.7976931348623157E308" textFill="RED" wrapText="true">
+                    <font>
+                        <Font name="System Bold" size="13.0"/>
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

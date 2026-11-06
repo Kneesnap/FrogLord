@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
+import net.highwayfrogs.editor.games.sony.frogger.mods.FroggerModSupport;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
@@ -441,6 +442,11 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     @Override
     protected FroggerMainMenuUIController makeMainMenuController() {
         return new FroggerMainMenuUIController(this);
+    }
+
+    @Override
+    public FroggerModSupport getModSupport() {
+        return new FroggerModSupport(this);
     }
 
     @Override

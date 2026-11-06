@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
+import net.highwayfrogs.editor.games.shared.mods.IModSupport;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
@@ -211,6 +212,14 @@ public abstract class SCGameInstance extends GameInstance {
     @Override
     protected SCMainMenuUIController<?> makeMainMenuController() {
         return new SCMainMenuUIController<>(this);
+    }
+
+    /**
+     * Gets the mod package support of this game, which the main menu uses to offer installing mod packages.
+     * @return modSupport, or null if this game does not support mod packages
+     */
+    public IModSupport getModSupport() {
+        return null;
     }
 
     /**

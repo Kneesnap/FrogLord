@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import net.highwayfrogs.editor.games.shared.mods.IModSupport;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -75,6 +76,10 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         addMenuItem(this.menuBarDebug, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
 
         addMenuItem(this.menuBarEdit, "Find Texture", this::promptSearchForTexture);
+        MenuItem installModItem = new MenuItem("Install Mod Package...");
+        installModItem.setDisable(getGameInstance().getModSupport() == null);
+        installModItem.setOnAction(event -> openModInstallDialog());
+        this.menuBarFile.getItems().add(this.menuBarFile.getItems().indexOf(this.menuItemSaveMain) + 1, installModItem);
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
         if (getGameInstance().getVloTree() != null) {
             addMenuItem(this.menuBarEdit, "Rebuild Vlo Files", () -> {
@@ -110,8 +115,11 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         }
     }
 
+    /**
+     * Saves the main game data, asking the user where to write the modified files.
+     */
     @Override
-    protected void saveMainGameData() {
+    public void saveMainGameData() {
         if (getConfig().isMwdLooseFiles()) {
             // We can support this at any time I think.
             boolean saveAnyways = FXUtils.makePopUpYesNo("Saving files outside of the MWD is not supported yet.\n"
@@ -201,6 +209,18 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
      */
     public MWDFile getArchive() {
         return getGameInstance() != null ? getGameInstance().getMainArchive() : null;
+    }
+
+    private void openModInstallDialog() {
+        IModSupport modSupport = getGameInstance().getModSupport();
+        if (modSupport == null)
+            return;
+
+        try {
+            modSupport.openInstallDialog();
+        } catch (Throwable th) {
+            handleError(th, true, "Failed to open the mod package install dialog.");
+        }
     }
 
     private void exportBulkTextures() {
