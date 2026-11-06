@@ -52,7 +52,7 @@ Hello # All the text after the '#' character on this line will be ignored by Fro
 ```
 
 > [!TIP]
-> To use the `#` character directly without making a comment, try escaping the value by typing `\#` instead.  
+> To use the `#` character directly without making a comment, try escaping the value by typing `##` instead.  
 
 ### Attaching Sections to Each other 
 > [!IMPORTANT]
