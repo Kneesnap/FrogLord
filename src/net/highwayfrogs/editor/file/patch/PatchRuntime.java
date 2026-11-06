@@ -210,7 +210,7 @@ public class PatchRuntime extends SCSharedGameObject {
     }
 
     private void setupVariables() {
-        getPatch().getDefaultVariables().forEach(this.variables::put); // Copy the default variables too.
+        getPatch().getDefaultVariables().forEach((name, value) -> this.variables.put(name, value != null ? new PatchValue(value) : null)); // Copy the default variables too.
 
         for (PatchArgument argument : patch.getArguments())
             this.variables.put(argument.getName(), new PatchValue(argument.getType(), argument.getDefaultValue()));
@@ -218,7 +218,7 @@ public class PatchRuntime extends SCSharedGameObject {
         // Use version-specific variables.
         Map<String, PatchValue> versionValues = getPatch().getVersionSpecificVariables().get(getConfig().getInternalName());
         if (versionValues != null)
-            versionValues.forEach(this.variables::put);
+            versionValues.forEach((name, value) -> this.variables.put(name, value != null ? new PatchValue(value) : null));
     }
 
     private void onFinish() {

@@ -16,6 +16,15 @@ public class PatchValue {
         this.value = value;
     }
 
+    /**
+     * Creates an independent copy of another value, so changing one leaves the other alone.
+     * The held objects (numbers, strings, colors, booleans) are immutable, so they are shared.
+     * @param other the value to copy
+     */
+    public PatchValue(PatchValue other) {
+        this(other.type, other.value);
+    }
+
     public boolean isInteger() {
         return this.type == PatchArgumentType.INT;
     }
