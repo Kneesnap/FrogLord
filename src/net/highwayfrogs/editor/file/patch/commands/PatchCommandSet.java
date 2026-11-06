@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.patch.commands;
 
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
+import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class PatchCommandSet extends PatchCommand {
 
     @Override
     public void execute(PatchRuntime runtime, List<PatchValueReference> args) {
-        runtime.getVariables().put(getValueText(args, 0), getValue(runtime, args, 1));
+        PatchValue value = getValue(runtime, args, 1);
+        runtime.getVariables().put(getValueText(args, 0), value != null ? new PatchValue(value) : null);
     }
 }
