@@ -23,10 +23,14 @@ skyBaseColorAddress=0x73F90
 skyBaseColorAddress=0x5CA58
 
 [ArgsCode]
-readcolor color1 skyBaseColorAddress
-readcolor color2
-readcolor color3
-readcolor color4
+set colorAddress skyBaseColorAddress
+readcolor color1 colorAddress
+add colorAddress 4
+readcolor color2 colorAddress
+add colorAddress 4
+readcolor color3 colorAddress
+add colorAddress 4
+readcolor color4 colorAddress
 
 [Code]
 writecolor color1 skyBaseColorAddress
