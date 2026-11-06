@@ -10,7 +10,8 @@ import net.highwayfrogs.editor.file.patch.reference.PatchWrapperValue;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
-import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,10 +29,21 @@ public class PatchRuntime extends SCSharedGameObject {
     @Setter private int executionLevel = 0;
     private final Map<String, PatchValue> variables = new HashMap<>();
     private boolean hadError = false;
+    private final DataWriter injectedExeWriter;
+    private final ProblemResponse errorResponse;
 
     public PatchRuntime(SCGameInstance instance, GamePatch patch) {
+        this(instance, patch, null, ProblemResponse.CREATE_POPUP);
+    }
+
+    public PatchRuntime(SCGameInstance instance, GamePatch patch, DataWriter exeWriter, ProblemResponse errorResponse) {
         super(instance);
+        if (errorResponse == null)
+            throw new NullPointerException("errorResponse");
+
         this.patch = patch;
+        this.injectedExeWriter = exeWriter;
+        this.errorResponse = errorResponse;
     }
 
     /**
@@ -59,6 +71,7 @@ public class PatchRuntime extends SCSharedGameObject {
 
     /**
      * Runs the patch.
+     * Errors are reported with the error response this runtime was created with.
      */
     public void run() {
         String lastLine = null;
@@ -72,13 +85,16 @@ public class PatchRuntime extends SCSharedGameObject {
             printRuntimeInformation();
             System.out.println("Encountered an error while running '" + getPatch().getName() + "'.");
             System.out.println("Line: '" + lastLine + "'.");
-            FXUtils.makeErrorPopUp("There was an error while applying the patch.", ex, true);
+            handleRuntimeError("There was an error while applying the patch '" + getPatch().getName() + "' at line '" + lastLine + "'.", ex);
+        } finally {
+            onFinish();
         }
-        onFinish();
     }
 
     /**
      * Attempts to setup the patch.
+     * Errors are reported with the error response this runtime was created with.
+     * @return true iff the setup succeeded
      */
     public boolean runSetup() {
         this.hadError = false;
@@ -99,8 +115,26 @@ public class PatchRuntime extends SCSharedGameObject {
             printRuntimeInformation();
             System.out.println("Encountered an error while running setup for '" + getPatch().getName() + "'.");
             System.out.println("Line: '" + lastLine + "'.");
-            FXUtils.makeErrorPopUp("There was an error while setting up the patch.", ex, true);
+            handleRuntimeError("There was an error while setting up the patch '" + getPatch().getName() + "' at line '" + lastLine + "'.", ex);
             return false;
+        }
+    }
+
+    private void handleRuntimeError(String message, Exception ex) {
+        switch (this.errorResponse) {
+            case THROW_EXCEPTION:
+                throw new RuntimeException(message, ex);
+            case PRINT_MESSAGE:
+                getLogger().severe("%s (%s)", message, ex.getMessage());
+                break;
+            case PRINT_STACK_TRACE:
+                Utils.handleError(getLogger(), ex, false, message);
+                break;
+            case CREATE_POPUP:
+            case PRINT_STACK_TRACE_WITH_POPUP:
+            default:
+                Utils.handleError(getLogger(), ex, true, message);
+                break;
         }
     }
 
@@ -196,11 +230,12 @@ public class PatchRuntime extends SCSharedGameObject {
 
     /**
      * Gets the writer which is writing to the exe.
+     * This is the writer given to the constructor if there was one, otherwise a writer to the cached executable bytes.
      * @return exeWriter
      */
     public DataWriter getExeWriter() {
         if (this.exeWriter == null)
-            this.exeWriter = getGameInstance().createExecutableWriter();
+            this.exeWriter = this.injectedExeWriter != null ? this.injectedExeWriter : getGameInstance().createExecutableWriter();
         return this.exeWriter;
     }
 }
