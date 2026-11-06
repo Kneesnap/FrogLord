@@ -670,6 +670,7 @@ public class FroggerModInstaller {
             this.gameInstance.getVloTree().rebuildRecursive(null);
             applied("Checked that the textures still fit VRAM (FrogLord places them again when saving).");
         } catch (Throwable th) {
+            this.result.setSaveExpectedToFail(true);
             warning(FroggerModManifest.SECTION_IMAGES, null, "The replaced images do not fit VRAM with FrogLord's texture placement, so saving will fail: "
                     + describeThrowable(th) + ". On PC, images without blackIsTransparent need room on pages without transparent textures.");
         }

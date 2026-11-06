@@ -60,7 +60,6 @@ public class FroggerModInstallController extends GameUIController<FroggerGameIns
     private static final String WINDOW_TITLE = "Install Mod Package";
     private static final BrowserFileType MOD_PACKAGE_FILE_TYPE = new BrowserFileType("FrogLord Mod Package", "mod");
     private static final SavedFilePath MOD_PACKAGE_PATH = new SavedFilePath("modPackageInstallPath", "Select the mod package to install...", MOD_PACKAGE_FILE_TYPE);
-    private static final String SAVE_FAILURE_MARKER = "saving will fail";
 
     public FroggerModInstallController(FroggerGameInstance instance) {
         super(instance);
@@ -349,11 +348,7 @@ public class FroggerModInstallController extends GameUIController<FroggerGameIns
     }
 
     private static boolean isSaveBlocked(ModInstallResult result) {
-        for (ModProblem warning : result.getWarnings())
-            if (warning.getMessage().toLowerCase().contains(SAVE_FAILURE_MARKER))
-                return true;
-
-        return false;
+        return result.isSaveExpectedToFail();
     }
 
     private void saveGame() {

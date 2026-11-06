@@ -17,6 +17,7 @@ public class ModInstallResult {
     private final String packageName;
     @Setter private String targetName;
     @Setter private boolean gameModified;
+    @Setter private boolean saveExpectedToFail;
     private final List<String> appliedOperations = new ArrayList<>();
     private final List<ModProblem> problems = new ArrayList<>();
 
