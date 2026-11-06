@@ -273,11 +273,19 @@ public class FroggerModInstaller {
         if (leftPadding + inGameWidth > fullWidth)
             throw fail(key, "the in-game size %dx%d does not fit the %dx%d image in %s", inGameWidth, inGameHeight, fullWidth, fullHeight, entry.getFile());
 
-        int[] pixels = packaged.getRGB(leftPadding, padding / 2, inGameWidth, inGameHeight, null, 0, inGameWidth);
-        BufferedImage inGameImage = new BufferedImage(inGameWidth, inGameHeight, BufferedImage.TYPE_INT_ARGB);
-        inGameImage.setRGB(0, 0, inGameWidth, inGameHeight, pixels, 0, inGameWidth);
-        plan.inGameImage = inGameImage;
-        plan.padding = padding;
+        if (this.gameInstance.isPSX()) {
+            int[] pixels = packaged.getRGB(leftPadding, padding / 2, inGameWidth, inGameHeight, null, 0, inGameWidth);
+            BufferedImage inGameImage = new BufferedImage(inGameWidth, inGameHeight, BufferedImage.TYPE_INT_ARGB);
+            inGameImage.setRGB(0, 0, inGameWidth, inGameHeight, pixels, 0, inGameWidth);
+            plan.newImage = inGameImage;
+            plan.padding = padding;
+        } else {
+            plan.newImage = packaged;
+            plan.keepPackagedPadding = true;
+        }
+
+        plan.inGameWidth = inGameWidth;
+        plan.inGameHeight = inGameHeight;
         plan.fullWidth = fullWidth;
         plan.fullHeight = fullHeight;
         return plan;
@@ -633,11 +641,13 @@ public class FroggerModInstaller {
         for (ImagePlan plan : this.imagePlans) {
             VloImage image = plan.image;
             Boolean blackIsTransparent = plan.entry.getBlackIsTransparent();
-            if (plan.inGameImage != null && !this.gameInstance.isPSX() && Boolean.FALSE.equals(blackIsTransparent) && image.isPaddingTransparent())
+            if (plan.newImage != null && !this.gameInstance.isPSX() && Boolean.FALSE.equals(blackIsTransparent) && image.isPaddingTransparent())
                 image.setPaddingTransparent(false);
 
-            if (plan.inGameImage != null) {
-                image.replaceImage(plan.inGameImage, plan.bitDepth, plan.padding, plan.translucent, ProblemResponse.THROW_EXCEPTION);
+            if (plan.newImage != null) {
+                image.replaceImage(plan.newImage, plan.bitDepth, plan.keepPackagedPadding ? 0 : plan.padding, plan.translucent, ProblemResponse.THROW_EXCEPTION);
+                if (plan.keepPackagedPadding)
+                    image.setUnpaddedSize(plan.inGameWidth, plan.inGameHeight);
             } else {
                 image.setFlag(VloImage.FLAG_TRANSLUCENT, plan.translucent);
             }
@@ -653,7 +663,7 @@ public class FroggerModInstaller {
                 }
             }
 
-            if (plan.inGameImage != null && (image.getWidth() != plan.fullWidth || image.getHeight() != plan.fullHeight))
+            if (plan.newImage != null && (image.getWidth() != plan.fullWidth || image.getHeight() != plan.fullHeight))
                 warning(FroggerModManifest.SECTION_IMAGES, null, imageKey(plan.entry.getBank(), plan.entry.getName()) + ": the image is stored as "
                         + image.getWidth() + "x" + image.getHeight() + ", not " + plan.fullWidth + "x" + plan.fullHeight + " as packaged.");
 
@@ -1097,8 +1107,11 @@ public class FroggerModInstaller {
     private static class ImagePlan {
         private final FroggerModImageEntry entry;
         private final VloImage image;
-        private BufferedImage inGameImage;
+        private BufferedImage newImage;
+        private boolean keepPackagedPadding;
         private int padding;
+        private int inGameWidth;
+        private int inGameHeight;
         private int fullWidth;
         private int fullHeight;
         private boolean translucent;

@@ -1544,6 +1544,24 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     /**
+     * Sets the in-game size of the image, treating the pixels around it as its padding.
+     * The pixels are kept as they are, so padding imported as part of the image is preserved instead of being regenerated.
+     * @param unpaddedWidth the in-game width
+     * @param unpaddedHeight the in-game height
+     */
+    public void setUnpaddedSize(int unpaddedWidth, int unpaddedHeight) {
+        int newPadding = this.paddedHeight - unpaddedHeight;
+        if (unpaddedWidth < 1 || unpaddedHeight < 1 || newPadding < 0
+                || this.paddedWidth != unpaddedWidth + calculatePaddingX(isPsxMode(), unpaddedWidth, newPadding, getWidthMultiplier()))
+            throw new IllegalArgumentException("The in-game size " + unpaddedWidth + "x" + unpaddedHeight + " does not fit the padded size " + this.paddedWidth + "x" + this.paddedHeight + ".");
+
+        this.unpaddedWidth = (short) unpaddedWidth;
+        this.unpaddedHeight = (short) unpaddedHeight;
+        this.paddingAmount = newPadding;
+        invalidateCache();
+    }
+
+    /**
      * Invalidate the cached image.
      */
     public void invalidateCache() {
