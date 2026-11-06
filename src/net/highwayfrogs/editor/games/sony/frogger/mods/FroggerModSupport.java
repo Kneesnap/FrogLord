@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.shared.mods.IModSupport;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.ui.mods.FroggerModExportController;
 import net.highwayfrogs.editor.games.sony.frogger.ui.mods.FroggerModInstallController;
 
 /**
@@ -21,5 +22,10 @@ public class FroggerModSupport implements IModSupport {
     @Override
     public void openInstallDialog() {
         FroggerModInstallController.openMenu(this.gameInstance);
+    }
+
+    @Override
+    public void openExportDialog() {
+        FroggerModExportController.openMenu(this.gameInstance);
     }
 }

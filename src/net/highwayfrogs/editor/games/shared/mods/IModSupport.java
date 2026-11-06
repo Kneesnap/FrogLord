@@ -9,4 +9,9 @@ public interface IModSupport {
      * Opens the dialog which installs a mod package onto the open game.
      */
     void openInstallDialog();
+
+    /**
+     * Opens the dialog which exports the changes of the open game as a mod package.
+     */
+    void openExportDialog();
 }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+            prefHeight="820.0" prefWidth="960.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox spacing="6.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+              AnchorPane.topAnchor="0.0">
+            <padding>
+                <Insets bottom="10.0" left="12.0" right="12.0" top="10.0"/>
+            </padding>
+            <children>
+                <GridPane hgap="6.0" vgap="4.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+                    <children>
+                        <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="nameField" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        <Label text="Version:" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                        <TextField fx:id="versionField" promptText="1.0.0" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                        <Label text="Author:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="authorField" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <Label text="Licence:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                        <TextField fx:id="licenceField" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                        <Label text="Id:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <HBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <children>
+                                <TextField fx:id="idField" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="newIdButton" mnemonicParsing="false" text="New"/>
+                            </children>
+                        </HBox>
+                        <Label text="Homepage:" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                        <TextField fx:id="homepageField" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                    </children>
+                </GridPane>
+                <Label text="Description:"/>
+                <TextArea fx:id="descriptionTextArea" prefHeight="60.0" prefRowCount="3" wrapText="true"/>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Label text="Base:"/>
+                        <ComboBox fx:id="baseModeComboBox" prefWidth="260.0"/>
+                        <Button fx:id="chooseOriginalButton" mnemonicParsing="false" text="Choose original..."/>
+                        <ProgressIndicator fx:id="baseProgressIndicator" prefHeight="18.0" prefWidth="18.0"/>
+                        <Label fx:id="baseStatusLabel" maxWidth="1.7976931348623157E308" wrapText="true" HBox.hgrow="ALWAYS"/>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Button fx:id="analyseButton" mnemonicParsing="false" text="Analyse"/>
+                        <Label fx:id="analyseStatusLabel" maxWidth="1.7976931348623157E308" wrapText="true" HBox.hgrow="ALWAYS"/>
+                    </children>
+                </HBox>
+                <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+                    <items>
+                        <VBox spacing="4.0">
+                            <children>
+                                <Label text="Detected changes (untick to leave out)"/>
+                                <TreeView fx:id="changeTreeView" showRoot="false" VBox.vgrow="ALWAYS"/>
+                            </children>
+                        </VBox>
+                        <VBox spacing="4.0">
+                            <children>
+                                <Label text="Level names (name= of the arcade rows)"/>
+                                <ScrollPane fitToWidth="true" prefHeight="180.0" VBox.vgrow="ALWAYS">
+                                    <content>
+                                        <GridPane fx:id="levelGridPane" hgap="6.0" vgap="4.0">
+                                            <padding>
+                                                <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
+                                            </padding>
+                                        </GridPane>
+                                    </content>
+                                </ScrollPane>
+                                <Label text="Warnings"/>
+                                <TextArea fx:id="warningsTextArea" editable="false" prefHeight="200.0" wrapText="true" VBox.vgrow="ALWAYS"/>
+                            </children>
+                        </VBox>
+                    </items>
+                </SplitPane>
+                <CheckBox fx:id="rawWritesCheckBox" mnemonicParsing="false"
+                          text="Package the unexplained executable changes as raw writes (patches/raw-writes.patch; needs the original files)"/>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Label text="Output:"/>
+                        <TextField fx:id="outputPathField" promptText="Path of the .mod file to write" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="browseOutputButton" mnemonicParsing="false" text="Browse..."/>
+                        <Button fx:id="exportButton" mnemonicParsing="false" text="Export"/>
+                        <Button fx:id="closeButton" mnemonicParsing="false" text="Close"/>
+                    </children>
+                </HBox>
+                <Label fx:id="statusLabel" maxWidth="1.7976931348623157E308" wrapText="true">
+                    <font>
+                        <Font name="System Bold" size="13.0"/>
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

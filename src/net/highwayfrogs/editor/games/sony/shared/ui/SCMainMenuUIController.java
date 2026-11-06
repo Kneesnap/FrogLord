@@ -76,10 +76,16 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         addMenuItem(this.menuBarDebug, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
 
         addMenuItem(this.menuBarEdit, "Find Texture", this::promptSearchForTexture);
+        boolean noModSupport = getGameInstance().getModSupport() == null;
+        MenuItem exportModItem = new MenuItem("Export Mod Package...");
+        exportModItem.setDisable(noModSupport);
+        exportModItem.setOnAction(event -> openModExportDialog());
         MenuItem installModItem = new MenuItem("Install Mod Package...");
-        installModItem.setDisable(getGameInstance().getModSupport() == null);
+        installModItem.setDisable(noModSupport);
         installModItem.setOnAction(event -> openModInstallDialog());
-        this.menuBarFile.getItems().add(this.menuBarFile.getItems().indexOf(this.menuItemSaveMain) + 1, installModItem);
+        int saveIndex = this.menuBarFile.getItems().indexOf(this.menuItemSaveMain);
+        this.menuBarFile.getItems().add(saveIndex + 1, exportModItem);
+        this.menuBarFile.getItems().add(saveIndex + 2, installModItem);
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
         if (getGameInstance().getVloTree() != null) {
             addMenuItem(this.menuBarEdit, "Rebuild Vlo Files", () -> {
@@ -209,6 +215,18 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
      */
     public MWDFile getArchive() {
         return getGameInstance() != null ? getGameInstance().getMainArchive() : null;
+    }
+
+    private void openModExportDialog() {
+        IModSupport modSupport = getGameInstance().getModSupport();
+        if (modSupport == null)
+            return;
+
+        try {
+            modSupport.openExportDialog();
+        } catch (Throwable th) {
+            handleError(th, true, "Failed to open the mod package export dialog.");
+        }
     }
 
     private void openModInstallDialog() {
