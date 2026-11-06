@@ -51,8 +51,6 @@ import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -322,7 +320,7 @@ public class FroggerModExporter {
 
                     byte[] modelBytes = child.getFile().writeDataToByteArray();
                     Set<String> baseHashes = baseHashesByName.get(modelName);
-                    if (baseHashes != null && baseHashes.contains(sha1(modelBytes)))
+                    if (baseHashes != null && baseHashes.contains(FroggerModHasher.sha1(modelBytes)))
                         continue;
 
                     addModel(modelName, modelBytes, slotName);
@@ -832,12 +830,12 @@ public class FroggerModExporter {
 
             List<FroggerExeBlockChange> unexplained = new ArrayList<>();
             for (FroggerExeBlockChange change : this.difference.getUnexplainedExeBlocks()) {
-                if (isExcluded(SECTION_EXE_BLOCKS, formatRange(change.getBlock()))) {
+                if (isExcluded(SECTION_EXE_BLOCKS, FroggerModHasher.formatRange(change.getBlock()))) {
                     continue;
                 }
 
                 unexplained.add(change);
-                problem(false, SECTION_EXE_BLOCKS, formatRange(change.getBlock()), "Unexplained executable change: " + change
+                problem(false, SECTION_EXE_BLOCKS, FroggerModHasher.formatRange(change.getBlock()), "Unexplained executable change: " + change
                         + (this.options.isIncludeRawExecutableWrites() && this.baseInstance != null ? "; packaged as raw writes." : "; it is not packaged."));
             }
 
@@ -854,10 +852,10 @@ public class FroggerModExporter {
             int length = Math.min(this.difference.getBaseExecutableLength(), this.difference.getCurrentExecutableLength());
             boolean[] skipped = new boolean[length];
             for (FroggerOwnedRange owned : this.base.getOwnedRanges())
-                markRange(skipped, owned.getRange());
+                FroggerModHasher.markRange(skipped, owned.getRange());
             for (List<PatchWriteRange> ranges : this.base.getPatchSiteRanges().values())
                 for (PatchWriteRange range : ranges)
-                    markRange(skipped, range);
+                    FroggerModHasher.markRange(skipped, range);
 
             StringBuilder code = new StringBuilder();
             int byteCount = 0;
@@ -941,7 +939,7 @@ public class FroggerModExporter {
 
                 MWIResourceEntry entry = file.getIndexEntry();
                 String name = entry != null ? entry.getDisplayName() : file.getFileDisplayName();
-                results.put(makeUniqueKey(results.keySet(), name, entry != null ? "@" + entry.getResourceId() : "@"), file);
+                results.put(FroggerModHasher.makeUniqueKey(results.keySet(), name, entry != null ? "@" + entry.getResourceId() : "@"), file);
             }
 
             return results;
@@ -958,7 +956,7 @@ public class FroggerModExporter {
                 for (int i = 0; i < images.size(); i++) {
                     VloImage image = images.get(i);
                     String imageName = resolver.imageNameOf(image);
-                    String key = makeUniqueKey(results.keySet(), bankName + ":" + (imageName != null ? imageName : "id" + image.getTextureId()), "@" + i);
+                    String key = FroggerModHasher.makeUniqueKey(results.keySet(), bankName + ":" + (imageName != null ? imageName : "id" + image.getTextureId()), "@" + i);
                     results.put(key, new FroggerModImageRef(bankName, image));
                 }
             }
@@ -978,7 +976,7 @@ public class FroggerModExporter {
                 if (name == null || name.isEmpty())
                     name = String.format("remap@0x%08X", remap.getReaderIndex());
 
-                String key = makeUniqueKey(used, name, String.format("@0x%08X", remap.getReaderIndex()));
+                String key = FroggerModHasher.makeUniqueKey(used, name, String.format("@0x%08X", remap.getReaderIndex()));
                 used.add(key);
                 results.put(remap, key);
             }
@@ -993,7 +991,7 @@ public class FroggerModExporter {
                     continue;
 
                 FroggerMapLevelID level = entry.getLevel();
-                results.put(makeUniqueKey(results.keySet(), level != null ? level.getInternalName() : "level", "@" + results.size()), entry);
+                results.put(FroggerModHasher.makeUniqueKey(results.keySet(), level != null ? level.getInternalName() : "level", "@" + results.size()), entry);
             }
 
             return results;
@@ -1003,8 +1001,8 @@ public class FroggerModExporter {
             Set<String> names = new LinkedHashSet<>();
             for (Long pointer : gameInstance.getBmpTexturePointers())
                 if (pointer != null)
-                    names.add(pointerName(resolver, pointer));
-            names.add(pointerName(resolver, 0));
+                    names.add(FroggerModHasher.pointerName(resolver, pointer));
+            names.add(FroggerModHasher.pointerName(resolver, 0));
             return new ArrayList<>(names);
         }
 
@@ -1089,12 +1087,12 @@ public class FroggerModExporter {
         fields[FIELD_THEME] = theme;
         fields[FIELD_LOCAL_LEVEL_ID] = String.valueOf(entry.getLocalLevelId());
         fields[FIELD_LEVELS_IN_WORLD] = String.valueOf(entry.getLevelsInWorld());
-        fields[FIELD_WORLD_IMAGE_SELECTABLE] = pointerName(resolver, entry.getWorldImageSelectablePointer());
-        fields[FIELD_WORLD_IMAGE_VISITED] = pointerName(resolver, entry.getWorldImageVisitedPointer());
-        fields[FIELD_WORLD_IMAGE_NOT_TRIED] = pointerName(resolver, entry.getWorldImageNotTriedPointer());
-        fields[FIELD_LEVEL_TEXTURE] = pointerName(resolver, entry.getLevelTexturePointer());
-        fields[FIELD_LEVEL_NAME_TEXTURE] = pointerName(resolver, entry.getLevelNameTexturePointer());
-        fields[FIELD_LEVEL_NAME_TEXTURE_IN_GAME] = pointerName(resolver, entry.getLevelNameTextureInGamePointer());
+        fields[FIELD_WORLD_IMAGE_SELECTABLE] = FroggerModHasher.pointerName(resolver, entry.getWorldImageSelectablePointer());
+        fields[FIELD_WORLD_IMAGE_VISITED] = FroggerModHasher.pointerName(resolver, entry.getWorldImageVisitedPointer());
+        fields[FIELD_WORLD_IMAGE_NOT_TRIED] = FroggerModHasher.pointerName(resolver, entry.getWorldImageNotTriedPointer());
+        fields[FIELD_LEVEL_TEXTURE] = FroggerModHasher.pointerName(resolver, entry.getLevelTexturePointer());
+        fields[FIELD_LEVEL_NAME_TEXTURE] = FroggerModHasher.pointerName(resolver, entry.getLevelNameTexturePointer());
+        fields[FIELD_LEVEL_NAME_TEXTURE_IN_GAME] = FroggerModHasher.pointerName(resolver, entry.getLevelNameTextureInGamePointer());
         return fields;
     }
 
@@ -1106,7 +1104,7 @@ public class FroggerModExporter {
             builder.append(ROW_FIELD_LABELS[i]).append('=').append(fields[i]);
         }
 
-        return sha1(builder.toString().getBytes(StandardCharsets.UTF_8));
+        return FroggerModHasher.sha1(builder.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private static String[] searchRowFields(String[] current, String baseHash, List<String> pointerNames) {
@@ -1174,11 +1172,6 @@ public class FroggerModExporter {
         return pointerName == null || pointerName.startsWith("0x");
     }
 
-    private static String pointerName(FroggerModNameResolver resolver, long pointer) {
-        String name = pointer != 0 ? resolver.imageNameForPointer(pointer) : null;
-        return name != null ? name : String.format("0x%08X", pointer);
-    }
-
     private static String themeFieldsOf(FroggerThemeBook book) {
         return book.execute(
                 pc -> "highWadId=" + pc.getHighWadId() + ";highVloId=" + pc.getHighVloId() + ";lowWadId=" + pc.getLowWadId() + ";lowVloId=" + pc.getLowVloId()
@@ -1207,32 +1200,6 @@ public class FroggerModExporter {
     private static String displayNameOf(SCGameFile<?> file) {
         MWIResourceEntry entry = file.getIndexEntry();
         return entry != null ? entry.getDisplayName() : file.getFileDisplayName();
-    }
-
-    private static String makeUniqueKey(Set<String> existing, String key, String suffix) {
-        if (!existing.contains(key))
-            return key;
-
-        String newKey = key + suffix;
-        int counter = 2;
-        while (existing.contains(newKey))
-            newKey = key + suffix + "." + counter++;
-        return newKey;
-    }
-
-    private static void markRange(boolean[] mask, PatchWriteRange range) {
-        for (int i = Math.max(0, range.getAddress()); i < Math.min(mask.length, range.getEndAddress()); i++)
-            mask[i] = true;
-    }
-
-    private static String formatRange(PatchWriteRange range) {
-        return String.format("0x%08X+%d", range.getAddress(), range.getLength());
-    }
-
-    private static String sha1(byte[] data) {
-        FroggerModHasher hasher = new FroggerModHasher();
-        hasher.digest.update(data);
-        return hasher.finish();
     }
 
     private static class FroggerModLevelMaps {
@@ -1331,41 +1298,4 @@ public class FroggerModExporter {
         }
     }
 
-    private static class FroggerModHasher {
-        private final MessageDigest digest;
-
-        private FroggerModHasher() {
-            try {
-                this.digest = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException ex) {
-                throw new IllegalStateException("SHA-1 is not available.", ex);
-            }
-        }
-
-        private void putInt(int value) {
-            this.digest.update((byte) (value >>> 24));
-            this.digest.update((byte) (value >>> 16));
-            this.digest.update((byte) (value >>> 8));
-            this.digest.update((byte) value);
-        }
-
-        private void putString(String value) {
-            byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-            putInt(bytes.length);
-            this.digest.update(bytes);
-        }
-
-        private void putBytes(byte[] value) {
-            putInt(value.length);
-            this.digest.update(value);
-        }
-
-        private String finish() {
-            byte[] hash = this.digest.digest();
-            StringBuilder builder = new StringBuilder(hash.length * 2);
-            for (byte b : hash)
-                builder.append(String.format("%02x", b & 0xFF));
-            return builder.toString();
-        }
-    }
 }

@@ -47,8 +47,6 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
@@ -95,7 +93,7 @@ public class FroggerBaseFingerprint {
     public static final int EXE_BLOCK_SIZE = 1024;
     public static final String UNPATCHED_SUFFIX = "/unpatched";
     public static final String UNCOMPARED_HASH = "-";
-    public static final String DUMMY_HASH = sha1(MRModel.DUMMY_DATA);
+    public static final String DUMMY_HASH = FroggerModHasher.sha1(MRModel.DUMMY_DATA);
 
     private static final String PATCH_FOLDER = "patches";
     private static final String PATCH_EXTENSION = ".patch";
@@ -239,7 +237,7 @@ public class FroggerBaseFingerprint {
 
         Config ownedConfig = new Config(SECTION_EXE_OWNED);
         for (FroggerOwnedRange owned : this.ownedRanges)
-            ownedConfig.getInternalText().add(new Config.ConfigValueNode(owned.getHash() + " " + formatRange(owned.getRange()) + " " + owned.getLabel()));
+            ownedConfig.getInternalText().add(new Config.ConfigValueNode(owned.getHash() + " " + FroggerModHasher.formatRange(owned.getRange()) + " " + owned.getLabel()));
         root.addChildConfig(ownedConfig);
 
         root.addChildConfig(writeHashSection(SECTION_EXE_BLOCKS, this.exeBlocks));
@@ -248,7 +246,7 @@ public class FroggerBaseFingerprint {
         for (Map.Entry<String, String> entry : this.patchSiteHashes.entrySet()) {
             List<String> ranges = new ArrayList<>();
             for (PatchWriteRange range : this.patchSiteRanges.get(entry.getKey()))
-                ranges.add(formatRange(range));
+                ranges.add(FroggerModHasher.formatRange(range));
             patchConfig.getInternalText().add(new Config.ConfigValueNode(entry.getValue() + " " + entry.getKey() + " " + String.join(",", ranges)));
         }
         root.addChildConfig(patchConfig);
@@ -309,7 +307,7 @@ public class FroggerBaseFingerprint {
             FroggerOwnedRange baseRange = this.ownedRanges.get(i);
             FroggerOwnedRange currentRange = current.ownedRanges.get(i);
             if (!UNCOMPARED_HASH.equals(baseRange.getHash()) && !baseRange.getHash().equals(currentRange.getHash()))
-                difference.getOwnedRegions().getChanged().add(formatRange(baseRange.getRange()) + " " + baseRange.getLabel());
+                difference.getOwnedRegions().getChanged().add(FroggerModHasher.formatRange(baseRange.getRange()) + " " + baseRange.getLabel());
         }
 
         compareExeBlocks(current, difference);
@@ -377,11 +375,11 @@ public class FroggerBaseFingerprint {
 
             MWIResourceEntry entry = file.getIndexEntry();
             String name = entry != null ? entry.getDisplayName() : file.getFileDisplayName();
-            String key = makeUniqueKey(this.files, name, entry != null ? "@" + entry.getResourceId() : "@");
+            String key = FroggerModHasher.makeUniqueKey(this.files.keySet(), name, entry != null ? "@" + entry.getResourceId() : "@");
             if (file instanceof WADFile) {
                 WADFile wad = (WADFile) file;
                 String wadName = resolver.wadNameOf(wad);
-                Hasher containerHasher = new Hasher();
+                FroggerModHasher containerHasher = new FroggerModHasher();
                 List<WADEntry> children = wad.getFiles();
                 containerHasher.putInt(children.size());
                 for (int i = 0; i < children.size(); i++) {
@@ -399,7 +397,7 @@ public class FroggerBaseFingerprint {
             } else if (file instanceof VloFile && bankHashes.containsKey(file)) {
                 this.files.put(key, bankHashes.get(file));
             } else {
-                this.files.put(key, sha1(serializeWithoutSideEffects(instance, file, logger)));
+                this.files.put(key, FroggerModHasher.sha1(serializeWithoutSideEffects(instance, file, logger)));
             }
         }
     }
@@ -408,7 +406,7 @@ public class FroggerBaseFingerprint {
         if (child.isDummy())
             return DUMMY_HASH;
 
-        return sha1(serializeWithoutSideEffects(instance, child.getFile(), logger));
+        return FroggerModHasher.sha1(serializeWithoutSideEffects(instance, child.getFile(), logger));
     }
 
     private static byte[] serializeWithoutSideEffects(FroggerGameInstance instance, SCGameFile<?> file, ILogger logger) {
@@ -457,7 +455,7 @@ public class FroggerBaseFingerprint {
     private Map<VloFile, String> hashImages(FroggerGameInstance instance, FroggerModNameResolver resolver) {
         Map<VloFile, String> bankHashes = new IdentityHashMap<>();
         for (VloFile bank : instance.getMainArchive().getAllFiles(VloFile.class)) {
-            Hasher bankHasher = new Hasher();
+            FroggerModHasher bankHasher = new FroggerModHasher();
             String bankName = resolver.bankNameOf(bank);
             if (bankName == null)
                 bankName = bank.getFileDisplayName();
@@ -468,9 +466,9 @@ public class FroggerBaseFingerprint {
                 VloImage image = bankImages.get(i);
                 String imageName = resolver.imageNameOf(image);
                 String key = bankName + ":" + (imageName != null ? imageName : "id" + image.getTextureId());
-                key = makeUniqueKey(this.images, key, "@" + i);
+                key = FroggerModHasher.makeUniqueKey(this.images.keySet(), key, "@" + i);
 
-                Hasher hasher = new Hasher();
+                FroggerModHasher hasher = new FroggerModHasher();
                 hasher.putInt(image.getPaddedWidth());
                 hasher.putInt(image.getPaddedHeight());
                 hasher.putInt(image.getInternalUnpaddedWidth());
@@ -502,7 +500,7 @@ public class FroggerBaseFingerprint {
                 continue;
 
             FroggerMapLevelID level = entry.getLevel();
-            String key = makeUniqueKey(output, level != null ? resolver.levelCodeOf(level) : "level", "@" + output.size());
+            String key = FroggerModHasher.makeUniqueKey(output.keySet(), level != null ? resolver.levelCodeOf(level) : "level", "@" + output.size());
             order.add(key);
 
             String theme;
@@ -519,19 +517,14 @@ public class FroggerBaseFingerprint {
                     .append(";theme=").append(theme)
                     .append(";localLevelId=").append(entry.getLocalLevelId())
                     .append(";levelsInWorld=").append(entry.getLevelsInWorld())
-                    .append(";worldImageSelectable=").append(pointerName(resolver, entry.getWorldImageSelectablePointer()))
-                    .append(";worldImageVisited=").append(pointerName(resolver, entry.getWorldImageVisitedPointer()))
-                    .append(";worldImageNotTried=").append(pointerName(resolver, entry.getWorldImageNotTriedPointer()))
-                    .append(";levelTexture=").append(pointerName(resolver, entry.getLevelTexturePointer()))
-                    .append(";levelNameTexture=").append(pointerName(resolver, entry.getLevelNameTexturePointer()))
-                    .append(";levelNameTextureInGame=").append(pointerName(resolver, entry.getLevelNameTextureInGamePointer()));
-            output.put(key, sha1(builder.toString().getBytes(StandardCharsets.UTF_8)));
+                    .append(";worldImageSelectable=").append(FroggerModHasher.pointerName(resolver, entry.getWorldImageSelectablePointer()))
+                    .append(";worldImageVisited=").append(FroggerModHasher.pointerName(resolver, entry.getWorldImageVisitedPointer()))
+                    .append(";worldImageNotTried=").append(FroggerModHasher.pointerName(resolver, entry.getWorldImageNotTriedPointer()))
+                    .append(";levelTexture=").append(FroggerModHasher.pointerName(resolver, entry.getLevelTexturePointer()))
+                    .append(";levelNameTexture=").append(FroggerModHasher.pointerName(resolver, entry.getLevelNameTexturePointer()))
+                    .append(";levelNameTextureInGame=").append(FroggerModHasher.pointerName(resolver, entry.getLevelNameTextureInGamePointer()));
+            output.put(key, FroggerModHasher.sha1(builder.toString().getBytes(StandardCharsets.UTF_8)));
         }
-    }
-
-    private static String pointerName(FroggerModNameResolver resolver, long pointer) {
-        String name = pointer != 0 ? resolver.imageNameForPointer(pointer) : null;
-        return name != null ? name : String.format("0x%08X", pointer);
     }
 
     private void hashDemos(FroggerGameInstance instance, FroggerModNameResolver resolver) {
@@ -550,7 +543,7 @@ public class FroggerBaseFingerprint {
                 }
             }
 
-            this.demos.put(String.valueOf(i), sha1(text.getBytes(StandardCharsets.UTF_8)));
+            this.demos.put(String.valueOf(i), FroggerModHasher.sha1(text.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -574,7 +567,7 @@ public class FroggerBaseFingerprint {
                             + ";multiplayerVloId=" + psx.getMultiplayerVloId() + ";formLibraryPointer=" + psx.getFormLibraryPointer()
                             + ";deathHeight=" + psx.getDeathHeight());
 
-            Hasher hasher = new Hasher();
+            FroggerModHasher hasher = new FroggerModHasher();
             hasher.putString(fields);
             List<FroggerFormEntry> formBook = book.getFormBook();
             hasher.putInt(formBook.size());
@@ -595,13 +588,13 @@ public class FroggerBaseFingerprint {
             if (name == null || name.isEmpty())
                 name = String.format("remap@0x%08X", remap.getReaderIndex());
 
-            Hasher hasher = new Hasher();
+            FroggerModHasher hasher = new FroggerModHasher();
             List<Short> textureIds = remap.getTextureIds();
             hasher.putInt(textureIds.size());
             for (Short textureId : textureIds)
                 hasher.putInt(textureId != null ? textureId : Integer.MIN_VALUE);
 
-            this.remaps.put(makeUniqueKey(this.remaps, name, String.format("@0x%08X", remap.getReaderIndex())), hasher.finish());
+            this.remaps.put(FroggerModHasher.makeUniqueKey(this.remaps.keySet(), name, String.format("@0x%08X", remap.getReaderIndex())), hasher.finish());
         }
     }
 
@@ -609,12 +602,12 @@ public class FroggerBaseFingerprint {
         int currentLength = this.exeLength;
         boolean[] owned = new boolean[blockLength];
         for (FroggerOwnedRange range : this.ownedRanges)
-            markRange(owned, range.getRange());
+            FroggerModHasher.markRange(owned, range.getRange());
 
         boolean[] patched = new boolean[blockLength];
         for (List<PatchWriteRange> ranges : this.patchSiteRanges.values())
             for (PatchWriteRange range : ranges)
-                markRange(patched, range);
+                FroggerModHasher.markRange(patched, range);
 
         for (int i = 0; i < this.ownedRanges.size(); i++) {
             FroggerOwnedRange range = this.ownedRanges.get(i);
@@ -624,8 +617,8 @@ public class FroggerBaseFingerprint {
 
         for (int blockStart = 0; blockStart < blockLength; blockStart += EXE_BLOCK_SIZE) {
             int blockEnd = Math.min(blockStart + EXE_BLOCK_SIZE, blockLength);
-            Hasher fullHasher = new Hasher();
-            Hasher unpatchedHasher = new Hasher();
+            FroggerModHasher fullHasher = new FroggerModHasher();
+            FroggerModHasher unpatchedHasher = new FroggerModHasher();
             int ownedBytes = 0;
             boolean anyPatched = false;
             for (int i = blockStart; i < blockEnd; i++) {
@@ -646,14 +639,14 @@ public class FroggerBaseFingerprint {
             if (ownedBytes == blockEnd - blockStart)
                 continue;
 
-            String key = formatRange(new PatchWriteRange(blockStart, blockEnd - blockStart));
+            String key = FroggerModHasher.formatRange(new PatchWriteRange(blockStart, blockEnd - blockStart));
             this.exeBlocks.put(key, fullHasher.finish());
             if (anyPatched)
                 this.exeBlocks.put(key + UNPATCHED_SUFFIX, unpatchedHasher.finish());
         }
 
         for (Map.Entry<String, List<PatchWriteRange>> entry : this.patchSiteRanges.entrySet()) {
-            Hasher hasher = new Hasher();
+            FroggerModHasher hasher = new FroggerModHasher();
             for (PatchWriteRange range : entry.getValue())
                 for (int i = range.getAddress(); i < range.getEndAddress(); i++)
                     hasher.putInt(i >= 0 && i < currentLength ? (exeBytes[i] & 0xFF) : -1);
@@ -662,17 +655,10 @@ public class FroggerBaseFingerprint {
     }
 
     private static String hashBytes(byte[] exeBytes, int currentLength, PatchWriteRange range) {
-        Hasher hasher = new Hasher();
+        FroggerModHasher hasher = new FroggerModHasher();
         for (int i = range.getAddress(); i < range.getEndAddress(); i++)
             hasher.putInt(i >= 0 && i < currentLength ? (exeBytes[i] & 0xFF) : -1);
         return hasher.finish();
-    }
-
-    private static void markRange(boolean[] mask, PatchWriteRange range) {
-        int start = Math.max(0, range.getAddress());
-        int end = Math.min(mask.length, range.getEndAddress());
-        for (int i = start; i < end; i++)
-            mask[i] = true;
     }
 
     private static int getEffectiveExecutableLength(FroggerGameInstance instance, byte[] exeBytes) {
@@ -726,7 +712,7 @@ public class FroggerBaseFingerprint {
         for (Map.Entry<String, List<PatchWriteRange>> entry : parts.entrySet()) {
             for (PatchWriteRange range : entry.getValue()) {
                 results.add(new FroggerOwnedRange(range, entry.getKey(), UNCOMPARED_HASH));
-                markRange(labelled, range);
+                FroggerModHasher.markRange(labelled, range);
             }
         }
 
@@ -804,17 +790,6 @@ public class FroggerBaseFingerprint {
                 output.getAdded().add(key);
     }
 
-    private static String makeUniqueKey(Map<String, String> existing, String key, String suffix) {
-        if (!existing.containsKey(key))
-            return key;
-
-        String newKey = key + suffix;
-        int counter = 2;
-        while (existing.containsKey(newKey))
-            newKey = key + suffix + "." + counter++;
-        return newKey;
-    }
-
     private static Config writeHashSection(String sectionName, Map<String, String> hashes) {
         Config section = new Config(sectionName);
         for (Map.Entry<String, String> entry : hashes.entrySet())
@@ -849,10 +824,6 @@ public class FroggerBaseFingerprint {
                     output.add(code.trim());
     }
 
-    private static String formatRange(PatchWriteRange range) {
-        return String.format("0x%08X+%d", range.getAddress(), range.getLength());
-    }
-
     private static PatchWriteRange parseRange(String text) {
         String trimmed = text.trim();
         int suffix = trimmed.indexOf('/');
@@ -863,12 +834,6 @@ public class FroggerBaseFingerprint {
         if (plus <= 0 || !trimmed.startsWith("0x"))
             throw new IllegalArgumentException("Invalid executable range: '" + text + "'.");
         return new PatchWriteRange(Integer.parseInt(trimmed.substring(2, plus), 16), Integer.parseInt(trimmed.substring(plus + 1)));
-    }
-
-    private static String sha1(byte[] data) {
-        Hasher hasher = new Hasher();
-        hasher.digest.update(data);
-        return hasher.finish();
     }
 
     /**
@@ -927,45 +892,4 @@ public class FroggerBaseFingerprint {
         }
     }
 
-    private static class Hasher {
-        private final MessageDigest digest;
-
-        private Hasher() {
-            try {
-                this.digest = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException ex) {
-                throw new IllegalStateException("SHA-1 is not available.", ex);
-            }
-        }
-
-        private void putInt(int value) {
-            this.digest.update((byte) (value >>> 24));
-            this.digest.update((byte) (value >>> 16));
-            this.digest.update((byte) (value >>> 8));
-            this.digest.update((byte) value);
-        }
-
-        private void putBoolean(boolean value) {
-            this.digest.update(value ? (byte) 1 : (byte) 0);
-        }
-
-        private void putString(String value) {
-            byte[] bytes = value != null ? value.getBytes(StandardCharsets.UTF_8) : new byte[0];
-            putInt(value != null ? bytes.length : -1);
-            this.digest.update(bytes);
-        }
-
-        private void putBytes(byte[] value) {
-            putInt(value.length);
-            this.digest.update(value);
-        }
-
-        private String finish() {
-            byte[] hash = this.digest.digest();
-            StringBuilder builder = new StringBuilder(hash.length * 2);
-            for (byte b : hash)
-                builder.append(String.format("%02x", b & 0xFF));
-            return builder.toString();
-        }
-    }
 }
