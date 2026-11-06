@@ -562,7 +562,7 @@ public abstract class SCGameInstance extends GameInstance {
         if (results.isEmpty())
             throw new IllegalStateException("No images named '" + name + "' were found in the entire game.");
 
-        return null;
+        return results;
     }
 
     /**
