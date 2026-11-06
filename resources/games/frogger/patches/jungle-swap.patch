@@ -1,0 +1,76 @@
+Name=Disable Jungle Swap
+Description=Keeps JUN1 in the level stack instead of swapping in JUN2 after the jungle is completed, at the end of the game, or when a save with the jungle gold frog is loaded. PC sites: LevelCompleteStartup (cmp dword [edx],0x12; jne; mov dword [edx],0x13), GameMainloopEndOfGameUpdate and DecodeSaveData (mov dword [eax],0x13), all replaced with NOPs. The PSX addresses come from the Frogger Plus+ script and were not verified against a PSX executable; the pc-retail-v3.0e-vogons addresses repeat the v3.0e ones, as that script does, and were not checked against that executable either. After setup, the variable 'applied' is true when every site already holds the patched bytes.
+Author=jimbolina
+Versions=pc-retail-v3.0e,pc-retail-v3.0e-vogons,psx-retail-usa
+
+[pc-retail-v3.0e]
+psx=false
+levelCompleteAddress=0x4470E
+endOfGameAddress=0x329C4
+decodeSaveAddress=0x3C99C
+
+[pc-retail-v3.0e-vogons]
+psx=false
+levelCompleteAddress=0x4470E
+endOfGameAddress=0x329C4
+decodeSaveAddress=0x3C99C
+
+[psx-retail-usa]
+psx=true
+levelCompleteAddress=0x3727C
+endOfGameAddress=0x5870
+decodeSaveAddress=0x4A04C
+jungleLevel=18
+
+[ArgsCode]
+set applied false
+if psx == false
+ readb first levelCompleteAddress
+ readb second endOfGameAddress
+ readb third decodeSaveAddress
+ if first == 0x90
+  if second == 0x90
+   if third == 0x90
+    set applied true
+if psx
+ readi first levelCompleteAddress
+ readb second endOfGameAddress
+ readb third decodeSaveAddress
+ if first == 0
+  if second == jungleLevel
+   if third == jungleLevel
+    set applied true
+
+[Code]
+if psx == false
+ writeb 0x90 levelCompleteAddress
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90 endOfGameAddress
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90 decodeSaveAddress
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+ writeb 0x90
+if psx
+ writei 0 levelCompleteAddress
+ writei 0
+ writei 0
+ writei 0
+ writeb jungleLevel endOfGameAddress
+ writeb jungleLevel decodeSaveAddress
+print "Jungle swap disabled."

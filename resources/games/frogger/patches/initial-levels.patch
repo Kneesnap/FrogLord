@@ -1,0 +1,180 @@
+Name=Initial Level Unlocks
+Description=Sets the level-select flags SelectLevelInit gives each arcade level when a new game starts. Each of the 15 calls SelectSetLevelFlags(level, flags) takes a level id (the FroggerMapLevelID ordinal, ORG1 = 24) and a flags value: 1 = completed, 2 = selectable, 4 = zone accessible, so 6 starts a level unlocked and 4 shows its world picture without letting it be played. The game assigns the flags (it does not combine them) and ignores levels missing from the arcade table, so repeating a pair is harmless. Retail gives 6 to ORG1, SUB1, FOR1 and VOL1 and 4 to ORG2-5, SUB2-5, FOR2, VOL2 and VOL3. The five multiplayer calls that follow are not touched. The PSX addresses come from the Frogger Plus+ script and were not verified against a PSX executable; the pc-retail-v3.0e-vogons addresses repeat the v3.0e ones, as that script does, and were not checked against that executable either.
+Author=jimbolina
+Versions=pc-retail-v3.0e,pc-retail-v3.0e-vogons,psx-retail-usa
+
+[Args]
+int,level1,Call 1 level id,24,0,255
+int,flags1,Call 1 flags,6,0,255
+int,level2,Call 2 level id,48,0,255
+int,flags2,Call 2 flags,6,0,255
+int,level3,Call 3 level id,12,0,255
+int,flags3,Call 3 flags,6,0,255
+int,level4,Call 4 level id,54,0,255
+int,flags4,Call 4 flags,6,0,255
+int,level5,Call 5 level id,25,0,255
+int,flags5,Call 5 flags,4,0,255
+int,level6,Call 6 level id,26,0,255
+int,flags6,Call 6 flags,4,0,255
+int,level7,Call 7 level id,27,0,255
+int,flags7,Call 7 flags,4,0,255
+int,level8,Call 8 level id,28,0,255
+int,flags8,Call 8 flags,4,0,255
+int,level9,Call 9 level id,49,0,255
+int,flags9,Call 9 flags,4,0,255
+int,level10,Call 10 level id,50,0,255
+int,flags10,Call 10 flags,4,0,255
+int,level11,Call 11 level id,51,0,255
+int,flags11,Call 11 flags,4,0,255
+int,level12,Call 12 level id,52,0,255
+int,flags12,Call 12 flags,4,0,255
+int,level13,Call 13 level id,13,0,255
+int,flags13,Call 13 flags,4,0,255
+int,level14,Call 14 level id,55,0,255
+int,flags14,Call 14 flags,4,0,255
+int,level15,Call 15 level id,56,0,255
+int,flags15,Call 15 flags,4,0,255
+
+[pc-retail-v3.0e]
+levelAddress=0xDD5A
+flagsAddress=0xDD58
+stride=12
+
+[pc-retail-v3.0e-vogons]
+levelAddress=0xDD5A
+flagsAddress=0xDD58
+stride=12
+
+[psx-retail-usa]
+levelAddress=0x3D0B8
+flagsAddress=0x3D0C0
+stride=12
+
+[ArgsCode]
+set levelAt 0
+add levelAt levelAddress
+set flagsAt 0
+add flagsAt flagsAddress
+readb level1 levelAt
+readb flags1 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level2 levelAt
+readb flags2 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level3 levelAt
+readb flags3 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level4 levelAt
+readb flags4 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level5 levelAt
+readb flags5 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level6 levelAt
+readb flags6 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level7 levelAt
+readb flags7 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level8 levelAt
+readb flags8 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level9 levelAt
+readb flags9 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level10 levelAt
+readb flags10 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level11 levelAt
+readb flags11 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level12 levelAt
+readb flags12 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level13 levelAt
+readb flags13 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level14 levelAt
+readb flags14 flagsAt
+add levelAt stride
+add flagsAt stride
+readb level15 levelAt
+readb flags15 flagsAt
+
+[Code]
+set levelAt 0
+add levelAt levelAddress
+set flagsAt 0
+add flagsAt flagsAddress
+writeb level1 levelAt
+writeb flags1 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level2 levelAt
+writeb flags2 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level3 levelAt
+writeb flags3 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level4 levelAt
+writeb flags4 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level5 levelAt
+writeb flags5 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level6 levelAt
+writeb flags6 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level7 levelAt
+writeb flags7 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level8 levelAt
+writeb flags8 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level9 levelAt
+writeb flags9 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level10 levelAt
+writeb flags10 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level11 levelAt
+writeb flags11 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level12 levelAt
+writeb flags12 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level13 levelAt
+writeb flags13 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level14 levelAt
+writeb flags14 flagsAt
+add levelAt stride
+add flagsAt stride
+writeb level15 levelAt
+writeb flags15 flagsAt
+print "Initial level unlocks written."
