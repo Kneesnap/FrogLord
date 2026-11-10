@@ -44,10 +44,11 @@ public class FroggerEntityDataPress extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Speed (World Units/sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
-                .setTooltip(FXUtils.createTooltip("Controls how fast the press moves.\nMost likely these are in world units."));
+        editor.addFixedShort("Speed (grid tiles/sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast the press moves, both rising and falling."));
         editor.addFixedShort("Distance (grid)", this.distance, newDistance -> this.distance = newDistance, 256)
-                .setTooltip(FXUtils.createTooltip("Controls many grid squares does the press has moved when it is fully extended."));
+                .setTooltip(FXUtils.createTooltip("How far the press will rise/fall before reversing course.\n\"Controls many grid squares does the press has moved when it is fully extended.\" \n" +
+                        "\t\\ Kneesnap, May 6, 2025"));
         editor.addEnumSelector("Movement Direction", this.direction, FroggerEntityDataPressDirection.values(), false, newDirection -> this.direction = newDirection)
                 .setTooltip(FXUtils.createTooltip("Controls which direction the press moves, from its starting position."));
         editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, getGameInstance().getFPS())

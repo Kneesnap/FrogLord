@@ -39,8 +39,8 @@ public class FroggerEntityDataEvilPlant extends FroggerEntityDataMatrix {
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
         editor.addFixedShort("Snap Time (sec)", this.snapTime, newSnapTime -> this.snapTime = newSnapTime, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("How long to wait to start snapping after the player enters aggro range."));
+                .setTooltip(FXUtils.createTooltip("How long to wait to start snapping after the player enters aggro range.\nThe plant will additionally pause for this amount of time once the Snap Delay expires."));
         editor.addFixedShort("Snap Delay (sec)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("After the snap animation ends, the plant will be incapacitated until this delay ends."));
+                .setTooltip(FXUtils.createTooltip("How long the plant will continue to snap at the player before pausing.\nThis timer starts after the plant has finished its first bite."));
     }
 }

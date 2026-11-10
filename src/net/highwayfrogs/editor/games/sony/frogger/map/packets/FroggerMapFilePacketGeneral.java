@@ -235,7 +235,8 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         // Add map theme / level timer.
         if (!isAprilFormat()) {
             editor.addLabel("Theme", getParentFile().getMapTheme().name()); // Should look into whether this is ok to edit.
-            editor.addUnsignedShortField("Level Timer", this.startingTimeLimit, newStartingTimeLimit -> this.startingTimeLimit = newStartingTimeLimit);
+            editor.addUnsignedShortField("Level Timer", this.startingTimeLimit, newStartingTimeLimit -> this.startingTimeLimit = newStartingTimeLimit)
+                    .setTooltip(FXUtils.createTooltip("On PC, this value is multiplied by 1.5, except in ORG levels. The hardcoded maximum is 99.\nHigher values are accepted on PSX, but values above 75 cause visual errors on the HUD."));
         }
 
         // Add start tile / rotation data.
@@ -243,17 +244,17 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
                 newX -> !doesStartTileLookValid() || testStartTileLooksValid(newX, this.startGridCoordZ), newX -> {
             this.startGridCoordX = newX;
             manager.updatePlayerCharacter();
-        });
+        }).setTooltip(FXUtils.createTooltip("The X location on the level grid where the player will start. 0 is the far left.\nSubtract 1 for each multiplayer frog added."));
         editor.addUnsignedShortField("Start zTile", this.startGridCoordZ,
                 newZ -> !doesStartTileLookValid() || testStartTileLooksValid(this.startGridCoordX, newZ), newZ -> {
             this.startGridCoordZ = newZ;
             manager.updatePlayerCharacter();
-        });
+        }).setTooltip(FXUtils.createTooltip("The Z location on the level grid where the player will start. 0 is the far bottom."));
         editor.addEnumSelector("Start Rotation", this.startRotation, FroggerMapStartRotation.values(), false,
                         newStartRotation -> {
             this.startRotation = newStartRotation;
-            manager.updatePlayerCharacter();
-        }).setConverter(new AbstractStringConverter<>(FroggerMapStartRotation::getArrow));
+            manager.updatePlayerCharacter();                                                                                                                   //Commented out until I can figure out how to implement the tooltip alongside it
+        }).setTooltip(FXUtils.createTooltip("Which direction the frog(s) will face when they spawn. This does not affect the starting camera in any way."));    //.setConverter(new AbstractStringConverter<>(FroggerMapStartRotation::getArrow));
 
         // Add frog lighting data.
         if (hasFrogColorData()) {
@@ -261,7 +262,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
                 loadFrogLightingFromBgr(ColorUtils.swapRedBlue(newRgb));
                 manager.getFrogLight().setColor(ColorUtils.fromRGB(newRgb, 1F));
                 manager.updatePlayerCharacterLighting();
-            });
+            }).setTooltip(FXUtils.createTooltip("Set an ambient light color for the player frogs. All vanilla levels set this to gray."));
         }
 
         // Add camera data.

@@ -38,7 +38,7 @@ public class FroggerEntityScriptDataNoise extends FroggerEntityScriptData {
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         editor.addFixedInt("Min Radius (grid)", this.minRadius, newMinRadius -> this.minRadius = newMinRadius, 256)
-                .setTooltip(FXUtils.createTooltip("The minimum distance away (in grid squares) to hear the sound from."));
+                .setTooltip(FXUtils.createTooltip("The radius (in grid squares) within which the sound will play the loudest."));
         editor.addFixedInt("Max Radius (grid)", this.maxRadius, newMaxRadius -> this.maxRadius = newMaxRadius, 256)
                 .setTooltip(FXUtils.createTooltip("The maximum distance away (in grid squares) to hear the sound from."));
     }

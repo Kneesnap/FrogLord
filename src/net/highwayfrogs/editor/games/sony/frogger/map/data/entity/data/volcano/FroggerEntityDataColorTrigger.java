@@ -62,10 +62,17 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
         editor.addEnumSelector("Action", this.type, FroggerEntityColorTriggerType.values(), false, newType -> this.type = newType)
-                .setTooltip(FXUtils.createTooltip("Controls what happens to the entities targetted by the switch when pressed."));
-
+                .setTooltip(FXUtils.createTooltip("Controls what happens to the entities targeted by the switch when pressed."));
+        editor.addBoldLabel("FREEZE:");
+        editor.addNormalLabel("Pauses/unpauses all linked platforms.");
+        editor.addBoldLabel("REVERSE:");
+        editor.addNormalLabel("Swaps the direction of all linked");
+        editor.addNormalLabel("platforms. Works on paused ones as well.");
+        editor.addBoldLabel("FREEZE_UNUSED_DUPLICATE:");
+        editor.addNormalLabel("Exactly what it sounds like.");
+        editor.addNormalLabel("Internally named \"START\"");
         ComboBox<?> colorField = editor.addEnumSelector("Color (PSX Only)", this.color, VolcanoTriggerColor.values(), false, newColor -> this.color = newColor);
-        colorField.setTooltip(FXUtils.createTooltip("Sets the color to use for the switch.\nThis feature doesn't appear to do anything on the PC version. (PSX Untested)"));
+        colorField.setTooltip(FXUtils.createTooltip("Sets the color of the switch. Only RED/GREEN is used in the vanilla game.\nThe 8 unused variants toggle from a \"dark\" to a \"lit\" state when pressed, except Orange, which has 2 \"dark\" textures.\nThe white switch has a glitchy \"lit\" texture."));
         if (getGameInstance().isPC())
             colorField.setDisable(true);
 
@@ -79,7 +86,7 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
                 }
 
                 return true;
-            }, newEntityId -> this.uniqueIds[tempIndex] = newEntityId);
+            }, newEntityId -> this.uniqueIds[tempIndex] = newEntityId).setTooltip(FXUtils.createTooltip("The ID of the path object to be linked. -1 for nothing. Multiple switches can be tied to the same ID."));
         }
     }
 
@@ -96,7 +103,7 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
     }
 
     public enum VolcanoTriggerColor {
-        RED, BLUE, CYAN, GREEN, ORANGE, PINK, PURPLE, RED_ALTERNATE, WHITE
+        RED_GREEN, BLUE, CYAN, GREEN, ORANGE, PINK, PURPLE, RED, WHITE
     }
 
     public enum FroggerEntityColorTriggerType {

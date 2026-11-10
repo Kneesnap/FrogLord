@@ -39,6 +39,6 @@ public class FroggerEntityScriptDataNuclearBarrel extends FroggerEntityScriptDat
         editor.addSignedIntegerField("Jump Distance (grid)", this.jumpDistance, newDistance -> this.jumpDistance = newDistance)
                 .setTooltip(FXUtils.createTooltip("Controls how many grid squares the player will be moved."));
         editor.addFixedInt("Jump Time (sec)", this.jumpTime, newTime -> this.jumpTime = newTime, getGameInstance().getFPS())
-                .setTooltip(FXUtils.createTooltip("Controls how long (in seconds) the jump will take."));
+                .setTooltip(FXUtils.createTooltip("Controls how long (in seconds) the jump will take.\nA bigger number will result in a higher launch arc."));
     }
 }

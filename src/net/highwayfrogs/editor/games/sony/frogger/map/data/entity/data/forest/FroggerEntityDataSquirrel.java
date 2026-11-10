@@ -37,8 +37,8 @@ public class FroggerEntityDataSquirrel extends FroggerEntityDataPathInfo {
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
         // Seems unused.
-        TextField squirrelTurnDurationField = editor.addUnsignedFixedShort("Turn Duration (secs)", this.turnDuration, newTurnDuration -> this.turnDuration = newTurnDuration, getGameInstance().getFPS(), 0, 3000);
+        TextField squirrelTurnDurationField = editor.addUnsignedFixedShort("Unused Turn Duration (secs)", this.turnDuration, newTurnDuration -> this.turnDuration = newTurnDuration, getGameInstance().getFPS(), 0, 3000);
         squirrelTurnDurationField.setDisable(true);
-        squirrelTurnDurationField.setTooltip(FXUtils.createTooltip("Controls how long the squirrel's turn lasts.\nSeems unused in favor of automatically checking when the turn animation is finished."));
+        squirrelTurnDurationField.setTooltip(FXUtils.createTooltip("Controls how long the squirrel's turn lasts.\nUnused in favor of automatically checking when the turn animation is finished. This animation lasts 21 frames (.7 seconds)."));
     }
 }

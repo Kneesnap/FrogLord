@@ -42,7 +42,7 @@ public class FroggerEntityDataBreakingBranch extends FroggerEntityDataMatrix {
         super.setupEditor(editor);
         editor.addUnsignedFixedShort("Break Delay (secs)", this.breakDelay, newBreakDelay -> this.breakDelay = newBreakDelay, getGameInstance().getFPS(), 0, 3000)
                 .setTooltip(FXUtils.createTooltip("How long does it take from the moment the player steps on the branch for it to become unusable?"));
-        editor.addUnsignedFixedShort("Fall Speed (grid/sec)", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184.5)
-                .setTooltip(FXUtils.createTooltip("How fast the branch falls once it breaks.\nThe unit of this value is not correctly understood."));
+        editor.addUnsignedFixedShort("Unused Fall Speed", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("Unused in favor of a hardcoded gravity equation."));
     }
 }

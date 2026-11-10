@@ -36,7 +36,7 @@ public class FroggerEntityDataSlug extends FroggerEntityDataPathInfo {
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
         editor.addEnumSelector("Motion Type", this.motionType, FroggerEntityDataSlugMotionType.values(), false, newMotionType -> this.motionType = newMotionType)
-                .setTooltip(FXUtils.createTooltip("Controls if the slug movement type is ground-based or pipe-based. (Compare Bang Bang Barrel vs Slime Sliding)"));
+                .setTooltip(FXUtils.createTooltip("Controls if the slug movement type is ground-based or pipe-based. (Compare Bang Bang Barrel vs Slime Sliding)\n\"Curvy\" is best paired with the \"Local Align\" flag."));
     }
 
     public enum FroggerEntityDataSlugMotionType {

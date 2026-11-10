@@ -45,7 +45,7 @@ public class FroggerEntityDataLogSnake extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addSignedShortField("Log ID", this.logId, newLogId -> {
+        editor.addSignedShortField("Ridden Entity ID", this.logId, newLogId -> {
             String errorMessage = getErrorMessageForEntityId(newLogId);
             if (errorMessage != null) {
                 FXUtils.makePopUp(errorMessage, AlertType.WARNING);
@@ -54,14 +54,14 @@ public class FroggerEntityDataLogSnake extends FroggerEntityDataMatrix {
 
             return true;
         }, newLogId -> this.logId = newLogId).setTooltip(FXUtils.createTooltip("The unique ID of the entity which the snake should ride."));
-        editor.addUnsignedFixedShort("Speed", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
-                .setTooltip(FXUtils.createTooltip("How fast along the log the snake moves. Seems to be roughly measured in grid squares per second."));
+        editor.addUnsignedFixedShort("Speed (grid sq./sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast the snake moves along its ridden entity."));
     }
 
     private String getErrorMessageForEntityId(int logEntityId) {
         FroggerMapEntity foundEntity = getMapFile().getEntityPacket().getEntityByUniqueId(logEntityId);
         if (foundEntity == null)
-            return "No ridable entity (for the snake) was found with the unique ID: " + logEntityId + ".";
+            return "No rideable entity (for the snake) was found with the unique ID: " + logEntityId + ".";
         if (!"MOVING".equals(foundEntity.getTypeName()) && foundEntity.getPathInfo() == null) // The snake entity specifically uses path data.
             return "Cannot attach snake entity to a(n) " + foundEntity.getTypeName() + " entity, only path followers are allowed.";
         return null;
